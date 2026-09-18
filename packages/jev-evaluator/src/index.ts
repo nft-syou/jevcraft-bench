@@ -1,4 +1,5 @@
 export type { JevBackend } from "./backend";
+export { createMockBackend } from "./mock-backend";
 export {
   buildXrayV1State,
   ROUTE_NATURALNESS_MAX,
