@@ -160,7 +160,8 @@ describe("extractAll", () => {
     expect(MiningSessionFeaturesSchema.parse(f)).toEqual(f);
     expect(f?.session.valuableOreReveals).toBe(1);
     expect(f?.session.blocksBroken).toBe(5);
-    expect(f?.exploration.caveExposureRatio).toBe(0);
+    // one of the five breaks borders natural cave air the player did not dig
+    expect(f?.exploration.caveExposureRatio).toBe(0.2);
     expect(f?.quality.enoughEvidence).toBe(false);
   });
 });
