@@ -1,0 +1,5 @@
+{"sessionId":"session_fixture_legit_001","label":"legit","subtype":"branch_mining","reviewStatus":"single_review"}
+{"sessionId":"session_fixture_legit_002","label":"legit","subtype":"cave_mining","reviewStatus":"single_review"}
+{"sessionId":"session_fixture_xray_direct_001","label":"simulated_xray","subtype":"direct_xray","reviewStatus":"single_review"}
+{"sessionId":"session_fixture_xray_evasive_001","label":"simulated_xray","subtype":"detour_xray","reviewStatus":"single_review"}
+{"sessionId":"session_fixture_insufficient_001","label":"unknown","subtype":null,"reviewStatus":"unreviewed","notes":"telemetry queue overflow; not usable as ground truth"}

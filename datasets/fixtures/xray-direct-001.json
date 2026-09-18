@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "featureExtractorVersion": "0.1.0",
+  "sessionId": "session_fixture_xray_direct_001",
+  "session": {
+    "durationSec": 603,
+    "movementDistance": 311.4,
+    "blocksBroken": 430,
+    "valuableOreReveals": 31,
+    "valuableOreBlocksBroken": 39
+  },
+  "exploration": {
+    "branchMiningLikelihood": 0.12,
+    "caveExposureRatio": 0.03,
+    "uniqueTunnelDirections": 14,
+    "turnCount": 41
+  },
+  "hiddenOreApproach": {
+    "sampleCount": 28,
+    "meanDirectness": 0.92,
+    "medianDetourRatio": 1.08,
+    "aimAlignmentBeforeRevealRatio": 0.85,
+    "turnsTowardHiddenOre": 24,
+    "directionChangesNearOre": 27
+  },
+  "timing": {
+    "meanBreakIntervalMs": 438,
+    "breakIntervalStdDevMs": 143,
+    "medianSecondsBetweenReveals": 13.2
+  },
+  "efficiency": {
+    "valuableOrePer100Blocks": 9.0,
+    "nonOreBlocksPerHiddenReveal": 12.8,
+    "baselinePercentile": null
+  },
+  "quality": {
+    "trajectoryCoverage": 0.97,
+    "droppedEventCount": 0,
+    "enoughEvidence": true,
+    "knownConfounders": []
+  }
+}

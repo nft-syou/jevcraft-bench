@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "featureExtractorVersion": "0.1.0",
+  "sessionId": "session_fixture_legit_001",
+  "session": {
+    "durationSec": 900,
+    "movementDistance": 420.5,
+    "blocksBroken": 610,
+    "valuableOreReveals": 4,
+    "valuableOreBlocksBroken": 7
+  },
+  "exploration": {
+    "branchMiningLikelihood": 0.91,
+    "caveExposureRatio": 0.04,
+    "uniqueTunnelDirections": 2,
+    "turnCount": 9
+  },
+  "hiddenOreApproach": {
+    "sampleCount": 4,
+    "meanDirectness": 0.35,
+    "medianDetourRatio": 2.85,
+    "aimAlignmentBeforeRevealRatio": 0.3,
+    "turnsTowardHiddenOre": 1,
+    "directionChangesNearOre": 2
+  },
+  "timing": {
+    "meanBreakIntervalMs": 520,
+    "breakIntervalStdDevMs": 210,
+    "medianSecondsBetweenReveals": 180
+  },
+  "efficiency": {
+    "valuableOrePer100Blocks": 0.66,
+    "nonOreBlocksPerHiddenReveal": 150.8,
+    "baselinePercentile": null
+  },
+  "quality": {
+    "trajectoryCoverage": 0.98,
+    "droppedEventCount": 0,
+    "enoughEvidence": true,
+    "knownConfounders": []
+  }
+}

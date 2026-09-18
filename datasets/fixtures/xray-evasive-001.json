@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "featureExtractorVersion": "0.1.0",
+  "sessionId": "session_fixture_xray_evasive_001",
+  "session": {
+    "durationSec": 840,
+    "movementDistance": 520.7,
+    "blocksBroken": 560,
+    "valuableOreReveals": 18,
+    "valuableOreBlocksBroken": 23
+  },
+  "exploration": {
+    "branchMiningLikelihood": 0.3,
+    "caveExposureRatio": 0.08,
+    "uniqueTunnelDirections": 9,
+    "turnCount": 47
+  },
+  "hiddenOreApproach": {
+    "sampleCount": 18,
+    "meanDirectness": 0.72,
+    "medianDetourRatio": 1.45,
+    "aimAlignmentBeforeRevealRatio": 0.55,
+    "turnsTowardHiddenOre": 11,
+    "directionChangesNearOre": 20
+  },
+  "timing": {
+    "meanBreakIntervalMs": 495,
+    "breakIntervalStdDevMs": 260,
+    "medianSecondsBetweenReveals": 31.0
+  },
+  "efficiency": {
+    "valuableOrePer100Blocks": 5.0,
+    "nonOreBlocksPerHiddenReveal": 29.8,
+    "baselinePercentile": null
+  },
+  "quality": {
+    "trajectoryCoverage": 0.95,
+    "droppedEventCount": 1,
+    "enoughEvidence": true,
+    "knownConfounders": []
+  }
+}
