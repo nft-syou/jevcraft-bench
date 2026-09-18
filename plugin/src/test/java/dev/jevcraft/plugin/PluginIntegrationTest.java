@@ -60,6 +60,7 @@ class PluginIntegrationTest {
         // Ore already open to a cave: must not be reported.
         world.getBlockAt(15, y, 1).setType(Material.DEEPSLATE_DIAMOND_ORE);
         world.getBlockAt(15, y, 2).setType(Material.CAVE_AIR);
+        world.getBlockAt(15, y, -1).setType(Material.CAVE_AIR); // natural cave next to the x=15 break
 
         PlayerMock player = server.addPlayer("Steve");
         player.setLocation(new Location(world, -2.5, y, 0.5));
@@ -79,6 +80,13 @@ class PluginIntegrationTest {
             assertTrue(player.breakBlock(world.getBlockAt(x, y, 0)));
         }
         assertTrue(player.breakBlock(world.getBlockAt(15, y, 0))); // next to the cave-exposed ore
+
+        // Standing still inside a session: the scheduler tick must add heartbeat samples.
+        long writtenBefore = plugin.service().writer().writtenCount() + plugin.service().writer().queueSize();
+        Thread.sleep(2100);
+        server.getScheduler().performTicks(20);
+        assertTrue(plugin.service().writer().flush(5, TimeUnit.SECONDS));
+        assertTrue(plugin.service().writer().writtenCount() > writtenBefore, "heartbeat sample while idle");
 
         server.getPluginManager().callEvent(
                 new PlayerQuitEvent(player, Component.text("bye"), PlayerQuitEvent.QuitReason.DISCONNECTED));
@@ -105,8 +113,14 @@ class PluginIntegrationTest {
         assertEquals(1, ore.get("z").getAsInt());
         assertFalse(ore.get("previouslyVisible").getAsBoolean());
         assertEquals("SURVIVAL", reveal.getAsJsonObject("context").get("gameMode").getAsString());
-        assertEquals(1, reveal.getAsJsonObject("context").get("openNeighbours").getAsInt(),
-                "tunnel dig: only the face the player came from is open");
+        assertEquals(0, reveal.getAsJsonObject("context").get("preexistingOpenFaces").getAsInt(),
+                "tunnel dig: the only open face was dug by the player themselves");
+        JsonObject caveBreak = events.stream()
+                .filter(e -> "block_break".equals(e.get("eventType").getAsString()))
+                .filter(e -> e.getAsJsonObject("position").get("x").getAsInt() == 15)
+                .findFirst().orElseThrow();
+        assertEquals(1, caveBreak.getAsJsonObject("context").get("preexistingOpenFaces").getAsInt(),
+                "the x=15 block borders cave air the player did not dig");
 
         JsonObject end = events.get(events.size() - 1);
         assertEquals("session_end", end.get("eventType").getAsString());

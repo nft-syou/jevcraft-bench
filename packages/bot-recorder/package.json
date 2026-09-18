@@ -9,7 +9,6 @@
   "dependencies": {
     "@jevcraft/schema": "workspace:*",
     "mineflayer": "^4.39.0",
-    "mineflayer-pathfinder": "^2.4.5",
     "minecraft-data": "^3.116.0",
     "vec3": "0.1.10",
     "zod": "^4.6.5"

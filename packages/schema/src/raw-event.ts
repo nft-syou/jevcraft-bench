@@ -26,8 +26,8 @@ const BreakContext = z.strictObject({
   tool: z.string(),
   lightLevel: z.number().int().min(0).max(15),
   underground: z.boolean(),
-  /** open (non-occluding) faces of the block before the break, 0..6 */
-  openNeighbours: z.number().int().min(0).max(6),
+  /** faces already open before the break that this player did not dig themselves recently, 0..6 */
+  preexistingOpenFaces: z.number().int().min(0).max(6),
 });
 
 export const MovementSampleEventSchema = z.strictObject({

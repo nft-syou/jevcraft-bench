@@ -1,12 +1,9 @@
 import type { BehaviorSubtype, GroundTruthLabel } from "@jevcraft/schema";
 import mineflayer, { type Bot } from "mineflayer";
-import pathfinderPkg from "mineflayer-pathfinder";
 import { Vec3 } from "vec3";
-import { createRng, sleep, tunnelMovements } from "./mining";
+import { createRng, sleep } from "./mining";
 import { offlineUuid, pseudonymize } from "./offline-uuid";
 import type { Scenario } from "./scenarios";
-
-const { pathfinder } = pathfinderPkg;
 
 /** One recorded bot run; enough to label the plugin's sessions afterwards. */
 export interface RunManifest {
@@ -70,7 +67,6 @@ export async function recordRun(options: RecordOptions): Promise<RunManifest> {
     version: options.version,
     auth: "offline",
   });
-  bot.loadPlugin(pathfinder);
   const joinedAt = new Date().toISOString();
   try {
     await waitForSpawn(bot, 60_000);
@@ -83,10 +79,19 @@ export async function recordRun(options: RecordOptions): Promise<RunManifest> {
     bot.chat(`/tp @s ${origin.x} ${origin.y} ${origin.z}`);
     await sleep(2500);
     await bot.waitForChunksToLoad();
-    await sleep(500);
+    // The arena origin is usually inside solid rock. Carve a 3x2x3 pocket with a solid floor so
+    // the tunneller has a valid start cell; /fill does not fire BlockBreakEvent, so nothing is recorded.
+    bot.chat(
+      `/fill ${origin.x - 1} ${origin.y - 1} ${origin.z - 1} ${origin.x + 1} ${origin.y - 1} ${origin.z + 1} minecraft:deepslate`,
+    );
+    bot.chat(
+      `/fill ${origin.x - 1} ${origin.y} ${origin.z - 1} ${origin.x + 1} ${origin.y + 1} ${origin.z + 1} minecraft:air`,
+    );
+    await sleep(1000);
+    bot.chat(`/tp @s ${origin.x} ${origin.y} ${origin.z}`);
+    await sleep(1500);
     const here = bot.entity.position.floored();
     if (here.distanceTo(origin) > 4) notes.push(`teleport landed at ${here} (wanted ${origin})`);
-    bot.pathfinder.setMovements(tunnelMovements(bot));
     const pickaxe = bot.inventory.items().find((i) => i.name.endsWith("_pickaxe"));
     if (pickaxe) await bot.equip(pickaxe, "hand");
     else notes.push("no pickaxe in inventory");
@@ -105,11 +110,7 @@ export async function recordRun(options: RecordOptions): Promise<RunManifest> {
   } catch (error) {
     notes.push(`error: ${error instanceof Error ? error.message : String(error)}`);
   } finally {
-    try {
-      bot.pathfinder?.stop();
-    } catch {
-      // ignore
-    }
+    bot.clearControlStates();
     bot.quit();
     await sleep(500);
   }

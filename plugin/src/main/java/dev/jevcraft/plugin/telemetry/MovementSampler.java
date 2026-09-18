@@ -83,6 +83,12 @@ public final class MovementSampler {
         return buffer == null ? List.of() : new ArrayList<>(buffer);
     }
 
+    /** Time of the last accepted sample, or -1 if none. */
+    public long lastSampleTimeMs(UUID player) {
+        Sample sample = last.get(player);
+        return sample == null ? -1 : sample.timeMs();
+    }
+
     public int bufferedCount(UUID player) {
         Deque<Sample> buffer = buffers.get(player);
         return buffer == null ? 0 : buffer.size();

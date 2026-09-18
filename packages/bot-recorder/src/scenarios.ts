@@ -2,15 +2,16 @@ import type { BehaviorSubtype, GroundTruthLabel } from "@jevcraft/schema";
 import type { Bot } from "mineflayer";
 import { Vec3 } from "vec3";
 import {
+  approachAndMine,
   DIAMOND_ORES,
   digAt,
   fidget,
   findOre,
-  goNear,
-  goTo,
   LOW_VALUE_ORES,
+  mineVisibleVein,
   type Rng,
   sleep,
+  tunnelTo,
   visibleOreNear,
 } from "./mining";
 
@@ -34,27 +35,29 @@ export interface Scenario {
   run(ctx: ScenarioContext): Promise<void>;
 }
 
-const STEP_TIMEOUT_MS = 20_000;
 const deadline = (ctx: ScenarioContext) => Date.now() + ctx.budgetMs;
 
-/** Digs a straight 1x2 tunnel by pathing to successive blocks along `dir`. */
-async function tunnel(
+const HEADINGS = [new Vec3(1, 0, 0), new Vec3(0, 0, 1), new Vec3(-1, 0, 0), new Vec3(0, 0, -1)];
+
+/** Straight tunnel of `length` cells along `dir` from the bot's current cell. */
+async function straight(
   ctx: ScenarioContext,
-  from: Vec3,
   dir: Vec3,
   length: number,
   until: number,
-): Promise<Vec3> {
-  let pos = from;
-  for (let i = 0; i < length && Date.now() < until; i++) {
-    pos = pos.plus(dir);
-    if (!(await goTo(ctx.bot, pos, STEP_TIMEOUT_MS))) {
-      ctx.log(`stuck at ${pos}`);
-      break;
-    }
-    await fidget(ctx.bot, ctx.rng, ctx.humanNoise);
-  }
-  return pos;
+): Promise<{ cell: Vec3; reached: boolean }> {
+  const from = ctx.bot.entity.position.floored();
+  const goal = from.plus(dir.scaled(length));
+  return tunnelTo(ctx.bot, goal, {
+    deadline: until,
+    onStep: () => fidget(ctx.bot, ctx.rng, ctx.humanNoise),
+  });
+}
+
+/** Picks a different axis heading when a tunnel is blocked (lava, water, cave floor missing). */
+function turn(current: Vec3, rng: Rng): Vec3 {
+  const others = HEADINGS.filter((h) => !h.equals(current) && !h.equals(current.scaled(-1)));
+  return others[Math.floor(rng.next() * others.length)] ?? current.scaled(-1);
 }
 
 /** Legit: strip mining with side branches. Never looks through walls. */
@@ -66,24 +69,26 @@ export const legitBranchMining: Scenario = {
     "Main tunnel along +x with 6-block branches every 4 blocks. Uses no hidden information.",
   async run(ctx) {
     const until = deadline(ctx);
-    let pos = ctx.origin.clone();
-    const branchLength = 6;
-    for (let segment = 0; segment < 12 && Date.now() < until; segment++) {
-      pos = await tunnel(ctx, pos, new Vec3(1, 0, 0), 4, until);
-      const side = segment % 2 === 0 ? 1 : -1;
-      const branchEnd = await tunnel(ctx, pos, new Vec3(0, 0, side), branchLength, until);
+    let main = new Vec3(1, 0, 0);
+    for (let segment = 0; Date.now() < until; segment++) {
+      const { cell: junction, reached } = await straight(ctx, main, 4, until);
+      if (!reached) {
+        main = turn(main, ctx.rng);
+        ctx.log(`blocked; main tunnel now ${main}`);
+        continue;
+      }
+      const side = segment % 2 === 0 ? new Vec3(main.z, 0, main.x) : new Vec3(-main.z, 0, -main.x);
+      await straight(ctx, side, 6, until);
       // A legit miner mines ore they can see in the branch wall.
       const seen = visibleOreNear(ctx.bot, [...DIAMOND_ORES, ...LOW_VALUE_ORES], 3);
-      if (seen) await digAt(ctx.bot, seen);
-      if (!branchEnd.equals(pos)) await goTo(ctx.bot, pos, STEP_TIMEOUT_MS * 2);
+      if (seen) {
+        await digAt(ctx.bot, seen);
+        await mineVisibleVein(ctx.bot, [...DIAMOND_ORES, ...LOW_VALUE_ORES]);
+      }
+      await tunnelTo(ctx.bot, junction, { deadline: until });
     }
   },
 };
-
-async function mineTarget(ctx: ScenarioContext, ore: Vec3): Promise<void> {
-  await goNear(ctx.bot, ore, 1, 90_000);
-  await digAt(ctx.bot, ore);
-}
 
 /** Blatant X-Ray: reads ore positions from chunk data and tunnels straight to each. */
 export const xrayDirect: Scenario = {
@@ -94,15 +99,26 @@ export const xrayDirect: Scenario = {
     "Finds the nearest diamond ore through the walls and digs the shortest path to it, repeatedly.",
   async run(ctx) {
     const until = deadline(ctx);
-    for (let i = 0; i < 8 && Date.now() < until; i++) {
-      const ore = findOre(ctx.bot, DIAMOND_ORES, 28);
+    let failures = 0;
+    let heading = new Vec3(1, 0, 0);
+    while (Date.now() < until) {
+      // Targets at least 6 blocks away so every reveal has an approach worth measuring.
+      const ore = failures >= 2 ? null : findOre(ctx.bot, DIAMOND_ORES, 28, 3, 6);
       if (!ore) {
-        ctx.log("no diamond within 28 blocks; moving on");
-        await tunnel(ctx, ctx.bot.entity.position.floored(), new Vec3(1, 0, 0), 12, until);
+        ctx.log(
+          failures >= 2 ? "targets keep failing; tunnelling on" : "no diamond within 28 blocks",
+        );
+        failures = 0;
+        if (!(await straight(ctx, heading, 10, until)).reached) heading = turn(heading, ctx.rng);
         continue;
       }
       ctx.log(`target ${ore}`);
-      await mineTarget(ctx, ore);
+      if (await approachAndMine(ctx.bot, ore, until)) {
+        failures = 0;
+        await mineVisibleVein(ctx.bot, DIAMOND_ORES);
+      } else {
+        failures++;
+      }
       await fidget(ctx.bot, ctx.rng, ctx.humanNoise);
     }
   },
@@ -117,10 +133,13 @@ export const xrayDetour: Scenario = {
     "Same hidden knowledge as xray-direct, but adds a 4–8 block sideways waypoint before each ore.",
   async run(ctx) {
     const until = deadline(ctx);
-    for (let i = 0; i < 8 && Date.now() < until; i++) {
-      const ore = findOre(ctx.bot, DIAMOND_ORES, 28);
+    let failures = 0;
+    let heading = new Vec3(1, 0, 0);
+    while (Date.now() < until) {
+      const ore = failures >= 2 ? null : findOre(ctx.bot, DIAMOND_ORES, 28, 3, 6);
       if (!ore) {
-        await tunnel(ctx, ctx.bot.entity.position.floored(), new Vec3(1, 0, 0), 12, until);
+        failures = 0;
+        if (!(await straight(ctx, heading, 10, until)).reached) heading = turn(heading, ctx.rng);
         continue;
       }
       const here = ctx.bot.entity.position.floored();
@@ -132,8 +151,13 @@ export const xrayDetour: Scenario = {
       const waypoint = here.plus(toOre.scaled(0.5).floored()).plus(sideways.scaled(offset * sign));
       waypoint.y = here.y;
       ctx.log(`target ${ore} via ${waypoint}`);
-      await goTo(ctx.bot, waypoint, 60_000);
-      await mineTarget(ctx, ore);
+      await tunnelTo(ctx.bot, waypoint, { deadline: until, lookAt: ore });
+      if (await approachAndMine(ctx.bot, ore, until)) {
+        failures = 0;
+        await mineVisibleVein(ctx.bot, DIAMOND_ORES);
+      } else {
+        failures++;
+      }
       await fidget(ctx.bot, ctx.rng, ctx.humanNoise);
     }
   },
@@ -148,20 +172,21 @@ export const xrayHumanized: Scenario = {
     "Alternates legit-looking strip mining with a targeted dig to a known diamond, mining coal/iron on the way.",
   async run(ctx) {
     const until = deadline(ctx);
-    let pos = ctx.origin.clone();
-    for (let round = 0; round < 6 && Date.now() < until; round++) {
-      pos = await tunnel(ctx, pos, new Vec3(1, 0, 0), 6 + Math.floor(ctx.rng.next() * 4), until);
-      const lowValue = findOre(ctx.bot, LOW_VALUE_ORES, 6);
-      if (lowValue && ctx.rng.next() < 0.6) await mineTarget(ctx, lowValue);
+    let heading = new Vec3(1, 0, 0);
+    while (Date.now() < until) {
+      const run = await straight(ctx, heading, 6 + Math.floor(ctx.rng.next() * 4), until);
+      if (!run.reached) heading = turn(heading, ctx.rng);
+      const lowValue = findOre(ctx.bot, LOW_VALUE_ORES, 6, 2);
+      if (lowValue && ctx.rng.next() < 0.6) await approachAndMine(ctx.bot, lowValue, until);
       if (ctx.rng.next() < 0.7) {
-        const ore = findOre(ctx.bot, DIAMOND_ORES, 20);
+        const ore = findOre(ctx.bot, DIAMOND_ORES, 20, 3, 5);
         if (ore) {
           ctx.log(`quiet target ${ore}`);
-          await mineTarget(ctx, ore);
+          if (await approachAndMine(ctx.bot, ore, until))
+            await mineVisibleVein(ctx.bot, DIAMOND_ORES);
           await sleep(1000 + ctx.rng.next() * 3000);
         }
       }
-      pos = ctx.bot.entity.position.floored();
     }
   },
 };

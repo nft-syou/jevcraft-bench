@@ -16,7 +16,7 @@ export interface Break {
   z: number;
   material?: string;
   targetOre?: boolean;
-  openNeighbours?: number;
+  preexistingOpenFaces?: number;
   gameMode?: string;
 }
 export interface Reveal {
@@ -88,7 +88,7 @@ export function rawSession(spec: RawSessionSpec): RawTelemetryEvent[] {
         tool: "DIAMOND_PICKAXE",
         lightLevel: 0,
         underground: true,
-        openNeighbours: b.openNeighbours ?? 1,
+        preexistingOpenFaces: b.preexistingOpenFaces ?? 0,
       },
     });
   }
@@ -103,7 +103,7 @@ export function rawSession(spec: RawSessionSpec): RawTelemetryEvent[] {
         tool: "DIAMOND_PICKAXE",
         lightLevel: 0,
         underground: true,
-        openNeighbours: 1,
+        preexistingOpenFaces: 0,
       },
     });
   }

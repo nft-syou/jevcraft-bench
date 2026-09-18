@@ -1,0 +1,4 @@
+{"sessionId":"session_34d82563-28e9-41ce-bf0c-a6cc421323e2","label":"legit","subtype":"branch_mining","reviewStatus":"single_review","notes":"bot: legit-branch-mining"}
+{"sessionId":"session_43b7400f-d59d-4d3e-94d3-9b99ded6ad15","label":"simulated_xray","subtype":"direct_xray","reviewStatus":"single_review","notes":"bot: xray-direct"}
+{"sessionId":"session_5bdf850f-7ef1-4dc3-a9e5-163233a58947","label":"simulated_xray","subtype":"detour_xray","reviewStatus":"single_review","notes":"bot: xray-detour"}
+{"sessionId":"session_fbd003c4-6fc5-43ea-a104-b2092dafe6c6","label":"simulated_xray","subtype":"humanized_xray","reviewStatus":"single_review","notes":"bot: xray-humanized"}

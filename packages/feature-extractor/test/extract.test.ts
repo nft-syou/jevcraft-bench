@@ -79,9 +79,12 @@ describe("extractFeatures", () => {
     expect(f.exploration.uniqueTunnelDirections).toBe(2);
   });
 
-  it("uses open neighbour faces for cave exposure and flags large caves", () => {
+  it("uses pre-existing open faces for cave exposure and flags large caves", () => {
     const tunnel = straightTunnel(10);
-    const breaks = tunnel.breaks.map((b, i) => ({ ...b, openNeighbours: i % 2 === 0 ? 3 : 1 }));
+    const breaks = tunnel.breaks.map((b, i) => ({
+      ...b,
+      preexistingOpenFaces: i % 2 === 0 ? 2 : 0,
+    }));
     const f = one(rawSession({ path: tunnel.path, breaks }));
     expect(f.exploration.caveExposureRatio).toBe(0.5);
     expect(f.quality.knownConfounders).toContain("large_cave_system");
@@ -123,6 +126,18 @@ describe("extractFeatures", () => {
     expect(f.hiddenOreApproach.sampleCount).toBe(3);
     expect(f.timing.medianSecondsBetweenReveals).toBe(25);
     expect(f.quality.enoughEvidence).toBe(true);
+  });
+});
+
+describe("1x2 tunnels", () => {
+  it("collapses feet/head breaks of one column so a straight 1x2 tunnel is still straight", () => {
+    const breaks = [];
+    for (let x = 0; x < 12; x++) {
+      breaks.push({ t: x * 1000, x, y: 10, z: 0 }, { t: x * 1000 + 400, x, y: 11, z: 0 });
+    }
+    const f = one(rawSession({ path: straightTunnel(12).path, breaks }));
+    expect(f.exploration.branchMiningLikelihood).toBe(1);
+    expect(f.exploration.uniqueTunnelDirections).toBe(1);
   });
 });
 

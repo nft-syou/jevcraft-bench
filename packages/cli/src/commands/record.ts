@@ -82,6 +82,8 @@ export async function runRecord(
       index++;
     }
   }
+  // The plugin flushes on logout; give a bind-mounted data dir a moment to show the tail.
+  await new Promise((resolve) => setTimeout(resolve, 3000));
   stderr(`recorded ${runs.length} run(s) -> ${outPath}`);
   return { outPath, runs };
 }

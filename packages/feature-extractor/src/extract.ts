@@ -140,11 +140,24 @@ function trajectoryCoverage(session: RawSession, opts: ExtractOptions): number {
   return Math.min(1, Math.max(0, 1 - uncovered / duration));
 }
 
+/**
+ * Unit steps between successive dig *columns*. Consecutive breaks in the same (x, z) column
+ * (feet + head of a 1x2 tunnel) collapse into one, so a straight tunnel yields identical steps.
+ */
 function breakSteps(session: RawSession): Vec3[] {
+  const columns: Vec3[] = [];
+  for (const b of session.breaks) {
+    const last = columns[columns.length - 1];
+    if (last && last.x === b.position.x && last.z === b.position.z) {
+      last.y = Math.min(last.y, b.position.y);
+      continue;
+    }
+    columns.push({ ...b.position });
+  }
   const steps: Vec3[] = [];
-  for (let i = 1; i < session.breaks.length; i++) {
-    const a = session.breaks[i - 1]?.position;
-    const b = session.breaks[i]?.position;
+  for (let i = 1; i < columns.length; i++) {
+    const a = columns[i - 1];
+    const b = columns[i];
     if (!a || !b) continue;
     steps.push({ x: Math.sign(b.x - a.x), y: Math.sign(b.y - a.y), z: Math.sign(b.z - a.z) });
   }
@@ -216,7 +229,7 @@ export function extractFeatures(
   const caveExposureRatio =
     blocksBroken === 0
       ? null
-      : session.breaks.filter((b) => b.context.openNeighbours >= 2).length / blocksBroken;
+      : session.breaks.filter((b) => b.context.preexistingOpenFaces >= 1).length / blocksBroken;
 
   // approaches to hidden ore
   const approaches: Approach[] = [];

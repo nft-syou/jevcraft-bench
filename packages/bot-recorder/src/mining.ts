@@ -1,10 +1,5 @@
 import type { Bot } from "mineflayer";
-// CommonJS package: named imports are not detectable under native ESM.
-import type { Movements as MovementsClass } from "mineflayer-pathfinder";
-import pathfinderPkg from "mineflayer-pathfinder";
 import { Vec3 } from "vec3";
-
-const { goals, Movements } = pathfinderPkg;
 
 export interface Rng {
   next(): number;
@@ -28,63 +23,24 @@ export const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(r
 export const DIAMOND_ORES = ["diamond_ore", "deepslate_diamond_ore"];
 export const LOW_VALUE_ORES = ["coal_ore", "deepslate_coal_ore", "iron_ore", "deepslate_iron_ore"];
 
-/** Pathfinder movements that tunnel through stone and never build. */
-export function tunnelMovements(bot: Bot): MovementsClass {
-  const m = new Movements(bot);
-  m.canDig = true;
-  m.allow1by1towers = false;
-  m.allowParkour = false;
-  m.allowSprinting = false;
-  m.scafoldingBlocks = [];
-  m.digCost = 1;
-  m.placeCost = 1000;
-  return m;
-}
+const PASSABLE = new Set(["air", "cave_air", "void_air"]);
+const DANGEROUS = ["lava", "water", "bedrock"];
 
-/** Walks/digs to stand on (x, y, z). Rejects on timeout so a stuck bot does not hang the run. */
-export async function goTo(bot: Bot, target: Vec3, timeoutMs: number): Promise<boolean> {
-  const goal = new goals.GoalBlock(target.x, target.y, target.z);
-  try {
-    await Promise.race([
-      bot.pathfinder.goto(goal),
-      sleep(timeoutMs).then(() => {
-        throw new Error("goto timeout");
-      }),
-    ]);
-    return true;
-  } catch {
-    bot.pathfinder.stop();
-    return false;
-  }
-}
+export const isPassable = (bot: Bot, pos: Vec3): boolean => {
+  const b = bot.blockAt(pos);
+  return b === null || PASSABLE.has(b.name);
+};
 
-/** Walks/digs until within `range` of the block. */
-export async function goNear(
-  bot: Bot,
-  target: Vec3,
-  range: number,
-  timeoutMs: number,
-): Promise<boolean> {
-  const goal = new goals.GoalNear(target.x, target.y, target.z, range);
-  try {
-    await Promise.race([
-      bot.pathfinder.goto(goal),
-      sleep(timeoutMs).then(() => {
-        throw new Error("goto timeout");
-      }),
-    ]);
-    return true;
-  } catch {
-    bot.pathfinder.stop();
-    return false;
-  }
-}
+const isDangerous = (bot: Bot, pos: Vec3): boolean => {
+  const b = bot.blockAt(pos);
+  return b !== null && DANGEROUS.some((d) => b.name.includes(d));
+};
 
-/** Digs one block if it is diggable and within reach. */
+/** Digs one block if it is solid, diggable and within reach. */
 export async function digAt(bot: Bot, pos: Vec3): Promise<boolean> {
   const block = bot.blockAt(pos);
-  if (!block || block.name === "air" || block.name === "cave_air" || !bot.canDigBlock(block))
-    return false;
+  if (!block || PASSABLE.has(block.name) || !bot.canDigBlock(block)) return false;
+  if (bot.entity.position.distanceTo(pos.offset(0.5, 0.5, 0.5)) > 5) return false;
   try {
     await bot.dig(block, true);
     return true;
@@ -93,22 +49,135 @@ export async function digAt(bot: Bot, pos: Vec3): Promise<boolean> {
   }
 }
 
+/** Walks the bot into the centre of a cell it can already stand in. */
+async function walkInto(bot: Bot, cell: Vec3, jump: boolean, timeoutMs: number): Promise<boolean> {
+  const centre = cell.offset(0.5, 0, 0.5);
+  await bot.lookAt(centre.offset(0, 1.62, 0), true);
+  bot.setControlState("forward", true);
+  if (jump) bot.setControlState("jump", true);
+  const started = Date.now();
+  try {
+    while (Date.now() - started < timeoutMs) {
+      const p = bot.entity.position;
+      const dx = p.x - centre.x;
+      const dz = p.z - centre.z;
+      if (Math.sqrt(dx * dx + dz * dz) < 0.3 && Math.abs(p.y - cell.y) < 0.6) return true;
+      await sleep(50);
+    }
+    return false;
+  } finally {
+    bot.setControlState("forward", false);
+    bot.setControlState("jump", false);
+  }
+}
+
+/**
+ * One tunnelling step into the horizontally adjacent cell `next` (dy in -1..1): clears the
+ * 1x2 space, makes sure there is a floor, then walks (or jumps) into it.
+ */
+export async function stepInto(bot: Bot, next: Vec3): Promise<boolean> {
+  const here = bot.entity.position.floored();
+  const dy = next.y - here.y;
+  if (Math.abs(dy) > 1) return false;
+  for (const p of [next, next.offset(0, 1, 0), next.offset(0, -1, 0), here.offset(0, 2, 0)]) {
+    if (isDangerous(bot, p)) return false;
+  }
+  await digAt(bot, next);
+  await digAt(bot, next.offset(0, 1, 0));
+  if (dy > 0) await digAt(bot, here.offset(0, 2, 0));
+  if (dy < 0) await digAt(bot, next.offset(0, 2, 0));
+  if (isPassable(bot, next.offset(0, -1, 0))) return false; // no floor: would fall into a cave
+  return walkInto(bot, next, dy > 0, 4000);
+}
+
+/** Next cell one axis-step closer to `goal` (dominant axis first), staying within one level. */
+export function nextCellToward(from: Vec3, goal: Vec3): Vec3 {
+  const dx = goal.x - from.x;
+  const dz = goal.z - from.z;
+  const dy = goal.y - from.y;
+  if (Math.abs(dx) >= Math.abs(dz) && dx !== 0) {
+    return from.offset(Math.sign(dx), dy !== 0 ? Math.sign(dy) : 0, 0);
+  }
+  if (dz !== 0) return from.offset(0, dy !== 0 ? Math.sign(dy) : 0, Math.sign(dz));
+  return from.offset(0, Math.sign(dy), 0);
+}
+
+export interface TunnelOptions {
+  /** Stop when this returns true (checked before every step). */
+  stopWhen?: () => boolean;
+  deadline: number;
+  onStep?: (cell: Vec3) => Promise<void> | void;
+  /** Where to look after each step (an X-Ray user keeps glancing at the ore they can "see"). */
+  lookAt?: Vec3;
+}
+
+/**
+ * Digs a tunnel from the bot's cell toward `goal` one step at a time. Returns the final cell.
+ * A horizontal goal on the same level yields a straight or 45° line; that is the point.
+ */
+export async function tunnelTo(
+  bot: Bot,
+  goal: Vec3,
+  opts: TunnelOptions,
+): Promise<{ cell: Vec3; reached: boolean }> {
+  let cell = bot.entity.position.floored();
+  let failures = 0;
+  while (Date.now() < opts.deadline) {
+    if (opts.stopWhen?.()) return { cell, reached: true };
+    if (cell.x === goal.x && cell.z === goal.z && Math.abs(cell.y - goal.y) <= 1) {
+      return { cell, reached: true };
+    }
+    const next = nextCellToward(cell, goal);
+    if (next.x === cell.x && next.z === cell.z) return { cell, reached: true };
+    const ok = await stepInto(bot, next);
+    if (!ok) {
+      failures++;
+      if (failures >= 3) return { cell, reached: false };
+      await sleep(300);
+      cell = bot.entity.position.floored();
+      continue;
+    }
+    failures = 0;
+    cell = bot.entity.position.floored();
+    if (opts.lookAt) await bot.lookAt(opts.lookAt.offset(0.5, 0.5, 0.5), true);
+    if (opts.onStep) await opts.onStep(cell);
+  }
+  return { cell, reached: false };
+}
+
 /** The X-Ray primitive: the bot reads world data it could not legitimately see. */
-export function findOre(bot: Bot, names: string[], maxDistance: number): Vec3 | null {
+export function findOre(
+  bot: Bot,
+  names: string[],
+  maxDistance: number,
+  maxDy = 3,
+  minHorizontal = 0,
+): Vec3 | null {
   const ids = names
     .map((n) => bot.registry.blocksByName[n]?.id)
     .filter((id): id is number => id !== undefined);
-  const block = bot.findBlock({ matching: ids, maxDistance, count: 1 });
-  return block ? block.position : null;
+  const here = bot.entity.position;
+  let best: Vec3 | null = null;
+  let bestScore = Number.POSITIVE_INFINITY;
+  for (const pos of bot.findBlocks({ matching: ids, maxDistance, count: 64 })) {
+    const dy = Math.abs(pos.y - here.y);
+    if (dy > maxDy) continue;
+    if (Math.hypot(pos.x + 0.5 - here.x, pos.z + 0.5 - here.z) < minHorizontal) continue;
+    const score = pos.distanceTo(here) + dy * 2;
+    if (score < bestScore) {
+      bestScore = score;
+      best = pos;
+    }
+  }
+  return best;
 }
 
-/** A neighbouring ore that is actually visible (has an air face), which a legit miner may notice. */
+/** A neighbouring ore that is actually visible (has an open face), which a legit miner may notice. */
 export function visibleOreNear(bot: Bot, names: string[], maxDistance: number): Vec3 | null {
   const ids = names
     .map((n) => bot.registry.blocksByName[n]?.id)
     .filter((id): id is number => id !== undefined);
-  const candidates = bot.findBlocks({ matching: ids, maxDistance, count: 16 });
-  for (const pos of candidates) {
+  for (const pos of bot.findBlocks({ matching: ids, maxDistance, count: 16 })) {
     for (const d of [
       new Vec3(1, 0, 0),
       new Vec3(-1, 0, 0),
@@ -117,11 +186,35 @@ export function visibleOreNear(bot: Bot, names: string[], maxDistance: number): 
       new Vec3(0, 0, 1),
       new Vec3(0, 0, -1),
     ]) {
-      const n = bot.blockAt(pos.plus(d));
-      if (n && (n.name === "air" || n.name === "cave_air")) return pos;
+      if (isPassable(bot, pos.plus(d))) return pos;
     }
   }
   return null;
+}
+
+/** Mines every ore of `names` that is within reach and has an open face (the rest of a vein). */
+export async function mineVisibleVein(bot: Bot, names: string[]): Promise<number> {
+  let mined = 0;
+  for (let i = 0; i < 12; i++) {
+    const next = visibleOreNear(bot, names, 4);
+    if (!next) break;
+    await bot.lookAt(next.offset(0.5, 0.5, 0.5), true);
+    if (!(await digAt(bot, next))) break;
+    mined++;
+  }
+  return mined;
+}
+
+/** Tunnels until the ore is within reach, then mines it. */
+export async function approachAndMine(bot: Bot, ore: Vec3, deadline: number): Promise<boolean> {
+  const y0 = bot.entity.position.floored().y;
+  const goal = new Vec3(ore.x, Math.max(y0 - 3, Math.min(y0 + 3, ore.y)), ore.z);
+  const inReach = () =>
+    bot.entity.position.offset(0, 1.62, 0).distanceTo(ore.offset(0.5, 0.5, 0.5)) <= 3.5;
+  const { reached } = await tunnelTo(bot, goal, { deadline, stopWhen: inReach, lookAt: ore });
+  if (!reached && !inReach()) return false;
+  await bot.lookAt(ore.offset(0.5, 0.5, 0.5), true);
+  return digAt(bot, ore);
 }
 
 /** Human-ish pause and glance, scaled by `noise` (0 = none). */

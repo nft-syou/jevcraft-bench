@@ -112,11 +112,13 @@ public final class TelemetryService implements SessionTracker.Listener {
         Optional<MiningSession> session = tracker.onBlockBreak(
                 player.getUniqueId(), block.getWorld().getName(), block.getY(), stoneLike, targetOre, reveals.size());
         if (session.isEmpty()) {
+            rememberBreak(player.getUniqueId(), block, clock.millis());
             return;
         }
         String sessionId = session.get().sessionId();
         String playerId = session.get().playerPseudonym();
         JsonObject context = breakContext(player, block);
+        rememberBreak(player.getUniqueId(), block, clock.millis());
 
         JsonObject blockJson = new JsonObject();
         blockJson.addProperty("material", type.name());
@@ -168,15 +170,32 @@ public final class TelemetryService implements SessionTracker.Listener {
     public void recordQuit(Player player) {
         tracker.onQuit(player.getUniqueId());
         sampler.forget(player.getUniqueId());
+        recentBreaks.remove(player.getUniqueId());
     }
 
     public boolean flush(UUID player) {
         return tracker.flush(player);
     }
 
+    /** Idle players in a session get a heartbeat sample so coverage reflects telemetry health, not standing still. */
+    static final long HEARTBEAT_MS = 2000;
+
     /** Once per second from the scheduler. */
     public void tick() {
         tracker.tick();
+        long now = clock.millis();
+        for (Map.Entry<UUID, MiningSession> entry : tracker.snapshot().entrySet()) {
+            long last = sampler.lastSampleTimeMs(entry.getKey());
+            if (last >= 0 && now - last < HEARTBEAT_MS) {
+                continue;
+            }
+            Player online = org.bukkit.Bukkit.getPlayer(entry.getKey());
+            if (online == null) {
+                continue;
+            }
+            MovementSampler.Sample sample = sampler.force(entry.getKey(), sampleOf(online.getLocation()));
+            writeMovement(online, entry.getValue().sessionId(), sample, false);
+        }
     }
 
     public Map<String, Object> metrics() {
@@ -289,23 +308,48 @@ public final class TelemetryService implements SessionTracker.Listener {
         context.addProperty("tool", player.getInventory().getItemInMainHand().getType().name());
         context.addProperty("lightLevel", block.getLightLevel());
         context.addProperty("underground", block.getY() <= config.undergroundYMax());
-        context.addProperty("openNeighbours", openNeighbours(block));
+        context.addProperty("preexistingOpenFaces", preexistingOpenFaces(player, block));
         return context;
     }
 
+    /** Blocks this player broke recently, so tunnel walls they opened themselves are not "caves". */
+    private final Map<UUID, java.util.LinkedHashMap<Long, Long>> recentBreaks = new java.util.HashMap<>();
+    static final long RECENT_BREAK_WINDOW_MS = 180_000;
+    static final int RECENT_BREAK_MAX = 4000;
+
+    private static long key(int x, int y, int z) {
+        return ((long) (x & 0x3FFFFFF) << 38) | ((long) (z & 0x3FFFFFF) << 12) | (y & 0xFFF);
+    }
+
+    private void rememberBreak(UUID player, Block block, long now) {
+        java.util.LinkedHashMap<Long, Long> map = recentBreaks.computeIfAbsent(player, k -> new java.util.LinkedHashMap<>());
+        map.put(key(block.getX(), block.getY(), block.getZ()), now);
+        java.util.Iterator<Map.Entry<Long, Long>> it = map.entrySet().iterator();
+        while (it.hasNext() && (map.size() > RECENT_BREAK_MAX || now - it.next().getValue() > RECENT_BREAK_WINDOW_MS)) {
+            it.remove();
+        }
+    }
+
     /**
-     * Number of the six faces already open (non-occluding) before the break. A tunnel dig
-     * usually has exactly one (where the player stands); cave-adjacent blocks have more.
+     * Number of the six faces that were already open before the break AND were not opened by this
+     * player's own recent digging. A plain tunnel block scores 0; a block bordering a natural cave,
+     * water, or someone else's tunnel scores 1 or more.
      */
-    private static int openNeighbours(Block block) {
+    private int preexistingOpenFaces(Player player, Block block) {
+        java.util.LinkedHashMap<Long, Long> own = recentBreaks.get(player.getUniqueId());
         int open = 0;
         for (org.bukkit.block.BlockFace face : new org.bukkit.block.BlockFace[] {
             org.bukkit.block.BlockFace.NORTH, org.bukkit.block.BlockFace.SOUTH,
             org.bukkit.block.BlockFace.EAST, org.bukkit.block.BlockFace.WEST,
             org.bukkit.block.BlockFace.UP, org.bukkit.block.BlockFace.DOWN}) {
-            if (!block.getRelative(face).getType().isOccluding()) {
-                open++;
+            Block n = block.getRelative(face);
+            if (n.getType().isOccluding()) {
+                continue;
             }
+            if (own != null && own.containsKey(key(n.getX(), n.getY(), n.getZ()))) {
+                continue;
+            }
+            open++;
         }
         return open;
     }
