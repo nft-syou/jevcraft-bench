@@ -15,17 +15,27 @@ import {
   thresholdSweep,
   tokenTotals,
 } from "./metrics";
+import {
+  DEFAULT_SUFFICIENCY_SWEEP,
+  repeatVariance,
+  type Spread,
+  sufficiencySweep,
+} from "./variance";
 
 export interface ReportInput {
   title: string;
   decisions: DecisionRecord[];
   labels: SessionLabel[];
   sweep?: number[];
+  sufficiencySweep?: number[];
 }
 
 const fmt = (value: number | null, digits = 3): string =>
   value === null ? "n/a" : value.toFixed(digits);
 const ms = (value: number | null): string => (value === null ? "n/a" : `${value} ms`);
+
+const spreadCell = (s: Spread | null): string =>
+  s === null ? "n/a" : `${fmt(s.mean)} ± ${fmt(s.std)} [${fmt(s.min)}, ${fmt(s.max)}]`;
 
 function cmRow(cm: ConfusionMatrix): string {
   return `| ${cm.tp} | ${cm.fp} | ${cm.tn} | ${cm.fn} |`;
@@ -74,6 +84,8 @@ export function buildReport(input: ReportInput): string {
   const falseNegatives = rows.filter(
     (r) => isTruthPositive(r.label.label) && !policyPredictsPositive(r.decision),
   );
+  const sufficiency = sufficiencySweep(rows, input.sufficiencySweep ?? DEFAULT_SUFFICIENCY_SWEEP);
+  const repeats = repeatVariance(input.decisions);
   const versions = new Set(
     input.decisions.map(
       (d) => `${d.model} / ${d.questionSetVersion} / ${d.featureExtractorVersion}`,
@@ -117,6 +129,36 @@ export function buildReport(input: ReportInput): string {
         `| ${p.threshold.toFixed(2)} | ${p.cm.tp} | ${p.cm.fp} | ${p.cm.tn} | ${p.cm.fn} | ${fmt(p.metrics.precision)} | ${fmt(p.metrics.recall)} | ${fmt(p.metrics.fpr)} | ${fmt(p.metrics.f1)} |`,
     ),
     "",
+    "## Sufficiency threshold sweep",
+    "",
+    "Rows whose `evidence_sufficiency` falls below the threshold become `insufficient_evidence` (dropped / total).",
+    "",
+    "| minEvidenceSufficiency | Dropped positives | Dropped negatives |",
+    "| --- | --- | --- |",
+    ...sufficiency.map(
+      (p) =>
+        `| ${p.threshold.toFixed(2)} | ${p.droppedPositive} / ${p.positiveTotal} | ${p.droppedNegative} / ${p.negativeTotal} |`,
+    ),
+    "",
+    ...(repeats.length === 0
+      ? []
+      : [
+          "## Repeat variance",
+          "",
+          "Same session evaluated more than once. Values are mean ± population std [min, max].",
+          "",
+          "| Session | Runs | P(likely_xray) | hidden_information_use | evidence_sufficiency | route_naturalness (norm) | Outcomes |",
+          "| --- | --- | --- | --- | --- | --- | --- |",
+          ...repeats.map(
+            (g) =>
+              `| ${g.sessionId} | ${g.count}${g.errorCount > 0 ? ` (+${g.errorCount} err)` : ""} | ${spreadCell(g.likelyXray)} | ${spreadCell(g.hiddenInformationUse)} | ${spreadCell(g.evidenceSufficiency)} | ${spreadCell(g.routeNaturalness)} | ${Object.entries(
+                g.outcomes,
+              )
+                .map(([k, v]) => `${k}=${v}`)
+                .join(", ")} |`,
+          ),
+          "",
+        ]),
     "## By scenario subtype",
     "",
     "| Subtype | Count | TP | FP | TN | FN | Precision | Recall | FPR |",

@@ -15,7 +15,7 @@ export interface EvaluateDeps {
 }
 
 export const EVALUATE_USAGE =
-  "usage: jevcraft evaluate <input.json|input.jsonl|dir>... [--out <file.jsonl>] [--backend auto|typesafe|mock] [--model <name>]";
+  "usage: jevcraft evaluate <input.json|input.jsonl|dir>... [--out <file.jsonl>] [--backend auto|typesafe|mock] [--model <name>] [--repeat <n>]";
 
 function chooseBackend(
   requested: string,
@@ -54,9 +54,14 @@ export async function runEvaluate(
       out: { type: "string" },
       backend: { type: "string", default: "auto" },
       model: { type: "string" },
+      repeat: { type: "string", default: "1" },
     },
   });
   if (positionals.length === 0) throw new Error(EVALUATE_USAGE);
+  const repeat = Number(values.repeat);
+  if (!Number.isInteger(repeat) || repeat < 1) {
+    throw new Error(`--repeat must be a positive integer, got "${values.repeat}"`);
+  }
 
   const files = await resolveInputFiles(positionals);
   const features = [];
@@ -77,13 +82,15 @@ export async function runEvaluate(
     join("datasets", "decisions", `${basename(firstInput, extname(firstInput))}.jsonl`);
 
   const records: DecisionRecord[] = [];
-  for (const f of features) {
-    const record = await evaluateSession(f, {
-      backend,
-      ...(values.model !== undefined ? { model: values.model } : {}),
-    });
-    records.push(record);
-    if (record.error !== null) stderr(`${record.sessionId}: ${record.error}`);
+  for (let round = 0; round < repeat; round++) {
+    for (const f of features) {
+      const record = await evaluateSession(f, {
+        backend,
+        ...(values.model !== undefined ? { model: values.model } : {}),
+      });
+      records.push(record);
+      if (record.error !== null) stderr(`${record.sessionId}: ${record.error}`);
+    }
   }
   await writeJsonl(outPath, records);
 

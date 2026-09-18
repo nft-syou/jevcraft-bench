@@ -20,3 +20,12 @@ export {
   xrayProbabilityAtLeast,
 } from "./metrics";
 export { buildReport, type ReportInput } from "./report";
+export {
+  DEFAULT_SUFFICIENCY_SWEEP,
+  type RepeatGroup,
+  repeatVariance,
+  type Spread,
+  type SufficiencyPoint,
+  spread,
+  sufficiencySweep,
+} from "./variance";

@@ -64,6 +64,25 @@ describe("buildReport", () => {
     expect(markdown).toMatch(/\| fn \| known_cheat \| humanized_xray \| no_action \| 0\.300 \|/);
   });
 
+  it("includes a sufficiency sweep and omits repeat variance when nothing was repeated", () => {
+    expect(markdown).toContain("## Sufficiency threshold sweep");
+    expect(markdown).toMatch(/\| 0\.65 \| 0 \/ 2 \| 0 \/ 2 \|/);
+    expect(markdown).not.toContain("## Repeat variance");
+  });
+
+  it("includes repeat variance when a session was evaluated more than once", () => {
+    const repeated = buildReport({
+      title: "rep",
+      decisions: [
+        decision("a", "review", { likelyXray: 0.8 }),
+        decision("a", "review", { likelyXray: 0.6 }),
+      ],
+      labels: [label("a", "simulated_xray")],
+    });
+    expect(repeated).toContain("## Repeat variance");
+    expect(repeated).toMatch(/\| a \| 2 \| 0\.700 ± 0\.100 \[0\.600, 0\.800\] \|/);
+  });
+
   it("prints n/a instead of NaN when there is nothing to measure", () => {
     const empty = buildReport({ title: "empty", decisions: [], labels: [] });
     expect(empty).toContain("| Precision | n/a |");
