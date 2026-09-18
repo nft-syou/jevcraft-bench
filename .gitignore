@@ -1,0 +1,13 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+datasets/private/
+datasets/decisions/*
+!datasets/decisions/.gitkeep
+reports/*
+!reports/.gitkeep
+*.log
+.DS_Store
