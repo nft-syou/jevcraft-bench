@@ -1,9 +1,11 @@
 import { EVALUATE_USAGE, runEvaluate } from "./commands/evaluate";
+import { REPORT_USAGE, runReport } from "./commands/report";
 
 const USAGE = `jevcraft <command>
 
 commands:
   evaluate   ${EVALUATE_USAGE}
+  report     ${REPORT_USAGE}
 `;
 
 async function main(argv: string[]): Promise<number> {
@@ -11,6 +13,9 @@ async function main(argv: string[]): Promise<number> {
   switch (command) {
     case "evaluate":
       await runEvaluate(rest);
+      return 0;
+    case "report":
+      await runReport(rest);
       return 0;
     default:
       console.error(USAGE);

@@ -19,3 +19,4 @@ export {
   tokenTotals,
   xrayProbabilityAtLeast,
 } from "./metrics";
+export { buildReport, type ReportInput } from "./report";

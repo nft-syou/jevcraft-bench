@@ -184,6 +184,9 @@ importers:
 
   packages/cli:
     dependencies:
+      '@jevcraft/eval-runner':
+        specifier: workspace:*
+        version: link:../eval-runner
       '@jevcraft/jev-evaluator':
         specifier: workspace:*
         version: link:../jev-evaluator
