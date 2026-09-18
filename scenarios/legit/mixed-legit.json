@@ -1,0 +1,46 @@
+{
+  "name": "legit-mixed",
+  "label": "legit",
+  "subtype": "mixed",
+  "description": "Mixed session: some caving, some tunnelling, moderate everything.",
+  "parameters": {
+    "durationSec": {
+      "mean": 720,
+      "sd": 120
+    },
+    "blocksBroken": {
+      "mean": 450,
+      "sd": 80
+    },
+    "hiddenOreReveals": {
+      "mean": 7,
+      "sd": 3
+    },
+    "directness": {
+      "mean": 0.5,
+      "sd": 0.1
+    },
+    "aimAlignment": {
+      "mean": 0.42,
+      "sd": 0.1
+    },
+    "caveExposure": {
+      "mean": 0.3,
+      "sd": 0.1
+    },
+    "branchMiningLikelihood": {
+      "mean": 0.45,
+      "sd": 0.15
+    },
+    "breakIntervalMs": {
+      "mean": 520,
+      "sd": 80
+    },
+    "trajectoryCoverage": {
+      "mean": 0.96,
+      "sd": 0.02
+    },
+    "humanNoise": 1.2,
+    "enoughEvidence": true
+  }
+}

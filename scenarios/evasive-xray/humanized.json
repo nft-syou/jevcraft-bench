@@ -1,0 +1,46 @@
+{
+  "name": "xray-humanized",
+  "label": "simulated_xray",
+  "subtype": "humanized_xray",
+  "description": "Mixes ordinary mining and low-value ore with targeted digs; noisy timing; harder to spot.",
+  "parameters": {
+    "durationSec": {
+      "mean": 1200,
+      "sd": 200
+    },
+    "blocksBroken": {
+      "mean": 800,
+      "sd": 120
+    },
+    "hiddenOreReveals": {
+      "mean": 14,
+      "sd": 4
+    },
+    "directness": {
+      "mean": 0.62,
+      "sd": 0.08
+    },
+    "aimAlignment": {
+      "mean": 0.5,
+      "sd": 0.1
+    },
+    "caveExposure": {
+      "mean": 0.15,
+      "sd": 0.06
+    },
+    "branchMiningLikelihood": {
+      "mean": 0.5,
+      "sd": 0.15
+    },
+    "breakIntervalMs": {
+      "mean": 600,
+      "sd": 150
+    },
+    "trajectoryCoverage": {
+      "mean": 0.96,
+      "sd": 0.02
+    },
+    "humanNoise": 1.4,
+    "enoughEvidence": true
+  }
+}

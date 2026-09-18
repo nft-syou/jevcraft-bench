@@ -1,0 +1,46 @@
+{
+  "name": "xray-detour",
+  "label": "simulated_xray",
+  "subtype": "detour_xray",
+  "description": "Knows ore positions but adds one or two detours per target to look less direct.",
+  "parameters": {
+    "durationSec": {
+      "mean": 840,
+      "sd": 120
+    },
+    "blocksBroken": {
+      "mean": 560,
+      "sd": 90
+    },
+    "hiddenOreReveals": {
+      "mean": 18,
+      "sd": 4
+    },
+    "directness": {
+      "mean": 0.72,
+      "sd": 0.06
+    },
+    "aimAlignment": {
+      "mean": 0.55,
+      "sd": 0.08
+    },
+    "caveExposure": {
+      "mean": 0.08,
+      "sd": 0.04
+    },
+    "branchMiningLikelihood": {
+      "mean": 0.3,
+      "sd": 0.1
+    },
+    "breakIntervalMs": {
+      "mean": 520,
+      "sd": 80
+    },
+    "trajectoryCoverage": {
+      "mean": 0.96,
+      "sd": 0.02
+    },
+    "humanNoise": 1.0,
+    "enoughEvidence": true
+  }
+}

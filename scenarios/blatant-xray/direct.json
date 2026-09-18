@@ -1,0 +1,46 @@
+{
+  "name": "xray-direct",
+  "label": "simulated_xray",
+  "subtype": "direct_xray",
+  "description": "Tunnels straight to each hidden diamond, aims at it before it is visible.",
+  "parameters": {
+    "durationSec": {
+      "mean": 600,
+      "sd": 90
+    },
+    "blocksBroken": {
+      "mean": 420,
+      "sd": 70
+    },
+    "hiddenOreReveals": {
+      "mean": 26,
+      "sd": 5
+    },
+    "directness": {
+      "mean": 0.9,
+      "sd": 0.04
+    },
+    "aimAlignment": {
+      "mean": 0.85,
+      "sd": 0.05
+    },
+    "caveExposure": {
+      "mean": 0.04,
+      "sd": 0.02
+    },
+    "branchMiningLikelihood": {
+      "mean": 0.12,
+      "sd": 0.06
+    },
+    "breakIntervalMs": {
+      "mean": 440,
+      "sd": 50
+    },
+    "trajectoryCoverage": {
+      "mean": 0.96,
+      "sd": 0.02
+    },
+    "humanNoise": 1.0,
+    "enoughEvidence": true
+  }
+}

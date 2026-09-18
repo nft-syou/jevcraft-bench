@@ -9,6 +9,7 @@
   "dependencies": {
     "@jevcraft/eval-runner": "workspace:*",
     "@jevcraft/jev-evaluator": "workspace:*",
+    "@jevcraft/scenario-generator": "workspace:*",
     "@jevcraft/schema": "workspace:*",
     "zod": "^4.6.5"
   }

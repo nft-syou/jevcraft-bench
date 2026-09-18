@@ -1,0 +1,46 @@
+{
+  "name": "legit-branch-mining",
+  "label": "legit",
+  "subtype": "branch_mining",
+  "description": "Ordinary strip/branch mining at diamond level: long straight tunnels, few reveals, no aim toward hidden ore.",
+  "parameters": {
+    "durationSec": {
+      "mean": 720,
+      "sd": 120
+    },
+    "blocksBroken": {
+      "mean": 650,
+      "sd": 100
+    },
+    "hiddenOreReveals": {
+      "mean": 5,
+      "sd": 2
+    },
+    "directness": {
+      "mean": 0.35,
+      "sd": 0.08
+    },
+    "aimAlignment": {
+      "mean": 0.3,
+      "sd": 0.08
+    },
+    "caveExposure": {
+      "mean": 0.04,
+      "sd": 0.03
+    },
+    "branchMiningLikelihood": {
+      "mean": 0.9,
+      "sd": 0.05
+    },
+    "breakIntervalMs": {
+      "mean": 520,
+      "sd": 80
+    },
+    "trajectoryCoverage": {
+      "mean": 0.96,
+      "sd": 0.02
+    },
+    "humanNoise": 1.0,
+    "enoughEvidence": true
+  }
+}

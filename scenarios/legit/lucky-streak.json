@@ -1,0 +1,46 @@
+{
+  "name": "legit-lucky-streak",
+  "label": "legit",
+  "subtype": "lucky_streak",
+  "description": "Branch mining that happens to cross a rich vein cluster: many reveals but no directed approach.",
+  "parameters": {
+    "durationSec": {
+      "mean": 720,
+      "sd": 120
+    },
+    "blocksBroken": {
+      "mean": 500,
+      "sd": 80
+    },
+    "hiddenOreReveals": {
+      "mean": 16,
+      "sd": 4
+    },
+    "directness": {
+      "mean": 0.4,
+      "sd": 0.08
+    },
+    "aimAlignment": {
+      "mean": 0.35,
+      "sd": 0.08
+    },
+    "caveExposure": {
+      "mean": 0.06,
+      "sd": 0.03
+    },
+    "branchMiningLikelihood": {
+      "mean": 0.85,
+      "sd": 0.08
+    },
+    "breakIntervalMs": {
+      "mean": 520,
+      "sd": 80
+    },
+    "trajectoryCoverage": {
+      "mean": 0.96,
+      "sd": 0.02
+    },
+    "humanNoise": 1.0,
+    "enoughEvidence": true
+  }
+}

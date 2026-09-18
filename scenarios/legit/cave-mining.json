@@ -1,0 +1,46 @@
+{
+  "name": "legit-cave-mining",
+  "label": "legit",
+  "subtype": "cave_mining",
+  "description": "Cave exploration: lots of exposed ore, high cave exposure, erratic movement.",
+  "parameters": {
+    "durationSec": {
+      "mean": 720,
+      "sd": 120
+    },
+    "blocksBroken": {
+      "mean": 220,
+      "sd": 60
+    },
+    "hiddenOreReveals": {
+      "mean": 9,
+      "sd": 3
+    },
+    "directness": {
+      "mean": 0.55,
+      "sd": 0.1
+    },
+    "aimAlignment": {
+      "mean": 0.45,
+      "sd": 0.1
+    },
+    "caveExposure": {
+      "mean": 0.6,
+      "sd": 0.12
+    },
+    "branchMiningLikelihood": {
+      "mean": 0.08,
+      "sd": 0.05
+    },
+    "breakIntervalMs": {
+      "mean": 800,
+      "sd": 200
+    },
+    "trajectoryCoverage": {
+      "mean": 0.96,
+      "sd": 0.02
+    },
+    "humanNoise": 1.0,
+    "enoughEvidence": true
+  }
+}
