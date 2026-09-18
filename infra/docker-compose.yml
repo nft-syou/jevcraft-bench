@@ -25,6 +25,18 @@ services:
       VERSION: "26.2"
       ONLINE_MODE: "false"
       MEMORY: 2G
+      # Fixed world so bot recordings are reproducible; peaceful so bots do not die underground.
+      SEED: "jevcraft-arena-1"
+      DIFFICULTY: peaceful
+      MODE: survival
+      SPAWN_PROTECTION: "0"
+      VIEW_DISTANCE: "6"
+      # Recorder bots (jevbot01..jevbot16) need /tp and /give. Offline-mode UUIDs, because the
+      # image cannot resolve offline names against Mojang.
+      OPS: 835db5eb-a484-3662-873d-d6b7a6d85d54,fcfec9ac-c7d6-3374-bd20-5d15814f1b00,8753071a-ba5b-373f-a808-dcb5aafd44d1,48ce8c3e-9efb-3065-9088-75ad373d6b7d,f917e10e-0220-3f9d-960e-850338810113,c463c34a-2a66-3e6d-93db-14fdc36dadcd,514e7a84-c622-3b7a-babc-e786360ad0e5,0e7ae624-e17b-3cd1-aab3-75d347ab5c65,386f69eb-f7d6-34f1-be2e-8dc807c5c1bb,852e9534-86d8-31ba-8881-7f736f63660d,0aaa570f-97ba-3253-acfe-0b9c5eda8ee4,bf06da45-c6c3-3c21-ba81-d88483dbf701,1a4610ce-e0ed-3eee-bf44-8a0336c7f5b1,25da5e62-fdc5-3756-971c-42749f6adb46,581f9860-b6e6-381e-b042-6d145fac347a,cefc9725-8958-3d80-8a10-a7b26e133be9
+      OVERRIDE_OPS: "true"
+      # Mineflayer speaks up to 26.1; ViaBackwards lets it join this 26.2 server.
+      MODRINTH_PROJECTS: viaversion,viabackwards
       JEVCRAFT_HMAC_SECRET: change-me-local-only
     ports:
       - "25565:25565"

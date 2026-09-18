@@ -7,11 +7,13 @@
     ".": "./src/main.ts"
   },
   "dependencies": {
+    "@jevcraft/bot-recorder": "workspace:*",
     "@jevcraft/eval-runner": "workspace:*",
     "@jevcraft/feature-extractor": "workspace:*",
     "@jevcraft/jev-evaluator": "workspace:*",
     "@jevcraft/scenario-generator": "workspace:*",
     "@jevcraft/schema": "workspace:*",
+    "vec3": "0.1.10",
     "zod": "^4.6.5"
   }
 }

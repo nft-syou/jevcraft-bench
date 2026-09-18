@@ -21,3 +21,5 @@ plugin/bin/
 infra/paper/data/
 datasets/features/*
 !datasets/features/.gitkeep
+datasets/recordings/*
+!datasets/recordings/.gitkeep
