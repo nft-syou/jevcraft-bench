@@ -1,0 +1,14 @@
+{
+  "name": "@jevcraft/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/main.ts"
+  },
+  "dependencies": {
+    "@jevcraft/jev-evaluator": "workspace:*",
+    "@jevcraft/schema": "workspace:*",
+    "zod": "^4.6.5"
+  }
+}
