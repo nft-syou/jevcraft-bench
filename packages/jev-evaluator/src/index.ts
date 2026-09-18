@@ -1,4 +1,5 @@
 export type { JevBackend } from "./backend";
+export { type EvaluateSessionOptions, evaluateSession, toJevAnswers } from "./evaluate-session";
 export { createMockBackend } from "./mock-backend";
 export { applyPolicy, DEFAULT_THRESHOLDS, type PolicyThresholds } from "./policy";
 export {
@@ -12,3 +13,4 @@ export {
   type XrayV1State,
   xrayV1Questions,
 } from "./questions/xray-v1";
+export { createTypeSafeBackend, DEFAULT_MODEL } from "./typesafe-backend";
