@@ -24,27 +24,45 @@ export const DIAMOND_ORES = ["diamond_ore", "deepslate_diamond_ore"];
 export const LOW_VALUE_ORES = ["coal_ore", "deepslate_coal_ore", "iron_ore", "deepslate_iron_ore"];
 
 const PASSABLE = new Set(["air", "cave_air", "void_air"]);
-const DANGEROUS = ["lava", "water", "bedrock"];
+const LIQUID = ["lava", "water"];
+/** Lowest y a scenario may target; below it the floor is bedrock and steps fail. */
+export const MIN_TARGET_Y = -59;
+const DIG_TIMEOUT_MS = 10_000;
 
 export const isPassable = (bot: Bot, pos: Vec3): boolean => {
   const b = bot.blockAt(pos);
   return b === null || PASSABLE.has(b.name);
 };
 
-const isDangerous = (bot: Bot, pos: Vec3): boolean => {
+const isLiquid = (bot: Bot, pos: Vec3): boolean => {
   const b = bot.blockAt(pos);
-  return b !== null && DANGEROUS.some((d) => b.name.includes(d));
+  return b !== null && LIQUID.some((d) => b.name.includes(d));
 };
 
-/** Digs one block if it is solid, diggable and within reach. */
+const isUndiggable = (bot: Bot, pos: Vec3): boolean => {
+  const b = bot.blockAt(pos);
+  return b !== null && !PASSABLE.has(b.name) && (b.name === "bedrock" || isLiquid(bot, pos));
+};
+
+/** Digs one block if it is solid, diggable and within reach. Never hangs on an unreachable block. */
 export async function digAt(bot: Bot, pos: Vec3): Promise<boolean> {
   const block = bot.blockAt(pos);
   if (!block || PASSABLE.has(block.name) || !bot.canDigBlock(block)) return false;
   if (bot.entity.position.distanceTo(pos.offset(0.5, 0.5, 0.5)) > 5) return false;
   try {
-    await bot.dig(block, true);
+    await Promise.race([
+      bot.dig(block, true),
+      sleep(DIG_TIMEOUT_MS).then(() => {
+        throw new Error("dig timeout");
+      }),
+    ]);
     return true;
   } catch {
+    try {
+      bot.stopDigging();
+    } catch {
+      // ignore
+    }
     return false;
   }
 }
@@ -79,9 +97,11 @@ export async function stepInto(bot: Bot, next: Vec3): Promise<boolean> {
   const here = bot.entity.position.floored();
   const dy = next.y - here.y;
   if (Math.abs(dy) > 1) return false;
-  for (const p of [next, next.offset(0, 1, 0), next.offset(0, -1, 0), here.offset(0, 2, 0)]) {
-    if (isDangerous(bot, p)) return false;
+  // Refuse to open liquids or hit bedrock; a bedrock floor is fine to stand on.
+  for (const p of [next, next.offset(0, 1, 0), here.offset(0, 2, 0), next.offset(0, 2, 0)]) {
+    if (isUndiggable(bot, p)) return false;
   }
+  if (isLiquid(bot, next.offset(0, -1, 0))) return false;
   await digAt(bot, next);
   await digAt(bot, next.offset(0, 1, 0));
   if (dy > 0) await digAt(bot, here.offset(0, 2, 0));
@@ -176,7 +196,7 @@ export function findOre(
   let bestScore = Number.POSITIVE_INFINITY;
   for (const pos of bot.findBlocks({ matching: ids, maxDistance, count: 64 })) {
     const dy = Math.abs(pos.y - here.y);
-    if (dy > maxDy) continue;
+    if (dy > maxDy || pos.y < MIN_TARGET_Y) continue;
     if (Math.hypot(pos.x + 0.5 - here.x, pos.z + 0.5 - here.z) < minHorizontal) continue;
     const score = pos.distanceTo(here) + dy * 2;
     if (score < bestScore) {
