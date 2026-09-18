@@ -64,7 +64,7 @@ describe("extractFeatures", () => {
       rawSession({
         path,
         breaks: path
-          .map((p, i) => ({ t: p.t + 500, x: Math.floor(p.x), y: 10, z: Math.floor(p.z) }))
+          .map((p) => ({ t: p.t + 500, x: Math.floor(p.x), y: 10, z: Math.floor(p.z) }))
           .slice(0, 20),
         reveals: [{ t: 19_600, at: { x: 9, y: 10, z: 10 }, ore: { x: 10, y: 10, z: 10 } }],
       }),
