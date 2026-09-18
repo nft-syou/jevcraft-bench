@@ -1,5 +1,6 @@
 export type { JevBackend } from "./backend";
 export { createMockBackend } from "./mock-backend";
+export { applyPolicy, DEFAULT_THRESHOLDS, type PolicyThresholds } from "./policy";
 export {
   buildXrayV1State,
   ROUTE_NATURALNESS_MAX,
