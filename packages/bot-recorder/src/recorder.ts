@@ -1,7 +1,7 @@
 import type { BehaviorSubtype, GroundTruthLabel } from "@jevcraft/schema";
 import mineflayer, { type Bot } from "mineflayer";
 import { Vec3 } from "vec3";
-import { createRng, sleep } from "./mining";
+import { createRng, DIAMOND_ORES, findOre, sleep } from "./mining";
 import { offlineUuid, pseudonymize } from "./offline-uuid";
 import type { Scenario } from "./scenarios";
 
@@ -76,23 +76,41 @@ export async function recordRun(options: RecordOptions): Promise<RunManifest> {
     bot.chat("/give @s netherite_pickaxe");
     bot.chat("/effect give @s night_vision 3600 1 true");
     await sleep(1000);
-    bot.chat(`/tp @s ${origin.x} ${origin.y} ${origin.z}`);
-    await sleep(2500);
-    await bot.waitForChunksToLoad();
-    // The arena origin is usually inside solid rock. Carve a 3x2x3 pocket with a solid floor so
-    // the tunneller has a valid start cell; /fill does not fire BlockBreakEvent, so nothing is recorded.
+    // Probe a few spots in the cell and start where diamonds are within reach of a scenario,
+    // otherwise short runs never meet an ore. Teleports before the session starts are harmless.
+    let chosen = origin;
+    const candidates = [
+      origin,
+      origin.offset(0, 0, 32),
+      origin.offset(32, 0, 0),
+      origin.offset(32, 0, 32),
+    ];
+    for (const candidate of candidates) {
+      bot.chat(`/tp @s ${candidate.x} ${candidate.y} ${candidate.z}`);
+      await sleep(2000);
+      await bot.waitForChunksToLoad();
+      chosen = candidate;
+      if (findOre(bot, DIAMOND_ORES, 24, 3, 6) !== null) break;
+      log(`no diamond near ${candidate}; trying the next spot`);
+    }
+    // The spot is usually inside solid rock. Carve a 3x2x3 pocket with a solid floor so the
+    // tunneller has a valid start cell; /fill does not fire BlockBreakEvent, so nothing is recorded.
     bot.chat(
-      `/fill ${origin.x - 1} ${origin.y - 1} ${origin.z - 1} ${origin.x + 1} ${origin.y - 1} ${origin.z + 1} minecraft:deepslate`,
+      `/fill ${chosen.x - 1} ${chosen.y - 1} ${chosen.z - 1} ${chosen.x + 1} ${chosen.y - 1} ${chosen.z + 1} minecraft:deepslate`,
     );
     bot.chat(
-      `/fill ${origin.x - 1} ${origin.y} ${origin.z - 1} ${origin.x + 1} ${origin.y + 1} ${origin.z + 1} minecraft:air`,
+      `/fill ${chosen.x - 1} ${chosen.y} ${chosen.z - 1} ${chosen.x + 1} ${chosen.y + 1} ${chosen.z + 1} minecraft:air`,
     );
     await sleep(1000);
-    bot.chat(`/tp @s ${origin.x} ${origin.y} ${origin.z}`);
+    bot.chat(`/tp @s ${chosen.x} ${chosen.y} ${chosen.z}`);
     await sleep(1500);
     const here = bot.entity.position.floored();
-    if (here.distanceTo(origin) > 4) notes.push(`teleport landed at ${here} (wanted ${origin})`);
-    const pickaxe = bot.inventory.items().find((i) => i.name.endsWith("_pickaxe"));
+    if (here.distanceTo(chosen) > 4) notes.push(`teleport landed at ${here} (wanted ${chosen})`);
+    let pickaxe = bot.inventory.items().find((i) => i.name.endsWith("_pickaxe"));
+    for (let attempt = 0; attempt < 10 && !pickaxe; attempt++) {
+      await sleep(500);
+      pickaxe = bot.inventory.items().find((i) => i.name.endsWith("_pickaxe"));
+    }
     if (pickaxe) await bot.equip(pickaxe, "hand");
     else notes.push("no pickaxe in inventory");
 

@@ -90,16 +90,30 @@ export async function stepInto(bot: Bot, next: Vec3): Promise<boolean> {
   return walkInto(bot, next, dy > 0, 4000);
 }
 
-/** Next cell one axis-step closer to `goal` (dominant axis first), staying within one level. */
-export function nextCellToward(from: Vec3, goal: Vec3): Vec3 {
+/** Distance from point p to the 2D line through a and b (xz plane). */
+function distanceToLineXZ(p: Vec3, a: Vec3, b: Vec3): number {
+  const vx = b.x - a.x;
+  const vz = b.z - a.z;
+  const len = Math.hypot(vx, vz);
+  if (len < 1e-9) return Math.hypot(p.x - a.x, p.z - a.z);
+  return Math.abs(vx * (p.z - a.z) - vz * (p.x - a.x)) / len;
+}
+
+/**
+ * Next cell one axis-step closer to `goal`, choosing the x or z step that stays nearest the
+ * straight line from `start` to `goal` (Bresenham-like), moving at most one level per step.
+ */
+export function nextCellToward(from: Vec3, goal: Vec3, start: Vec3 = from): Vec3 {
   const dx = goal.x - from.x;
   const dz = goal.z - from.z;
   const dy = goal.y - from.y;
-  if (Math.abs(dx) >= Math.abs(dz) && dx !== 0) {
-    return from.offset(Math.sign(dx), dy !== 0 ? Math.sign(dy) : 0, 0);
-  }
-  if (dz !== 0) return from.offset(0, dy !== 0 ? Math.sign(dy) : 0, Math.sign(dz));
-  return from.offset(0, Math.sign(dy), 0);
+  const stepY = dy !== 0 ? Math.sign(dy) : 0;
+  if (dx === 0 && dz === 0) return from.offset(0, Math.sign(dy), 0);
+  if (dx === 0) return from.offset(0, stepY, Math.sign(dz));
+  if (dz === 0) return from.offset(Math.sign(dx), stepY, 0);
+  const viaX = from.offset(Math.sign(dx), stepY, 0);
+  const viaZ = from.offset(0, stepY, Math.sign(dz));
+  return distanceToLineXZ(viaX, start, goal) <= distanceToLineXZ(viaZ, start, goal) ? viaX : viaZ;
 }
 
 export interface TunnelOptions {
@@ -121,13 +135,14 @@ export async function tunnelTo(
   opts: TunnelOptions,
 ): Promise<{ cell: Vec3; reached: boolean }> {
   let cell = bot.entity.position.floored();
+  const start = cell.clone();
   let failures = 0;
   while (Date.now() < opts.deadline) {
     if (opts.stopWhen?.()) return { cell, reached: true };
     if (cell.x === goal.x && cell.z === goal.z && Math.abs(cell.y - goal.y) <= 1) {
       return { cell, reached: true };
     }
-    const next = nextCellToward(cell, goal);
+    const next = nextCellToward(cell, goal, start);
     if (next.x === cell.x && next.z === cell.z) return { cell, reached: true };
     const ok = await stepInto(bot, next);
     if (!ok) {
