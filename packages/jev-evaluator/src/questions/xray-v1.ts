@@ -1,5 +1,6 @@
 import type { MiningSessionFeatures } from "@jevcraft/schema";
 import { choice, type JsonValue, noul, type SystemOneResult, score } from "@typesafe-ai/sdk";
+import type { QuestionSet } from "./question-set";
 
 export const XRAY_V1_VERSION = "xray-v1";
 
@@ -66,3 +67,10 @@ export function buildXrayV1State(features: MiningSessionFeatures): XrayV1State {
     features: rest as unknown as JsonValue,
   };
 }
+
+export const xrayV1: QuestionSet = {
+  version: XRAY_V1_VERSION,
+  task: XRAY_V1_TASK,
+  importantContext: XRAY_V1_IMPORTANT_CONTEXT,
+  questions: xrayV1Questions,
+};

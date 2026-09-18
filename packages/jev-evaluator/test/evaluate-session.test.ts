@@ -1,6 +1,11 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { createMockBackend, evaluateSession, type JevBackend } from "@jevcraft/jev-evaluator";
+import {
+  createMockBackend,
+  evaluateSession,
+  type JevBackend,
+  xrayV2,
+} from "@jevcraft/jev-evaluator";
 import { DecisionRecordSchema, MiningSessionFeaturesSchema } from "@jevcraft/schema";
 import { describe, expect, it } from "vitest";
 
@@ -55,6 +60,24 @@ describe("evaluateSession", () => {
   ])("%s -> %s with the mock backend", async (file, outcome) => {
     const record = await evaluateSession(loadFixture(file), fixedOptions);
     expect(record.policyOutcome).toBe(outcome);
+  });
+
+  it("records the question set version and sends that set's questions", async () => {
+    const seen: string[] = [];
+    const spy: JevBackend = {
+      kind: "mock",
+      systemOne: async (request) => {
+        seen.push(String(request.questions.evidence_sufficiency?.instructions));
+        return createMockBackend().systemOne(request);
+      },
+    };
+    const record = await evaluateSession(loadFixture("legit-001.json"), {
+      ...fixedOptions,
+      backend: spy,
+      questionSet: xrayV2,
+    });
+    expect(record.questionSetVersion).toBe("xray-v2");
+    expect(seen[0]).toMatch(/not whether cheating occurred/);
   });
 
   it("passes the model override to the backend", async () => {

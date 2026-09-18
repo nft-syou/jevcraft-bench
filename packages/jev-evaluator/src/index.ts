@@ -2,6 +2,8 @@ export type { JevBackend } from "./backend";
 export { type EvaluateSessionOptions, evaluateSession, toJevAnswers } from "./evaluate-session";
 export { createMockBackend } from "./mock-backend";
 export { applyPolicy, DEFAULT_THRESHOLDS, type PolicyThresholds } from "./policy";
+export { DEFAULT_QUESTION_SET, getQuestionSet, QUESTION_SETS } from "./questions/index";
+export { buildState, type QuestionSet, type QuestionSetState } from "./questions/question-set";
 export {
   buildXrayV1State,
   ROUTE_NATURALNESS_MAX,
@@ -11,6 +13,13 @@ export {
   type XrayV1Answers,
   type XrayV1Questions,
   type XrayV1State,
+  xrayV1,
   xrayV1Questions,
 } from "./questions/xray-v1";
+export {
+  XRAY_V2_IMPORTANT_CONTEXT,
+  XRAY_V2_VERSION,
+  xrayV2,
+  xrayV2Questions,
+} from "./questions/xray-v2";
 export { createTypeSafeBackend, DEFAULT_MODEL } from "./typesafe-backend";

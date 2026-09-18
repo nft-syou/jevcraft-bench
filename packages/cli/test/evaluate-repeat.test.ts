@@ -27,6 +27,36 @@ describe("jevcraft evaluate --repeat", () => {
     expect(new Set(records.map((r) => r.evaluationId)).size).toBe(3);
   });
 
+  it("selects the question set with --questions and records it", async () => {
+    const { records } = await runEvaluate(
+      [
+        join(fixtures, "legit-001.json"),
+        "--backend",
+        "mock",
+        "--questions",
+        "xray-v2",
+        "--out",
+        join(outDir, "q.jsonl"),
+      ],
+      { env: {}, stderr: () => {} },
+    );
+    expect(records[0]?.questionSetVersion).toBe("xray-v2");
+    await expect(
+      runEvaluate(
+        [
+          join(fixtures, "legit-001.json"),
+          "--backend",
+          "mock",
+          "--questions",
+          "xray-v9",
+          "--out",
+          join(outDir, "q9.jsonl"),
+        ],
+        { env: {}, stderr: () => {} },
+      ),
+    ).rejects.toThrow(/unknown question set/);
+  });
+
   it("rejects a non-positive repeat count", async () => {
     await expect(
       runEvaluate(

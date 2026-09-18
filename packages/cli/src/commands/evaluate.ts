@@ -4,6 +4,7 @@ import {
   createMockBackend,
   createTypeSafeBackend,
   evaluateSession,
+  getQuestionSet,
   type JevBackend,
 } from "@jevcraft/jev-evaluator";
 import { type DecisionRecord, MiningSessionFeaturesSchema } from "@jevcraft/schema";
@@ -15,7 +16,7 @@ export interface EvaluateDeps {
 }
 
 export const EVALUATE_USAGE =
-  "usage: jevcraft evaluate <input.json|input.jsonl|dir>... [--out <file.jsonl>] [--backend auto|typesafe|mock] [--model <name>] [--repeat <n>]";
+  "usage: jevcraft evaluate <input.json|input.jsonl|dir>... [--out <file.jsonl>] [--backend auto|typesafe|mock] [--model <name>] [--repeat <n>] [--questions xray-v1|xray-v2]";
 
 function chooseBackend(
   requested: string,
@@ -55,6 +56,7 @@ export async function runEvaluate(
       backend: { type: "string", default: "auto" },
       model: { type: "string" },
       repeat: { type: "string", default: "1" },
+      questions: { type: "string", default: "xray-v1" },
     },
   });
   if (positionals.length === 0) throw new Error(EVALUATE_USAGE);
@@ -75,6 +77,7 @@ export async function runEvaluate(
     }
   }
 
+  const questionSet = getQuestionSet(values.questions);
   const backend = chooseBackend(values.backend, env, stderr);
   const firstInput = positionals[0] ?? "decisions";
   const outPath =
@@ -86,6 +89,7 @@ export async function runEvaluate(
     for (const f of features) {
       const record = await evaluateSession(f, {
         backend,
+        questionSet,
         ...(values.model !== undefined ? { model: values.model } : {}),
       });
       records.push(record);
@@ -97,7 +101,7 @@ export async function runEvaluate(
   const counts = new Map<string, number>();
   for (const r of records) counts.set(r.policyOutcome, (counts.get(r.policyOutcome) ?? 0) + 1);
   stderr(
-    `evaluated ${records.length} session(s) with ${backend.kind} -> ${outPath} ` +
+    `evaluated ${records.length} session(s) with ${backend.kind} (${questionSet.version}) -> ${outPath} ` +
       `[${[...counts].map(([k, v]) => `${k}=${v}`).join(", ")}]`,
   );
   return { outPath, records };

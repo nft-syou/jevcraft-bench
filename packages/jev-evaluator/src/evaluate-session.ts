@@ -10,13 +10,9 @@ import {
 } from "@jevcraft/schema";
 import type { JevBackend } from "./backend";
 import { applyPolicy, DEFAULT_THRESHOLDS, type PolicyThresholds } from "./policy";
-import {
-  buildXrayV1State,
-  ROUTE_NATURALNESS_MAX,
-  XRAY_V1_VERSION,
-  type XrayV1Answers,
-  xrayV1Questions,
-} from "./questions/xray-v1";
+import { DEFAULT_QUESTION_SET } from "./questions/index";
+import { buildState, type QuestionSet } from "./questions/question-set";
+import { ROUTE_NATURALNESS_MAX, type XrayV1Answers } from "./questions/xray-v1";
 import { DEFAULT_MODEL } from "./typesafe-backend";
 
 export interface EvaluateSessionOptions {
@@ -24,6 +20,8 @@ export interface EvaluateSessionOptions {
   /** Model override; defaults to `jev-latest`. */
   model?: string;
   thresholds?: PolicyThresholds;
+  /** Question set to send; defaults to xray-v1. Its version is recorded on the decision. */
+  questionSet?: QuestionSet;
   /** Injectable clock for reproducible records. */
   now?: () => Date;
   /** Injectable id factory for reproducible records. */
@@ -67,6 +65,7 @@ export async function evaluateSession(
   const now = options.now ?? (() => new Date());
   const newId = options.newEvaluationId ?? (() => `eval_${randomUUID()}`);
   const model = options.model ?? DEFAULT_MODEL;
+  const questionSet = options.questionSet ?? DEFAULT_QUESTION_SET;
 
   const base = {
     schemaVersion: 1 as const,
@@ -74,15 +73,15 @@ export async function evaluateSession(
     sessionId: features.sessionId,
     evaluatedAt: now().toISOString(),
     backend: options.backend.kind,
-    questionSetVersion: XRAY_V1_VERSION,
+    questionSetVersion: questionSet.version,
     featureExtractorVersion: features.featureExtractorVersion,
   };
 
   const started = performance.now();
   try {
     const result = await options.backend.systemOne({
-      state: buildXrayV1State(features),
-      questions: xrayV1Questions,
+      state: buildState(questionSet, features),
+      questions: questionSet.questions,
       model,
     });
     const latencyMs = Math.round(performance.now() - started);
