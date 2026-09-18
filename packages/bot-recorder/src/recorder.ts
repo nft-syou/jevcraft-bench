@@ -55,21 +55,39 @@ function waitForSpawn(bot: Bot, timeoutMs: number): Promise<void> {
   });
 }
 
+function createBot(options: RecordOptions): Bot {
+  return mineflayer.createBot({
+    host: options.host,
+    port: options.port,
+    username: options.botName,
+    version: options.version,
+    auth: "offline",
+  });
+}
+
 /** Joins, prepares the bot (survival, pickaxe, teleport), runs the scenario, leaves. */
 export async function recordRun(options: RecordOptions): Promise<RunManifest> {
   const { botName, scenario, origin, log } = options;
   const uuid = offlineUuid(botName);
   const notes: string[] = [];
-  const bot = mineflayer.createBot({
-    host: options.host,
-    port: options.port,
-    username: botName,
-    version: options.version,
-    auth: "offline",
-  });
-  const joinedAt = new Date().toISOString();
+  // Paper throttles reconnects from one IP (default 4 s); parallel recorders trip it.
+  let bot = createBot(options);
+  let joinedAt = new Date().toISOString();
   try {
-    await waitForSpawn(bot, 60_000);
+    for (let attempt = 1; ; attempt++) {
+      try {
+        await waitForSpawn(bot, 60_000);
+        break;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (attempt >= 4 || !/throttled/i.test(message)) throw error;
+        log(`connection throttled; retrying in 6 s (attempt ${attempt})`);
+        bot.quit();
+        await sleep(6000);
+        bot = createBot(options);
+        joinedAt = new Date().toISOString();
+      }
+    }
     log(`${botName} spawned for ${scenario.name}`);
     bot.chat("/gamemode survival @s");
     bot.chat("/clear @s");
