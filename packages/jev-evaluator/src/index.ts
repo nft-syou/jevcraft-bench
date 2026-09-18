@@ -22,4 +22,5 @@ export {
   xrayV2,
   xrayV2Questions,
 } from "./questions/xray-v2";
+export { XRAY_V3_VERSION, xrayV3 } from "./questions/xray-v3";
 export { createTypeSafeBackend, DEFAULT_MODEL } from "./typesafe-backend";
