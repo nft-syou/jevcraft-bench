@@ -23,3 +23,13 @@ export {
   type SessionLabel,
   SessionLabelSchema,
 } from "./labels";
+export {
+  BlockBreakEventSchema,
+  HiddenOreRevealEventSchema,
+  MovementSampleEventSchema,
+  PseudonymousPlayerIdSchema,
+  type RawTelemetryEvent,
+  RawTelemetryEventSchema,
+  SessionEndEventSchema,
+  SessionStartEventSchema,
+} from "./raw-event";

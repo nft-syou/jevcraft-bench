@@ -21,3 +21,21 @@ jobs:
       - run: pnpm test
       # Live Jev evaluation is intentionally not run in CI. The mock backend proves the pipeline.
       - run: pnpm jevcraft evaluate datasets/fixtures --backend mock --out /tmp/ci-decisions.jsonl
+
+  plugin:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew test build --no-daemon --console=plain
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JevCraft-plugin-jar
+          path: plugin/build/libs/*.jar

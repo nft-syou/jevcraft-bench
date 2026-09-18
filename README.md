@@ -16,7 +16,9 @@ MiningSessionFeatures -> Jev questions (xray-v1) -> typed probabilities
   -> versioned DecisionRecord -> reproducible evaluation report
 ```
 
-The Paper plugin (Phase 2) is not started. See `docs/handoff/JevCraft_IMPLEMENTATION_HANDOFF.md`.
+Phase 2 (Paper telemetry plugin) is implemented under `plugin/`; see below. The feature
+extractor that turns its JSONL into `MiningSessionFeatures` is the next step.
+See `docs/handoff/JevCraft_IMPLEMENTATION_HANDOFF.md`.
 
 ## Requirements
 
@@ -70,6 +72,38 @@ pnpm jevcraft report --decisions datasets/decisions/seed1.jsonl --labels dataset
 
 The report then also contains a repeat-variance table and a sweep over `minEvidenceSufficiency`.
 Archived results from real runs live in `docs/baselines/`.
+
+## Paper plugin (Phase 2)
+
+`plugin/` is a Paper server plugin that records, in shadow mode only:
+
+- sampled movement (time / distance / rotation gates, with a 90 s ring buffer flushed when a session starts),
+- block breaks inside a mining session,
+- the first exposure of hidden valuable ores (6-neighbour rule, spec §7),
+- mining-session boundaries (underground stone breaks or an ore reveal start one; idle timeout,
+  logout, world change, far teleport, game-mode change, `/jevcraft flush` end one).
+
+Everything goes to `plugins/JevCraft/data/<serverRunId>.jsonl` through a bounded queue and a
+daemon writer thread; when the queue is full lines are dropped and counted, never blocking the
+tick. Player ids are `hmac-sha256:<hex>` derived from `JEVCRAFT_HMAC_SECRET`; raw UUIDs and
+names are never written. The plugin never bans, kicks, or rolls back.
+
+**All JVM work runs in Docker; no JDK is installed on the host.**
+
+```bash
+pnpm plugin:test     # docker compose -f infra/docker-compose.yml run --rm gradle test
+pnpm plugin:build    # ... gradle build  -> plugin/build/libs/JevCraft-<version>.jar
+docker compose -f infra/docker-compose.yml up paper   # local Paper server with the jar mounted
+```
+
+Admin commands (`jevcraft.admin`, default op): `/jevcraft status`, `/jevcraft session <player>`,
+`/jevcraft flush <player>`, `/jevcraft metrics`. Config: `plugin/src/main/resources/config.yml`.
+The JSONL line format is mirrored by `RawTelemetryEventSchema` in `@jevcraft/schema`, and
+`datasets/fixtures/raw/sample.jsonl` (written by the plugin's MockBukkit test) is validated by it.
+
+Deviations from the handoff spec, recorded in `docs/superpowers/plans/2026-09-19-paper-telemetry-plugin.md`:
+Paper `26.2.build.124-stable` requires Java 25 (spec said 21), and commands are declared in
+`plugin.yml` rather than `paper-plugin.yml`.
 
 ## Packages
 
