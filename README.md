@@ -56,6 +56,21 @@ Produces `reports/fixtures.md` with the confusion matrix, Precision / Recall / *
 a threshold sweep over `P(likely_xray)`, per-subtype and per-confidence-band breakdowns,
 latency percentiles, token totals, and the list of false positives and false negatives.
 
+### More trials: repeats and synthetic sessions
+
+```bash
+# Same 5 fixtures, 10 times each, to measure Jev's answer variance
+pnpm jevcraft evaluate datasets/fixtures --backend typesafe --repeat 10 --out datasets/decisions/fixtures-x10.jsonl
+
+# 7 scenarios x 20 synthetic sessions (deterministic per seed), then evaluate and report
+pnpm jevcraft generate scenarios --count 20 --seed 1   --out-features datasets/generated/seed1-features.jsonl --out-labels datasets/generated/seed1-labels.jsonl
+pnpm jevcraft evaluate datasets/generated/seed1-features.jsonl --backend typesafe --out datasets/decisions/seed1.jsonl
+pnpm jevcraft report --decisions datasets/decisions/seed1.jsonl --labels datasets/generated/seed1-labels.jsonl
+```
+
+The report then also contains a repeat-variance table and a sweep over `minEvidenceSufficiency`.
+Archived results from real runs live in `docs/baselines/`.
+
 ## Packages
 
 | Package | Responsibility |
@@ -63,7 +78,8 @@ latency percentiles, token totals, and the list of false positives and false neg
 | `@jevcraft/schema` | Zod contracts: `MiningSessionFeatures`, `DecisionRecord`, `SessionLabel` |
 | `@jevcraft/jev-evaluator` | `xray-v1` question set, TypeSafe SDK backend, mock backend, decision policy |
 | `@jevcraft/eval-runner` | Label join, metrics, Markdown report |
-| `@jevcraft/cli` | `pnpm jevcraft evaluate` / `report` |
+| `@jevcraft/scenario-generator` | Feature-level synthetic sessions from `scenarios/*.json` (spec §13A) |
+| `@jevcraft/cli` | `pnpm jevcraft evaluate` / `report` / `generate` |
 
 ## How a session is judged
 
