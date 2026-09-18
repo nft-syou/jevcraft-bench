@@ -115,6 +115,33 @@ aim alignment from the 60 s of movement before each hidden-ore reveal, branch-mi
 and tunnel directions from break geometry, cave exposure from open neighbour faces, break rhythm,
 and trajectory coverage. Anything unobserved is `null`.
 
+### Bot recordings (Phase 3 without humans)
+
+`@jevcraft/bot-recorder` drives Mineflayer bots against the compose server to produce *real*
+plugin telemetry at scale. An X-Ray bot is not a simulation: it reads ore positions from chunk
+data it could never legitimately see, which is exactly what a cheating client does. The legit
+bot only reacts to blocks with an open face.
+
+```bash
+docker compose -f infra/docker-compose.yml up -d paper       # fixed seed, peaceful, bots are ops
+JEVCRAFT_HMAC_SECRET=change-me-local-only   pnpm jevcraft record --scenario all --count 5 --budget-seconds 240 --out datasets/recordings/batch1.jsonl
+pnpm jevcraft extract infra/paper/data/plugins/JevCraft/data --out datasets/features/batch1.jsonl
+pnpm jevcraft label-runs --raw infra/paper/data/plugins/JevCraft/data --manifest datasets/recordings/batch1.jsonl --out datasets/labels/batch1.jsonl
+pnpm jevcraft evaluate datasets/features/batch1.jsonl --out datasets/decisions/batch1.jsonl
+pnpm jevcraft report --decisions datasets/decisions/batch1.jsonl --labels datasets/labels/batch1.jsonl
+```
+
+Scenarios: `legit-branch-mining`, `xray-direct`, `xray-detour`, `xray-humanized`
+(`packages/bot-recorder/src/scenarios.ts`). Each run joins as `jevbotNN`, teleports to a fresh
+64-block cell, mines for the budget, and leaves; the manifest records the bot's pseudonymous id
+(same HMAC as the plugin, computed from the offline UUID and the secret) and the time window, so
+`label-runs` can attach ground truth to the plugin's sessions without the plugin ever writing names.
+Mineflayer speaks protocol 26.1; the server runs ViaVersion + ViaBackwards so it can join 26.2.
+
+Bots move and look more regularly than people (`--human-noise` softens this). Treat bot data as
+the bulk set for wiring, extractor and threshold work, and keep a small human-played set for the
+final false-positive check (handoff spec §22).
+
 Admin commands (`jevcraft.admin`, default op): `/jevcraft status`, `/jevcraft session <player>`,
 `/jevcraft flush <player>`, `/jevcraft metrics`. Config: `plugin/src/main/resources/config.yml`.
 The JSONL line format is mirrored by `RawTelemetryEventSchema` in `@jevcraft/schema`, and
@@ -133,7 +160,8 @@ Paper `26.2.build.124-stable` requires Java 25 (spec said 21), and commands are 
 | `@jevcraft/eval-runner` | Label join, metrics, Markdown report |
 | `@jevcraft/feature-extractor` | Raw plugin JSONL -> `MiningSessionFeatures` (spec §9 definitions; 15-min windows) |
 | `@jevcraft/scenario-generator` | Feature-level synthetic sessions from `scenarios/*.json` (spec §13A) |
-| `@jevcraft/cli` | `pnpm jevcraft evaluate` / `report` / `generate` |
+| `@jevcraft/bot-recorder` | Mineflayer bots that play legit / X-Ray scenarios on the compose server (spec §13B) |
+| `@jevcraft/cli` | `pnpm jevcraft extract` / `evaluate` / `report` / `generate` / `record` / `label-runs` |
 
 ## How a session is judged
 
