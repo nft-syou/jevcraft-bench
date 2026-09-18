@@ -38,12 +38,12 @@ Decisions are written to `datasets/decisions/<input>.jsonl` (ignored by Git).
 ### Live evaluation
 
 ```bash
-cp .env.example .env          # then put your key in TYPESAFE_API_KEY
-export TYPESAFE_API_KEY=...   # or use your shell's dotenv loader
+cp .env.example .env   # then put your key in TYPESAFE_API_KEY
 pnpm jevcraft evaluate datasets/fixtures --backend typesafe --out datasets/decisions/fixtures-live.jsonl
 ```
 
-The key is read only from the environment. Never commit it.
+`pnpm jevcraft` loads `.env` if it exists (Node's `--env-file-if-exists`); an exported
+`TYPESAFE_API_KEY` works too. The key is read only from the environment. Never commit it.
 
 ### Evaluation report
 

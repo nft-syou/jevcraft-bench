@@ -8,7 +8,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "jevcraft": "tsx packages/cli/src/main.ts",
+    "jevcraft": "node --env-file-if-exists=.env --import tsx packages/cli/src/main.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json",
