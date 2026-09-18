@@ -277,13 +277,12 @@ export function extractFeatures(
   if (session.breaks.some((b) => b.context.gameMode !== "SURVIVAL"))
     confounders.push("non_survival_game_mode");
   if (durationSec < 60) confounders.push("short_session");
-  const enoughEvidence =
-    reveals >= 3 &&
-    approaches.length >= 3 &&
-    coverage >= 0.8 &&
-    durationSec >= 60 &&
-    blocksBroken >= 20 &&
-    dropped === 0;
+  // Telemetry quality first (coverage, no drops), then enough activity to judge the pattern:
+  // either several separate hidden-ore approaches (directedness can be measured) or a lot of
+  // mining with few reveals (absence of hidden-information use is itself evidence).
+  const telemetryOk = coverage >= 0.8 && durationSec >= 60 && blocksBroken >= 20 && dropped === 0;
+  const enoughActivity = approaches.length >= 3 || blocksBroken >= 150;
+  const enoughEvidence = telemetryOk && enoughActivity;
 
   return MiningSessionFeaturesSchema.parse({
     schemaVersion: 1,

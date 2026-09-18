@@ -115,7 +115,15 @@ describe("extractFeatures", () => {
     expect(g.quality.knownConfounders).toContain("missing_session_end");
   });
 
-  it("marks enough evidence only with several analysable approaches", () => {
+  it("marks a long session with many breaks and no reveals as enough evidence of legit mining", () => {
+    const f = one(rawSession(straightTunnel(160)));
+    expect(f.hiddenOreApproach.sampleCount).toBe(0);
+    expect(f.quality.enoughEvidence).toBe(true);
+    const g = one(rawSession(straightTunnel(90)));
+    expect(g.quality.enoughEvidence).toBe(false);
+  });
+
+  it("marks enough evidence with several analysable approaches", () => {
     const tunnel = straightTunnel(90);
     const reveals = [20, 45, 70].map((x) => ({
       t: x * 1000 + 600,

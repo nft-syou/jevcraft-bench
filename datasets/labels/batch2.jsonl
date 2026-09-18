@@ -18,4 +18,5 @@
 {"sessionId":"session_dc3fe240-ad3c-4ce7-82f6-e708c0a73fc1","label":"simulated_xray","subtype":"direct_xray","reviewStatus":"single_review","notes":"bot: xray-direct"}
 {"sessionId":"session_3907bba2-6923-435c-aa2d-6babcf3efc7d","label":"simulated_xray","subtype":"direct_xray","reviewStatus":"single_review","notes":"bot: xray-direct"}
 {"sessionId":"session_86bd1fee-41f0-4426-bd9a-f5bf1486a597","label":"simulated_xray","subtype":"direct_xray","reviewStatus":"single_review","notes":"bot: xray-direct"}
-{"sessionId":"session_ef612444-2ced-4c90-b910-41c43d74a7c5","label":"unknown","subtype":null,"reviewStatus":"unreviewed","notes":"no recorder run matched this session"}
+{"sessionId":"session_ef612444-2ced-4c90-b910-41c43d74a7c5","label":"simulated_xray","subtype":"detour_xray","reviewStatus":"single_review","notes":"bot: xray-detour"}
+{"sessionId":"session_24e1f49e-5919-4c6e-9ea4-2066b88b818c","label":"simulated_xray","subtype":"detour_xray","reviewStatus":"single_review","notes":"bot: xray-detour"}
