@@ -105,11 +105,14 @@ class PluginIntegrationTest {
         assertEquals(1, ore.get("z").getAsInt());
         assertFalse(ore.get("previouslyVisible").getAsBoolean());
         assertEquals("SURVIVAL", reveal.getAsJsonObject("context").get("gameMode").getAsString());
+        assertEquals(1, reveal.getAsJsonObject("context").get("openNeighbours").getAsInt(),
+                "tunnel dig: only the face the player came from is open");
 
         JsonObject end = events.get(events.size() - 1);
         assertEquals("session_end", end.get("eventType").getAsString());
         assertEquals("logout", end.getAsJsonObject("session").get("reason").getAsString());
         assertEquals(1, end.getAsJsonObject("session").get("oreReveals").getAsInt());
+        assertEquals(0, end.getAsJsonObject("session").get("droppedLines").getAsInt());
 
         String all = Files.readString(file);
         assertFalse(all.contains(player.getUniqueId().toString()), "raw UUID must never be written");

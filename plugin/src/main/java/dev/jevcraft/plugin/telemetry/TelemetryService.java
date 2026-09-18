@@ -39,6 +39,7 @@ public final class TelemetryService implements SessionTracker.Listener {
     private final PlayerPseudonymizer pseudonymizer;
     private final MovementSampler sampler;
     private final SessionTracker tracker;
+    private final Map<String, Long> droppedAtSessionStart = new java.util.HashMap<>();
 
     public TelemetryService(
             JevCraftConfig config,
@@ -198,6 +199,7 @@ public final class TelemetryService implements SessionTracker.Listener {
 
     @Override
     public void onSessionStart(UUID player, MiningSession session) {
+        droppedAtSessionStart.put(session.sessionId(), writer.droppedCount());
         JsonObject s = new JsonObject();
         s.addProperty("reason", session.startReason());
         TelemetryEvent event = TelemetryEvent.of(EV_SESSION_START, now())
@@ -234,6 +236,8 @@ public final class TelemetryService implements SessionTracker.Listener {
         s.addProperty("undergroundStoneBroken", session.undergroundStoneBroken());
         s.addProperty("oreReveals", session.oreReveals());
         s.addProperty("oreBlocksBroken", session.oreBlocksBroken());
+        Long droppedBefore = droppedAtSessionStart.remove(session.sessionId());
+        s.addProperty("droppedLines", droppedBefore == null ? 0 : writer.droppedCount() - droppedBefore);
         TelemetryEvent event = TelemetryEvent.of(EV_SESSION_END, now())
                 .serverRunId(serverRunId)
                 .sessionId(session.sessionId())
@@ -285,7 +289,25 @@ public final class TelemetryService implements SessionTracker.Listener {
         context.addProperty("tool", player.getInventory().getItemInMainHand().getType().name());
         context.addProperty("lightLevel", block.getLightLevel());
         context.addProperty("underground", block.getY() <= config.undergroundYMax());
+        context.addProperty("openNeighbours", openNeighbours(block));
         return context;
+    }
+
+    /**
+     * Number of the six faces already open (non-occluding) before the break. A tunnel dig
+     * usually has exactly one (where the player stands); cave-adjacent blocks have more.
+     */
+    private static int openNeighbours(Block block) {
+        int open = 0;
+        for (org.bukkit.block.BlockFace face : new org.bukkit.block.BlockFace[] {
+            org.bukkit.block.BlockFace.NORTH, org.bukkit.block.BlockFace.SOUTH,
+            org.bukkit.block.BlockFace.EAST, org.bukkit.block.BlockFace.WEST,
+            org.bukkit.block.BlockFace.UP, org.bukkit.block.BlockFace.DOWN}) {
+            if (!block.getRelative(face).getType().isOccluding()) {
+                open++;
+            }
+        }
+        return open;
     }
 
     private void write(TelemetryEvent event) {

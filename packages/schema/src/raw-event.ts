@@ -26,6 +26,8 @@ const BreakContext = z.strictObject({
   tool: z.string(),
   lightLevel: z.number().int().min(0).max(15),
   underground: z.boolean(),
+  /** open (non-occluding) faces of the block before the break, 0..6 */
+  openNeighbours: z.number().int().min(0).max(6),
 });
 
 export const MovementSampleEventSchema = z.strictObject({
@@ -87,6 +89,8 @@ export const SessionEndEventSchema = z.strictObject({
     undergroundStoneBroken: z.number().int().min(0),
     oreReveals: z.number().int().min(0),
     oreBlocksBroken: z.number().int().min(0),
+    /** telemetry lines dropped by the bounded writer during this session */
+    droppedLines: z.number().int().min(0),
   }),
 });
 
