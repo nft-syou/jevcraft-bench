@@ -1,0 +1,17 @@
+name: JevCraft
+version: "${version}"
+main: dev.jevcraft.plugin.JevCraftPlugin
+api-version: "1.21"
+description: Behavioral telemetry for X-Ray research. Shadow mode only; never punishes players.
+authors: [jevcraft]
+
+commands:
+  jevcraft:
+    description: JevCraft admin commands (status, session, flush, metrics)
+    usage: /jevcraft <status|session <player>|flush <player>|metrics>
+    permission: jevcraft.admin
+
+permissions:
+  jevcraft.admin:
+    description: Read JevCraft status and flush sessions
+    default: op

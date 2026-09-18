@@ -14,7 +14,9 @@
     "typecheck": "tsc -p tsconfig.json",
     "lint": "biome check .",
     "format": "biome check --write .",
-    "check": "pnpm lint && pnpm typecheck && pnpm test"
+    "check": "pnpm lint && pnpm typecheck && pnpm test",
+    "plugin:test": "docker compose -f infra/docker-compose.yml run --rm gradle test",
+    "plugin:build": "docker compose -f infra/docker-compose.yml run --rm gradle build"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",

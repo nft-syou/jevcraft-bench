@@ -1,0 +1,38 @@
+# All JVM work for the Paper plugin runs in containers; no JDK is installed on the host.
+#
+#   docker compose -f infra/docker-compose.yml run --rm gradle test
+#   docker compose -f infra/docker-compose.yml run --rm gradle build
+#   docker compose -f infra/docker-compose.yml up paper        # manual test server on :25565
+#
+# `pnpm plugin:test` / `pnpm plugin:build` wrap the first two.
+
+services:
+  gradle:
+    image: gradle:9.7.1-jdk25
+    working_dir: /work
+    volumes:
+      - ../plugin:/work
+      - gradle-cache:/home/gradle/.gradle
+    environment:
+      GRADLE_OPTS: -Dorg.gradle.daemon=false
+    entrypoint: ["sh", "./gradlew", "--no-daemon", "--console=plain"]
+
+  paper:
+    image: itzg/minecraft-server:java25
+    environment:
+      EULA: "TRUE"
+      TYPE: PAPER
+      VERSION: "26.2"
+      ONLINE_MODE: "false"
+      MEMORY: 2G
+      JEVCRAFT_HMAC_SECRET: change-me-local-only
+    ports:
+      - "25565:25565"
+    volumes:
+      - ./paper/data:/data
+      - ../plugin/build/libs:/plugins:ro
+    stdin_open: true
+    tty: true
+
+volumes:
+  gradle-cache:

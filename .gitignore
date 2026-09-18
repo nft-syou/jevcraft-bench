@@ -13,3 +13,9 @@ reports/*
 .DS_Store
 datasets/generated/*
 !datasets/generated/.gitkeep
+
+# Gradle (plugin/)
+plugin/build/
+plugin/.gradle/
+plugin/bin/
+infra/paper/data/

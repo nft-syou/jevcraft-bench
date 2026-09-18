@@ -1,0 +1,34 @@
+# JevCraft telemetry plugin. Shadow mode only: this plugin records, it never punishes.
+mode: shadow
+
+telemetry:
+  enabled: true
+  # A movement sample is written when any of these gates trips.
+  movementSampleMs: 150
+  movementSampleDistance: 0.75
+  movementSampleDegrees: 10.0
+  # Samples kept before a session starts, so the approach to the first ore is preserved.
+  trajectoryBufferSeconds: 90
+  sessionIdleTimeoutSeconds: 120
+  # A session starts after this many stone-like breaks at or below undergroundYMax, or on any target-ore reveal.
+  undergroundStoneBreaksToStart: 10
+  undergroundYMax: 40
+  # A teleport farther than this (blocks) ends the session.
+  teleportSplitDistance: 32.0
+  outputDirectory: plugins/JevCraft/data
+  queueCapacity: 10000
+
+ores:
+  - DIAMOND_ORE
+  - DEEPSLATE_DIAMOND_ORE
+  - ANCIENT_DEBRIS
+  - EMERALD_ORE
+  - DEEPSLATE_EMERALD_ORE
+
+privacy:
+  hmacSecretEnvironmentVariable: JEVCRAFT_HMAC_SECRET
+  includePlayerName: false
+
+# Reserved for a future sidecar. The plugin itself never calls the Jev API.
+evaluation:
+  enabled: false
