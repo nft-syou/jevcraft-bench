@@ -3,6 +3,7 @@ import { parseArgs } from "node:util";
 import {
   createMockBackend,
   createTypeSafeBackend,
+  DEFAULT_QUESTION_SET,
   evaluateSession,
   getQuestionSet,
   type JevBackend,
@@ -56,7 +57,7 @@ export async function runEvaluate(
       backend: { type: "string", default: "auto" },
       model: { type: "string" },
       repeat: { type: "string", default: "1" },
-      questions: { type: "string", default: "xray-v1" },
+      questions: { type: "string", default: DEFAULT_QUESTION_SET.version },
     },
   });
   if (positionals.length === 0) throw new Error(EVALUATE_USAGE);

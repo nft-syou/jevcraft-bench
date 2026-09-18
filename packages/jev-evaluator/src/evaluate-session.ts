@@ -20,7 +20,7 @@ export interface EvaluateSessionOptions {
   /** Model override; defaults to `jev-latest`. */
   model?: string;
   thresholds?: PolicyThresholds;
-  /** Question set to send; defaults to xray-v1. Its version is recorded on the decision. */
+  /** Question set to send; defaults to DEFAULT_QUESTION_SET. Its version is recorded on the decision. */
   questionSet?: QuestionSet;
   /** Injectable clock for reproducible records. */
   now?: () => Date;
