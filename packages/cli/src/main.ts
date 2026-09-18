@@ -1,10 +1,12 @@
 import { EVALUATE_USAGE, runEvaluate } from "./commands/evaluate";
+import { EXTRACT_USAGE, runExtract } from "./commands/extract";
 import { GENERATE_USAGE, runGenerate } from "./commands/generate";
 import { REPORT_USAGE, runReport } from "./commands/report";
 
 const USAGE = `jevcraft <command>
 
 commands:
+  extract    ${EXTRACT_USAGE}
   evaluate   ${EVALUATE_USAGE}
   report     ${REPORT_USAGE}
   generate   ${GENERATE_USAGE}
@@ -13,6 +15,9 @@ commands:
 async function main(argv: string[]): Promise<number> {
   const [command, ...rest] = argv;
   switch (command) {
+    case "extract":
+      await runExtract(rest);
+      return 0;
     case "evaluate":
       await runEvaluate(rest);
       return 0;

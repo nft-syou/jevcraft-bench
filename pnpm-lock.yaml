@@ -187,6 +187,9 @@ importers:
       '@jevcraft/eval-runner':
         specifier: workspace:*
         version: link:../eval-runner
+      '@jevcraft/feature-extractor':
+        specifier: workspace:*
+        version: link:../feature-extractor
       '@jevcraft/jev-evaluator':
         specifier: workspace:*
         version: link:../jev-evaluator
@@ -201,6 +204,12 @@ importers:
         version: 4.6.5
 
   packages/eval-runner:
+    dependencies:
+      '@jevcraft/schema':
+        specifier: workspace:*
+        version: link:../schema
+
+  packages/feature-extractor:
     dependencies:
       '@jevcraft/schema':
         specifier: workspace:*

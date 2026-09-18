@@ -19,3 +19,5 @@ plugin/build/
 plugin/.gradle/
 plugin/bin/
 infra/paper/data/
+datasets/features/*
+!datasets/features/.gitkeep

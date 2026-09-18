@@ -16,8 +16,14 @@ MiningSessionFeatures -> Jev questions (xray-v1) -> typed probabilities
   -> versioned DecisionRecord -> reproducible evaluation report
 ```
 
-Phase 2 (Paper telemetry plugin) is implemented under `plugin/`; see below. The feature
-extractor that turns its JSONL into `MiningSessionFeatures` is the next step.
+Phase 2 (Paper telemetry plugin, `plugin/`) and the feature extractor that turns its JSONL into
+`MiningSessionFeatures` are implemented, so the whole chain runs end to end:
+
+```text
+Paper plugin JSONL -> jevcraft extract -> jevcraft evaluate -> jevcraft report
+```
+
+Next is Phase 3: recording real legit and simulated-X-Ray sessions on a fixed-seed world.
 See `docs/handoff/JevCraft_IMPLEMENTATION_HANDOFF.md`.
 
 ## Requirements
@@ -96,6 +102,19 @@ pnpm plugin:build    # ... gradle build  -> plugin/build/libs/JevCraft-<version>
 docker compose -f infra/docker-compose.yml up paper   # local Paper server with the jar mounted
 ```
 
+Turn a server run into features and evaluate it:
+
+```bash
+pnpm jevcraft extract infra/paper/data/plugins/JevCraft/data --out datasets/features/run-001.jsonl
+pnpm jevcraft evaluate datasets/features/run-001.jsonl --out datasets/decisions/run-001.jsonl
+```
+
+`extract` groups events by session, splits sessions longer than `--window-minutes` (default 15)
+into `<sessionId>:w<n>` windows, and computes the spec §9 features: directness / detour ratio /
+aim alignment from the 60 s of movement before each hidden-ore reveal, branch-mining likelihood
+and tunnel directions from break geometry, cave exposure from open neighbour faces, break rhythm,
+and trajectory coverage. Anything unobserved is `null`.
+
 Admin commands (`jevcraft.admin`, default op): `/jevcraft status`, `/jevcraft session <player>`,
 `/jevcraft flush <player>`, `/jevcraft metrics`. Config: `plugin/src/main/resources/config.yml`.
 The JSONL line format is mirrored by `RawTelemetryEventSchema` in `@jevcraft/schema`, and
@@ -112,6 +131,7 @@ Paper `26.2.build.124-stable` requires Java 25 (spec said 21), and commands are 
 | `@jevcraft/schema` | Zod contracts: `MiningSessionFeatures`, `DecisionRecord`, `SessionLabel` |
 | `@jevcraft/jev-evaluator` | `xray-v1` question set, TypeSafe SDK backend, mock backend, decision policy |
 | `@jevcraft/eval-runner` | Label join, metrics, Markdown report |
+| `@jevcraft/feature-extractor` | Raw plugin JSONL -> `MiningSessionFeatures` (spec §9 definitions; 15-min windows) |
 | `@jevcraft/scenario-generator` | Feature-level synthetic sessions from `scenarios/*.json` (spec §13A) |
 | `@jevcraft/cli` | `pnpm jevcraft evaluate` / `report` / `generate` |
 

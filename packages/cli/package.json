@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@jevcraft/eval-runner": "workspace:*",
+    "@jevcraft/feature-extractor": "workspace:*",
     "@jevcraft/jev-evaluator": "workspace:*",
     "@jevcraft/scenario-generator": "workspace:*",
     "@jevcraft/schema": "workspace:*",
