@@ -37,12 +37,14 @@ services:
       OVERRIDE_OPS: "true"
       # Mineflayer speaks up to 26.1; ViaBackwards lets it join this 26.2 server.
       MODRINTH_PROJECTS: viaversion,viabackwards
+      # Bots reconnect often; patches/bukkit.json disables the per-IP reconnect throttle.
+      PATCH_DEFINITIONS: /patches
       JEVCRAFT_HMAC_SECRET: change-me-local-only
     ports:
       - "25565:25565"
     volumes:
       - ./paper/data:/data
-      - ./paper/config:/config:ro
+      - ./paper/patches:/patches:ro
       - ../plugin/build/libs:/plugins:ro
     stdin_open: true
     tty: true

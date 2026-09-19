@@ -40,6 +40,9 @@ public final class TelemetryService implements SessionTracker.Listener {
     private final MovementSampler sampler;
     private final SessionTracker tracker;
     private final Map<String, Long> droppedAtSessionStart = new java.util.HashMap<>();
+    private long breakEventsSeen;
+    private long moveEventsSeen;
+    private long revealsSeen;
 
     public TelemetryService(
             JevCraftConfig config,
@@ -86,6 +89,7 @@ public final class TelemetryService implements SessionTracker.Listener {
     // ---- Bukkit-facing entry points -------------------------------------------------------
 
     public void recordMovement(Player player, Location to) {
+        moveEventsSeen++;
         MovementSampler.Sample sample = sampleOf(to);
         Optional<MovementSampler.Sample> accepted = sampler.accept(player.getUniqueId(), sample);
         if (accepted.isEmpty()) {
@@ -97,6 +101,7 @@ public final class TelemetryService implements SessionTracker.Listener {
 
     /** Call from BlockBreakEvent at MONITOR priority, while the block still exists. */
     public void recordBlockBreak(Player player, Block block) {
+        breakEventsSeen++;
         Material type = block.getType();
         boolean targetOre = config.targetOres().contains(type);
         boolean stoneLike = JevCraftConfig.STONE_LIKE.contains(type);
@@ -109,6 +114,7 @@ public final class TelemetryService implements SessionTracker.Listener {
         // Make sure the position right before the break is in the trajectory.
         sampler.force(player.getUniqueId(), sampleOf(player.getLocation()));
 
+        revealsSeen += reveals.size();
         Optional<MiningSession> session = tracker.onBlockBreak(
                 player.getUniqueId(), block.getWorld().getName(), block.getY(), stoneLike, targetOre, reveals.size());
         if (session.isEmpty()) {
@@ -199,13 +205,17 @@ public final class TelemetryService implements SessionTracker.Listener {
     }
 
     public Map<String, Object> metrics() {
-        return Map.of(
-                "serverRunId", serverRunId,
-                "activeSessions", tracker.snapshot().size(),
-                "linesWritten", writer.writtenCount(),
-                "linesDropped", writer.droppedCount(),
-                "queueSize", writer.queueSize(),
-                "ephemeralIds", pseudonymizer.isEphemeral());
+        Map<String, Object> m = new java.util.LinkedHashMap<>();
+        m.put("serverRunId", serverRunId);
+        m.put("activeSessions", tracker.snapshot().size());
+        m.put("breakEventsSeen", breakEventsSeen);
+        m.put("moveEventsSeen", moveEventsSeen);
+        m.put("hiddenOreReveals", revealsSeen);
+        m.put("linesWritten", writer.writtenCount());
+        m.put("linesDropped", writer.droppedCount());
+        m.put("queueSize", writer.queueSize());
+        m.put("ephemeralIds", pseudonymizer.isEphemeral());
+        return m;
     }
 
     /** Ends every session and drains the writer. Safe to call from onDisable. */

@@ -1,3 +1,0 @@
-# Copied into /data on start (itzg). Bots reconnect often; disable the per-IP reconnect throttle.
-settings:
-  connection-throttle: -1
