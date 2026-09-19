@@ -22,6 +22,7 @@ Model for every run below: `jev-1.13.0` (what `jev-latest` resolved to on 2026-0
 | `2026-09-19-bots-all-bl-xray-v4.md` | same 56, features carry `baselinePercentile` | 56 | xray-v4 |
 | `2026-09-19-bots-all-bl-xray-v5.md` | same, v5 context | 56 | xray-v5 |
 | `2026-09-19-bots-all-bl-xray-v6.md` | same, v6 extra question | 56 | xray-v6 |
+| `2026-09-19-bots-all-bl-xray-v6-noflag.md` | same, v6 with `quality.enoughEvidence` redacted from the state | 56 | xray-v6-noflag |
 
 ## Question sets compared
 
@@ -191,6 +192,30 @@ note the reference includes the lucky-streak session itself, which then ranks 10
   the ordering is right and `behavior_class` sharpened too (direct 0.49 → 0.60). **v6 is now the
   default**; the policy does not use `approachTargeting` yet, so outcomes are unchanged until a
   rule is written for it.
+
+## Two more experiments on the same 56 sessions
+
+**Policy gate on `approach_targeting` (offline, no API).** Rule: an ordinary `review` also needs
+`approachTargeting >= t`, unless `P(likely_xray) >= 0.6`.
+
+| t | TP | FP | Recall | FPR |
+| --- | --- | --- | --- | --- |
+| off | 35 | 1 | 0.814 | 0.077 |
+| 0.15 | 34 | 0 | 0.791 | 0.000 |
+| 0.20 | 23 | 0 | 0.535 | 0.000 |
+
+The lucky-streak session has `approachTargeting` 0.13; three detour X-Ray sessions sit at
+0.12–0.14. A gate at 0.15 removes the false positive for one lost detour, but the margin is a
+single session wide, so the gate ships **off by default**
+(`DEFAULT_THRESHOLDS.reviewMinApproachTargeting = null`). Revisit with more legit data.
+
+**Ablation: do not send `quality.enoughEvidence`** (`xray-v6-noflag`). Sufficiency barely
+changed (nothing dropped below 0.75 either way), so Jev does judge telemetry itself. What the flag
+actually does is make `behavior_class` commit: without it P(likely_xray) medians fell from
+0.17 / 0.60 / 0.58 / 0.47 to 0.04 / 0.33 / 0.29 / 0.20 (legit / direct / detour / humanized) and
+the policy went to 29 TP / 0 FP (recall 0.674, FPR 0). The flag is therefore a sensitivity knob,
+not a leak of the answer; it stays in the state as spec §9 intends. `approach_targeting` ordering
+was unchanged by the ablation (0.10 / 0.40 / 0.16 / 0.17).
 
 ## Caveats
 

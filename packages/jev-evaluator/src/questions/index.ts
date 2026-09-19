@@ -14,6 +14,7 @@ export const QUESTION_SETS: readonly QuestionSet[] = [
   xrayV4,
   xrayV5,
   xrayV6,
+  xrayV6NoFlag,
 ];
 
 /**
