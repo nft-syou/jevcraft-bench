@@ -1,0 +1,17 @@
+{"sessionId":"session_278d7e39-4917-4875-90e3-4f1ebde88b88","label":"legit","subtype":"branch_mining","reviewStatus":"single_review","notes":"bot: legit-branch-mining"}
+{"sessionId":"session_352038a0-fa89-47c0-9235-b8fb3abd30fa","label":"legit","subtype":"branch_mining","reviewStatus":"single_review","notes":"bot: legit-branch-mining"}
+{"sessionId":"session_f645c77a-9932-44af-8236-38df64106f74","label":"legit","subtype":"branch_mining","reviewStatus":"single_review","notes":"bot: legit-branch-mining"}
+{"sessionId":"session_97b37ce9-8e0a-4a87-935a-1d60d887787c","label":"legit","subtype":"branch_mining","reviewStatus":"single_review","notes":"bot: legit-branch-mining"}
+{"sessionId":"session_0d5f4d8b-1d23-48a4-91de-e9820e01dbdb","label":"simulated_xray","subtype":"direct_xray","reviewStatus":"single_review","notes":"bot: xray-direct"}
+{"sessionId":"session_754cf628-fdc7-40ec-8087-0bf2c0d83279","label":"simulated_xray","subtype":"direct_xray","reviewStatus":"single_review","notes":"bot: xray-direct"}
+{"sessionId":"session_8d30e18e-df54-49e8-9748-3c042d10db3c","label":"simulated_xray","subtype":"direct_xray","reviewStatus":"single_review","notes":"bot: xray-direct"}
+{"sessionId":"session_cac32bc1-0aa1-4ce4-bb4c-8510653b73aa","label":"simulated_xray","subtype":"direct_xray","reviewStatus":"single_review","notes":"bot: xray-direct"}
+{"sessionId":"session_f3e01b08-b2c7-4546-8b06-10e7fa4e9e5e","label":"legit","subtype":"branch_mining","reviewStatus":"single_review","notes":"bot: legit-branch-mining"}
+{"sessionId":"session_d0daad09-28da-4568-b1f2-cbc2f5c1376a","label":"simulated_xray","subtype":"detour_xray","reviewStatus":"single_review","notes":"bot: xray-detour"}
+{"sessionId":"session_e394e222-71b5-4b10-81d9-9a11a9a6fa54","label":"simulated_xray","subtype":"detour_xray","reviewStatus":"single_review","notes":"bot: xray-detour"}
+{"sessionId":"session_850f9d18-6e11-46e7-b5e3-601509f882e1","label":"simulated_xray","subtype":"detour_xray","reviewStatus":"single_review","notes":"bot: xray-detour"}
+{"sessionId":"session_12398cc1-e1ae-410b-9960-aa071065c91d","label":"simulated_xray","subtype":"detour_xray","reviewStatus":"single_review","notes":"bot: xray-detour"}
+{"sessionId":"session_357027f8-df45-4073-8a0b-9c1098fc67f9","label":"simulated_xray","subtype":"humanized_xray","reviewStatus":"single_review","notes":"bot: xray-humanized"}
+{"sessionId":"session_d022ec69-7623-4c41-a9cc-e5f92c568c2a","label":"simulated_xray","subtype":"humanized_xray","reviewStatus":"single_review","notes":"bot: xray-humanized"}
+{"sessionId":"session_ace49b3d-bdb4-42a2-a651-4eb5cc7d811f","label":"simulated_xray","subtype":"humanized_xray","reviewStatus":"single_review","notes":"bot: xray-humanized"}
+{"sessionId":"session_766240e3-73f6-4e05-a89d-f12648c0e45d","label":"simulated_xray","subtype":"humanized_xray","reviewStatus":"single_review","notes":"bot: xray-humanized"}

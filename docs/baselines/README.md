@@ -14,6 +14,7 @@ Model for every run below: `jev-1.13.0` (what `jev-latest` resolved to on 2026-0
 | `2026-09-19-seed1-live-v3.md` | same 105 sessions | 105 | xray-v3 |
 | `2026-09-19-bot-batch1-live.md` | 12 Mineflayer bot runs × 240 s (real plugin telemetry) | 12 | xray-v3 |
 | `2026-09-19-bot-batch2-live.md` | 10 Mineflayer bot runs × 480 s (real plugin telemetry) | 10 | xray-v3 |
+| `2026-09-19-bot-batch4-live.md` | 16 bot runs × 480 s, 8 in parallel (17 sessions) | 17 | xray-v3 |
 
 ## Question sets compared
 
@@ -76,12 +77,23 @@ Phase 3 real telemetry and richer per-approach features exist.
 `jevcraft record` drove Mineflayer bots on the compose Paper server; the plugin, the extractor and
 `label-runs` produced everything below. Two batches: 240 s runs (batch1) and 480 s runs (batch2).
 
-| | batch1 (12) | batch2 (10) |
-| --- | --- | --- |
-| Sessions that met `enoughEvidence` | 2 | 6 |
-| X-Ray sessions sent to review | 2 / 9 | 5 / 8 |
-| Legit sessions flagged | 0 / 3 | 0 / 2 |
-| FPR / Precision / Recall (policy) | 0.000 / 1.000 / 0.22 | 0.000 / 1.000 / 0.625 |
+| | batch1 (12) | batch2 (10) | batch4 (17) |
+| --- | --- | --- | --- |
+| Sessions that met `enoughEvidence` | 2 | 6 | 15 |
+| X-Ray sessions sent to review | 2 / 9 | 5 / 8 | 11 / 12 |
+| Legit sessions flagged | 0 / 3 | 0 / 2 | 0 / 5 |
+| FPR / Precision / Recall (policy) | 0.000 / 1.000 / 0.22 | 0.000 / 1.000 / 0.625 | 0.000 / 1.000 / 0.917 |
+| Wall-clock for the batch | ~50 min sequential | ~90 min sequential | ~18 min, 8 bots in parallel |
+
+Batch4 is the first batch where the recorder itself was not the bottleneck (ore-aware start
+spots, plain pickaxe, parallel workers, no reconnect throttle). Every X-Ray run that met a
+diamond went to `review` with P(likely_xray) 0.34–0.67; none reached `high_priority_review`
+(needs 0.90). Legit runs with ≥ 2 reveals got `no_action` (P 0.18–0.27, sufficiency 0.78–0.86);
+legit runs with 0–1 reveals stayed `insufficient_evidence` because Jev's sufficiency was 0.43–0.49
+even with the extractor's `enoughEvidence: true`. The v3 sufficiency wording literally asks for
+"enough hidden-ore approaches", so a reveal-free legit session cannot satisfy it; an `xray-v4`
+wording that also accepts "enough mining activity to show the absence of targeted digging" is
+the next cheap experiment.
 
 What the bot data taught us, in order of importance:
 
