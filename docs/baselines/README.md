@@ -19,6 +19,9 @@ Model for every run below: `jev-1.13.0` (what `jev-latest` resolved to on 2026-0
 | `2026-09-19-bot-batch2-v4-live.md` | batch2's 10 sessions | 10 | xray-v4 |
 | `2026-09-19-bot-batch5-live.md` | 32 bot runs × 480 s, 8 in parallel (29 labelled sessions) | 29 | xray-v4 |
 | `2026-09-19-bots-all-live.md` | batch2 + batch4 + batch5 under v4 (56 sessions) | 56 | xray-v4 |
+| `2026-09-19-bots-all-bl-xray-v4.md` | same 56, features carry `baselinePercentile` | 56 | xray-v4 |
+| `2026-09-19-bots-all-bl-xray-v5.md` | same, v5 context | 56 | xray-v5 |
+| `2026-09-19-bots-all-bl-xray-v6.md` | same, v6 extra question | 56 | xray-v6 |
 
 ## Question sets compared
 
@@ -28,6 +31,8 @@ Model for every run below: `jev-1.13.0` (what `jev-latest` resolved to on 2026-0
 | xray-v2 | Reworded: telemetry quantity/quality, "not whether cheating occurred" | v1 + 1 line saying a legit session with complete telemetry has sufficient evidence |
 | xray-v3 | Same as v2 | Same as v1 |
 | xray-v4 | v3 wording, but "enough approaches **or** plenty of mining with no targeted digging" | Same as v1 |
+| xray-v5 | v4 | v1 + 3 lines explaining baselinePercentile and the approach metrics |
+| xray-v6 | v4 + fifth question `approach_targeting` (noul, judged from `hiddenOreApproach` only) | Same as v1 |
 
 v3 isolates the question rewording from the added context line.
 
@@ -162,6 +167,30 @@ tunneller fail until they were excluded; `bot.dig` needs a timeout.
   "first approach to each vein" or richer per-approach features is the next lever.
 - Throughput: 8 parallel bots record 32 × 480 s runs in ~35 min; 56 usable sessions cost ~60k
   input tokens to evaluate.
+
+## Baseline percentile, v5 and v6 on the same 56 sessions
+
+`jevcraft baseline` now builds `efficiency.baselinePercentile` from the legit sessions
+(spec §9); here from the 10 evidenced legit bot sessions (values 0 … 8.5 reveals per 100 blocks;
+note the reference includes the lucky-streak session itself, which then ranks 100th percentile).
+
+| | v4, no baseline | v4 + baseline | v5 + baseline | v6 + baseline |
+| --- | --- | --- | --- | --- |
+| Policy TP / FP / TN / FN | 35 / 1 / 12 / 8 | same | same | same |
+| TP at P(likely_xray) ≥ 0.50 (FP) | 14 (0) | 23 (1) | 14 (1) | — |
+| P(likely_xray) median: legit / direct / detour / humanized | 0.11 / 0.46 / 0.51 / 0.41 | 0.13 / 0.49 / 0.57 / 0.50 | 0.03 / 0.36 / 0.47 / 0.42 | 0.17 / 0.60 / 0.58 / 0.47 |
+| `approach_targeting` median: legit / direct / detour / humanized | — | — | — | 0.10 / 0.43 / 0.18 / 0.20 |
+
+- **Baseline helps recall at a fixed likely_xray threshold** (14 → 23 X-Ray sessions above 0.50)
+  without touching policy outcomes. The lucky streak now sits at percentile 100 and stays a
+  false positive under every variant; efficiency-based evidence cannot tell luck from X-Ray.
+- **v5's explanatory context was counter-productive**: Jev moved mass from `likely_xray` to
+  `suspicious` for every style (direct median 0.49 → 0.36). Kept in the registry as a negative result.
+- **v6's dedicated question is the first answer that separates direct X-Ray from detour**
+  (0.43 vs 0.18) and from strip mining (0.10). Absolute values stay below 0.5, so Jev hedges, but
+  the ordering is right and `behavior_class` sharpened too (direct 0.49 → 0.60). **v6 is now the
+  default**; the policy does not use `approachTargeting` yet, so outcomes are unchanged until a
+  rule is written for it.
 
 ## Caveats
 

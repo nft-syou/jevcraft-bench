@@ -16,10 +16,11 @@ export const QUESTION_SETS: readonly QuestionSet[] = [
 ];
 
 /**
- * v4 since 2026-09-19: v1's sufficiency tracked suspicion; v3 fixed that but still demanded
- * hidden-ore approaches, so reveal-free legit sessions stayed "insufficient" (see docs/baselines).
+ * v6 since 2026-09-19: v4 (sufficiency accepts reveal-free activity) plus a dedicated
+ * approach_targeting question, the only answer so far that separates direct X-Ray from detour
+ * and from strip mining on real bot telemetry (see docs/baselines).
  */
-export const DEFAULT_QUESTION_SET: QuestionSet = xrayV4;
+export const DEFAULT_QUESTION_SET: QuestionSet = xrayV6;
 
 export function getQuestionSet(version: string): QuestionSet {
   const found = QUESTION_SETS.find((set) => set.version === version);

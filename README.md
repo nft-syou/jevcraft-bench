@@ -127,6 +127,9 @@ docker compose -f infra/docker-compose.yml up -d paper       # fixed seed, peace
 JEVCRAFT_HMAC_SECRET=change-me-local-only   pnpm jevcraft record --scenario all --count 5 --budget-seconds 240 --out datasets/recordings/batch1.jsonl
 pnpm jevcraft extract infra/paper/data/plugins/JevCraft/data --out datasets/features/batch1.jsonl
 pnpm jevcraft label-runs --raw infra/paper/data/plugins/JevCraft/data --manifest datasets/recordings/batch1.jsonl --out datasets/labels/batch1.jsonl
+# optional: efficiency.baselinePercentile against the legit sessions you already have
+pnpm jevcraft baseline --features datasets/features/batch1.jsonl --labels datasets/labels/batch1.jsonl --out datasets/baselines/legit.json
+pnpm jevcraft extract infra/paper/data/plugins/JevCraft/data --baseline datasets/baselines/legit.json --out datasets/features/batch1.jsonl
 pnpm jevcraft evaluate datasets/features/batch1.jsonl --out datasets/decisions/batch1.jsonl
 pnpm jevcraft report --decisions datasets/decisions/batch1.jsonl --labels datasets/labels/batch1.jsonl
 ```
@@ -173,10 +176,11 @@ One request per mining session. Jev is asked four independent questions:
 | `hidden_information_use` | noul | P(player acted on hidden ore-location information) |
 | `route_naturalness` | score 0..4 | 0 = highly unnatural, 4 = strongly natural (`normalized = score / 4`) |
 | `evidence_sufficiency` | noul | P(enough evidence to classify) |
+| `approach_targeting` (v6+) | noul | P(movement before reveals was a deliberate approach, judged from `hiddenOreApproach` only) |
 
-Question sets are versioned (`--questions xray-v1|xray-v2|xray-v3|xray-v4`, default v4) and the version is
+Question sets are versioned (`--questions xray-v1` … `xray-v6`, default v6) and the version is
 stored on every decision record, so sets can be compared on the same dataset. See
-`docs/baselines/README.md` for why v3 replaced v1 and v4 replaced v3.
+`docs/baselines/README.md` for how each version was chosen.
 
 The policy (`packages/jev-evaluator/src/policy.ts`) turns these into
 `insufficient_evidence` / `high_priority_review` / `review` / `no_action`.

@@ -5,6 +5,7 @@ import {
   evaluateSession,
   type JevBackend,
   xrayV2,
+  xrayV4,
   xrayV6,
 } from "@jevcraft/jev-evaluator";
 import { DecisionRecordSchema, MiningSessionFeaturesSchema } from "@jevcraft/schema";
@@ -31,7 +32,7 @@ describe("evaluateSession", () => {
       evaluatedAt: "2026-09-19T00:00:00.000Z",
       model: "jev-latest",
       backend: "mock",
-      questionSetVersion: "xray-v4",
+      questionSetVersion: "xray-v6",
       featureExtractorVersion: "0.1.0",
       policyOutcome: "high_priority_review",
       error: null,
@@ -88,7 +89,10 @@ describe("evaluateSession", () => {
     });
     expect(record.questionSetVersion).toBe("xray-v6");
     expect(record.answers?.approachTargeting).toBe(0.5);
-    const v4 = await evaluateSession(loadFixture("xray-direct-001.json"), fixedOptions);
+    const v4 = await evaluateSession(loadFixture("xray-direct-001.json"), {
+      ...fixedOptions,
+      questionSet: xrayV4,
+    });
     expect(v4.answers?.approachTargeting).toBeUndefined();
   });
 

@@ -15,7 +15,7 @@ import { describe, expect, it } from "vitest";
 import { validFeatures } from "../../schema/test/helpers";
 
 describe("question set registry", () => {
-  it("knows xray-v1..v6 and defaults to v4", () => {
+  it("knows xray-v1..v6 and defaults to v6", () => {
     expect(QUESTION_SETS.map((s) => s.version)).toEqual([
       "xray-v1",
       "xray-v2",
@@ -24,7 +24,7 @@ describe("question set registry", () => {
       "xray-v5",
       "xray-v6",
     ]);
-    expect(DEFAULT_QUESTION_SET.version).toBe("xray-v4");
+    expect(DEFAULT_QUESTION_SET.version).toBe("xray-v6");
     expect(getQuestionSet("xray-v2")).toBe(xrayV2);
     expect(() => getQuestionSet("xray-v9")).toThrow(/unknown question set "xray-v9"/);
   });
