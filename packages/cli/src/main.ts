@@ -4,6 +4,7 @@ import { EXTRACT_USAGE, runExtract } from "./commands/extract";
 import { GENERATE_USAGE, runGenerate } from "./commands/generate";
 import { LABEL_RUNS_USAGE, runLabelRuns } from "./commands/label-runs";
 import { RECORD_USAGE, runRecord } from "./commands/record";
+import { REPOLICY_USAGE, runRepolicy } from "./commands/repolicy";
 import { REPORT_USAGE, runReport } from "./commands/report";
 
 const USAGE = `jevcraft <command>
@@ -13,6 +14,7 @@ commands:
   baseline   ${BASELINE_USAGE}
   evaluate   ${EVALUATE_USAGE}
   report     ${REPORT_USAGE}
+  repolicy   ${REPOLICY_USAGE}
   generate   ${GENERATE_USAGE}
   record     ${RECORD_USAGE}
   label-runs ${LABEL_RUNS_USAGE}
@@ -32,6 +34,9 @@ async function main(argv: string[]): Promise<number> {
       return 0;
     case "report":
       await runReport(rest);
+      return 0;
+    case "repolicy":
+      await runRepolicy(rest);
       return 0;
     case "generate":
       await runGenerate(rest);

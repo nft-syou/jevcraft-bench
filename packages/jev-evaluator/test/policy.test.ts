@@ -41,8 +41,8 @@ describe("applyPolicy", () => {
       highPriorityHiddenInfo: 0.85,
       highPriorityConfidence: 0.6,
       reviewCombinedProbability: 0.75,
-      reviewMinApproachTargeting: null,
-      reviewBypassXrayProbability: null,
+      reviewMinApproachTargeting: 0.15,
+      reviewBypassXrayProbability: 0.6,
     });
   });
 

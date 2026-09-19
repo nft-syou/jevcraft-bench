@@ -23,6 +23,8 @@ Model for every run below: `jev-1.13.0` (what `jev-latest` resolved to on 2026-0
 | `2026-09-19-bots-all-bl-xray-v5.md` | same, v5 context | 56 | xray-v5 |
 | `2026-09-19-bots-all-bl-xray-v6.md` | same, v6 extra question | 56 | xray-v6 |
 | `2026-09-19-bots-all-bl-xray-v6-noflag.md` | same, v6 with `quality.enoughEvidence` redacted from the state | 56 | xray-v6-noflag |
+| `2026-09-19-bot-batch6-live.md` | 24 legit-only runs (21 sessions), held out from every choice above | 21 | xray-v6 |
+| `2026-09-19-bots-77-gated-live.md` | all 77 bot sessions, approach gate 0.15 / bypass 0.6 (`jevcraft repolicy`) | 77 | xray-v6 |
 
 ## Question sets compared
 
@@ -205,9 +207,8 @@ note the reference includes the lucky-streak session itself, which then ranks 10
 | 0.20 | 23 | 0 | 0.535 | 0.000 |
 
 The lucky-streak session has `approachTargeting` 0.13; three detour X-Ray sessions sit at
-0.12–0.14. A gate at 0.15 removes the false positive for one lost detour, but the margin is a
-single session wide, so the gate ships **off by default**
-(`DEFAULT_THRESHOLDS.reviewMinApproachTargeting = null`). Revisit with more legit data.
+0.12–0.14. A gate at 0.15 removes the false positive for one lost detour; on these 56 sessions the margin
+was a single session wide, so it was first left off. It was then validated on batch6 (below).
 
 **Ablation: do not send `quality.enoughEvidence`** (`xray-v6-noflag`). Sufficiency barely
 changed (nothing dropped below 0.75 either way), so Jev does judge telemetry itself. What the flag
@@ -216,6 +217,37 @@ actually does is make `behavior_class` commit: without it P(likely_xray) medians
 the policy went to 29 TP / 0 FP (recall 0.674, FPR 0). The flag is therefore a sensitivity knob,
 not a leak of the answer; it stays in the state as spec §9 intends. `approach_targeting` ordering
 was unchanged by the ablation (0.10 / 0.40 / 0.16 / 0.17).
+
+## Held-out legit batch (batch6) and the gate decision
+
+24 legit-only runs (21 sessions) were recorded *after* every choice above, in a different part of
+the arena (ore-rich cells, because the recorder's start-spot probing looks for diamonds for every
+scenario). They are the closest thing to a held-out FPR test the bench has.
+
+| | legit sessions flagged (`review`) | FPR |
+| --- | --- | --- |
+| default policy, xray-v6, with baselinePercentile | 9 / 21 | 0.429 |
+| same, without baselinePercentile | 8 / 21 | 0.381 |
+| approach gate t = 0.15, bypass P(likely_xray) ≥ 0.6 | 2 / 21 | 0.095 |
+| approach gate t = 0.20 | 1 / 21 | 0.048 |
+
+So the earlier FPR of 0.077 was small-sample luck: ordinary strip mining that runs through a
+vein-rich area is flagged by `suspicious` mass four times out of ten, and `baselinePercentile`
+is not the cause. The flagged legit sessions have `approach_targeting` 0.10–0.15 (one at 0.33),
+which is exactly what the dedicated question was built to expose.
+
+Across all 77 sessions (34 legit / 43 X-Ray):
+
+| gate | TP | FP | Recall | FPR |
+| --- | --- | --- | --- | --- |
+| off | 35 | 10 | 0.814 | 0.294 |
+| 0.15 / bypass 0.6 | 34 | 2 | 0.791 | 0.059 |
+| 0.20 / bypass 0.6 | 23 | 1 | 0.535 | 0.029 |
+
+**The gate (0.15, bypass 0.6) is now on by default.** It costs one X-Ray session out of 35 and
+removes eight of ten false positives. It is still provisional: one seed, one world, bots only.
+`jevcraft repolicy` recomputes outcomes from archived answers, so future threshold changes can be
+compared on these 77 sessions without new API calls.
 
 ## Caveats
 

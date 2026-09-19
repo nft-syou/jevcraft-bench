@@ -27,10 +27,11 @@ export const DEFAULT_THRESHOLDS: PolicyThresholds = {
   highPriorityHiddenInfo: 0.85,
   highPriorityConfidence: 0.6,
   reviewCombinedProbability: 0.75,
-  // Off by default: on 56 bot sessions a gate of 0.15 (bypass 0.6) removed the one lucky-streak
-  // false positive at the cost of one detour X-Ray, but the margin (0.13 vs 0.15) is one session wide.
-  reviewMinApproachTargeting: null,
-  reviewBypassXrayProbability: null,
+  // On since 2026-09-19: chosen on 56 bot sessions (removed the one lucky-streak FP for one lost
+  // detour X-Ray), then validated on 21 held-out legit sessions where it cut false positives from
+  // 9 to 2. Still provisional: bots, one seed, one world. See docs/baselines/README.md.
+  reviewMinApproachTargeting: 0.15,
+  reviewBypassXrayProbability: 0.6,
 };
 
 /**
