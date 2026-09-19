@@ -17,6 +17,8 @@ Model for every run below: `jev-1.13.0` (what `jev-latest` resolved to on 2026-0
 | `2026-09-19-bot-batch4-live.md` | 16 bot runs × 480 s, 8 in parallel (17 sessions) | 17 | xray-v3 |
 | `2026-09-19-bot-batch4-v4-live.md` | same 17 sessions | 17 | xray-v4 |
 | `2026-09-19-bot-batch2-v4-live.md` | batch2's 10 sessions | 10 | xray-v4 |
+| `2026-09-19-bot-batch5-live.md` | 32 bot runs × 480 s, 8 in parallel (29 labelled sessions) | 29 | xray-v4 |
+| `2026-09-19-bots-all-live.md` | batch2 + batch4 + batch5 under v4 (56 sessions) | 56 | xray-v4 |
 
 ## Question sets compared
 
@@ -137,6 +139,29 @@ sufficiency question largely echoes the extractor. Worth an ablation (drop the f
 Operational notes: Paper throttles reconnects from one IP (4 s), which killed three parallel bot
 runs before the recorder learned to retry; targets in the bedrock layer (y < -59) made the
 tunneller fail until they were excluded; `bot.dig` needs a timeout.
+
+## All bot sessions under xray-v4 (56 sessions: 13 legit, 43 X-Ray)
+
+| | value |
+| --- | --- |
+| Policy confusion (TP / FP / TN / FN) | 35 / 1 / 12 / 8 |
+| Precision / Recall / FPR | 0.972 / 0.814 / 0.077 |
+| direct / detour / humanized recall | 0.80 / 0.86 / 0.79 |
+| X-Ray misses that never met a diamond (recording limitation) | 6 of 8 |
+
+- The single false positive is a **lucky streak**: a legit strip-mining bot cut through a cluster
+  of veins (17 reveals in 200 breaks, P(likely_xray) 0.31, `suspicious` 0.45) and the review rule
+  (`P(likely_xray) + P(suspicious) >= 0.75`) fired. Exactly the failure the spec warns about (§22),
+  now observed on real telemetry rather than on the synthetic generator.
+- `P(likely_xray)` alone never crosses 0.75 for any bot session; at a 0.50 threshold it gives
+  FPR 0 with recall 0.33. Everything the policy catches beyond that comes from `suspicious` mass.
+  `high_priority_review` (0.90) is unreachable with the current features.
+- The three X-Ray styles are not separated: P(likely_xray) medians are direct 0.53, detour 0.55,
+  humanized 0.44. Directness (0.7–0.98 vs 0.4–0.7) and detour ratio do differ in the features, so
+  the signal exists but Jev is not using it strongly; a question that asks specifically about
+  "first approach to each vein" or richer per-approach features is the next lever.
+- Throughput: 8 parallel bots record 32 × 480 s runs in ~35 min; 56 usable sessions cost ~60k
+  input tokens to evaluate.
 
 ## Caveats
 
