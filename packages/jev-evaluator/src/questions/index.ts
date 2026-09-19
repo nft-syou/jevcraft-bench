@@ -5,6 +5,7 @@ import { xrayV3 } from "./xray-v3";
 import { xrayV4 } from "./xray-v4";
 import { xrayV5 } from "./xray-v5";
 import { xrayV6 } from "./xray-v6";
+import { xrayV6NoFlag } from "./xray-v6-noflag";
 
 export const QUESTION_SETS: readonly QuestionSet[] = [
   xrayV1,

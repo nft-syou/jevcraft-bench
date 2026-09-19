@@ -31,4 +31,5 @@ export { XRAY_V3_VERSION, xrayV3 } from "./questions/xray-v3";
 export { XRAY_V4_VERSION, xrayV4, xrayV4Questions } from "./questions/xray-v4";
 export { XRAY_V5_IMPORTANT_CONTEXT, XRAY_V5_VERSION, xrayV5 } from "./questions/xray-v5";
 export { XRAY_V6_VERSION, xrayV6, xrayV6Questions } from "./questions/xray-v6";
+export { XRAY_V6_NOFLAG_VERSION, xrayV6NoFlag } from "./questions/xray-v6-noflag";
 export { createTypeSafeBackend, DEFAULT_MODEL } from "./typesafe-backend";

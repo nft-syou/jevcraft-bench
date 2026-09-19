@@ -9,13 +9,14 @@ import {
   xrayV4,
   xrayV5,
   xrayV6,
+  xrayV6NoFlag,
 } from "@jevcraft/jev-evaluator";
 import { MiningSessionFeaturesSchema } from "@jevcraft/schema";
 import { describe, expect, it } from "vitest";
 import { validFeatures } from "../../schema/test/helpers";
 
 describe("question set registry", () => {
-  it("knows xray-v1..v6 and defaults to v6", () => {
+  it("knows xray-v1..v6 (+noflag) and defaults to v6", () => {
     expect(QUESTION_SETS.map((s) => s.version)).toEqual([
       "xray-v1",
       "xray-v2",
@@ -23,6 +24,7 @@ describe("question set registry", () => {
       "xray-v4",
       "xray-v5",
       "xray-v6",
+      "xray-v6-noflag",
     ]);
     expect(DEFAULT_QUESTION_SET.version).toBe("xray-v6");
     expect(getQuestionSet("xray-v2")).toBe(xrayV2);
@@ -68,6 +70,16 @@ describe("question set registry", () => {
     const { approach_targeting, ...rest } = xrayV6.questions;
     expect(rest).toEqual(xrayV4.questions);
     expect(approach_targeting?.type).toBe("noul");
+  });
+
+  it("noflag ablation redacts quality.enoughEvidence from the state and nothing else", () => {
+    const features = MiningSessionFeaturesSchema.parse(validFeatures);
+    const state = buildState(xrayV6NoFlag, features);
+    const quality = (state.features as { quality: Record<string, unknown> }).quality;
+    expect(quality).not.toHaveProperty("enoughEvidence");
+    expect(quality).toHaveProperty("trajectoryCoverage");
+    expect(buildState(xrayV6, features).features).toHaveProperty("quality.enoughEvidence");
+    expect(features.quality.enoughEvidence).toBe(true);
   });
 
   it("builds state from any set without the session id", () => {

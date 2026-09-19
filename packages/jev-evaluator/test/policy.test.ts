@@ -41,6 +41,8 @@ describe("applyPolicy", () => {
       highPriorityHiddenInfo: 0.85,
       highPriorityConfidence: 0.6,
       reviewCombinedProbability: 0.75,
+      reviewMinApproachTargeting: null,
+      reviewBypassXrayProbability: null,
     });
   });
 
@@ -83,6 +85,35 @@ describe("applyPolicy", () => {
     expect(applyPolicy(answers({ legit: 0.9, suspicious: 0.05, likely_xray: 0.03 }), ok)).toBe(
       "no_action",
     );
+  });
+
+  it("gates ordinary review on approachTargeting when enabled, with a likely_xray bypass", () => {
+    const gated = {
+      ...DEFAULT_THRESHOLDS,
+      reviewMinApproachTargeting: 0.15,
+      reviewBypassXrayProbability: 0.6,
+    };
+    const lucky = { ...answers({ likely_xray: 0.53, suspicious: 0.3 }), approachTargeting: 0.13 };
+    expect(applyPolicy(lucky, ok)).toBe("review");
+    expect(applyPolicy(lucky, ok, gated)).toBe("no_action");
+    const targeted = { ...lucky, approachTargeting: 0.4 };
+    expect(applyPolicy(targeted, ok, gated)).toBe("review");
+    const strongButUntargeted = {
+      ...lucky,
+      approachTargeting: 0.1,
+      behaviorClass: {
+        ...lucky.behaviorClass,
+        probabilities: {
+          legit: 0.1,
+          suspicious: 0.2,
+          likely_xray: 0.65,
+          insufficient_evidence: 0.05,
+        },
+      },
+    };
+    expect(applyPolicy(strongButUntargeted, ok, gated)).toBe("review");
+    const noAnswer = answers({ likely_xray: 0.4, suspicious: 0.35 });
+    expect(applyPolicy(noAnswer, ok, gated)).toBe("review");
   });
 
   it("honours custom thresholds", () => {

@@ -11,6 +11,13 @@ export interface PolicyThresholds {
   highPriorityConfidence: number;
   /** P(likely_xray) + P(suspicious) needed for ordinary review. */
   reviewCombinedProbability: number;
+  /**
+   * Optional approach gate for ordinary review (xray-v6+ answers only): a review also needs
+   * `approachTargeting >= reviewMinApproachTargeting`, unless P(likely_xray) is at least
+   * `reviewBypassXrayProbability`. Null disables the gate. Sessions without the answer are not gated.
+   */
+  reviewMinApproachTargeting: number | null;
+  reviewBypassXrayProbability: number | null;
 }
 
 /** Provisional values from spec §10. Tune from labeled data; never treat as final. */
@@ -20,6 +27,10 @@ export const DEFAULT_THRESHOLDS: PolicyThresholds = {
   highPriorityHiddenInfo: 0.85,
   highPriorityConfidence: 0.6,
   reviewCombinedProbability: 0.75,
+  // Off by default: on 56 bot sessions a gate of 0.15 (bypass 0.6) removed the one lucky-streak
+  // false positive at the cost of one detour X-Ray, but the margin (0.13 vs 0.15) is one session wide.
+  reviewMinApproachTargeting: null,
+  reviewBypassXrayProbability: null,
 };
 
 /**
@@ -44,6 +55,14 @@ export function applyPolicy(
   ) {
     return "high_priority_review";
   }
-  if (p.likely_xray + p.suspicious >= thresholds.reviewCombinedProbability) return "review";
+  if (p.likely_xray + p.suspicious >= thresholds.reviewCombinedProbability) {
+    const gate = thresholds.reviewMinApproachTargeting;
+    const targeting = answers.approachTargeting;
+    if (gate !== null && targeting !== undefined && targeting < gate) {
+      const bypass = thresholds.reviewBypassXrayProbability;
+      if (bypass === null || p.likely_xray < bypass) return "no_action";
+    }
+    return "review";
+  }
   return "no_action";
 }

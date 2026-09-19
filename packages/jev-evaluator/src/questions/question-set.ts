@@ -14,6 +14,8 @@ export interface QuestionSet {
   task: string;
   importantContext: string[];
   questions: XrayQuestions;
+  /** Feature paths (e.g. "quality.enoughEvidence") removed from the state before sending; for ablations. */
+  redact?: string[];
 }
 
 export interface QuestionSetState {
@@ -26,9 +28,19 @@ export interface QuestionSetState {
 /** State sent to Jev. The session id is an opaque handle for our records and is not sent. */
 export function buildState(set: QuestionSet, features: MiningSessionFeatures): QuestionSetState {
   const { sessionId: _omit, ...rest } = features;
+  const copy = structuredClone(rest) as Record<string, unknown>;
+  for (const path of set.redact ?? []) {
+    const parts = path.split(".");
+    const last = parts.pop();
+    let node: unknown = copy;
+    for (const part of parts) node = (node as Record<string, unknown> | undefined)?.[part];
+    if (last !== undefined && typeof node === "object" && node !== null) {
+      delete (node as Record<string, unknown>)[last];
+    }
+  }
   return {
     task: set.task,
     importantContext: set.importantContext,
-    features: rest as unknown as JsonValue,
+    features: copy as unknown as JsonValue,
   };
 }
