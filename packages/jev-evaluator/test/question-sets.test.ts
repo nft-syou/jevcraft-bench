@@ -8,19 +8,21 @@ import {
   xrayV3,
   xrayV4,
   xrayV5,
+  xrayV6,
 } from "@jevcraft/jev-evaluator";
 import { MiningSessionFeaturesSchema } from "@jevcraft/schema";
 import { describe, expect, it } from "vitest";
 import { validFeatures } from "../../schema/test/helpers";
 
 describe("question set registry", () => {
-  it("knows xray-v1..v5 and defaults to v4", () => {
+  it("knows xray-v1..v6 and defaults to v4", () => {
     expect(QUESTION_SETS.map((s) => s.version)).toEqual([
       "xray-v1",
       "xray-v2",
       "xray-v3",
       "xray-v4",
       "xray-v5",
+      "xray-v6",
     ]);
     expect(DEFAULT_QUESTION_SET.version).toBe("xray-v4");
     expect(getQuestionSet("xray-v2")).toBe(xrayV2);
@@ -60,6 +62,12 @@ describe("question set registry", () => {
     expect(xrayV5.questions).toBe(xrayV4.questions);
     expect(xrayV5.importantContext.slice(0, 4)).toEqual(xrayV4.importantContext);
     expect(xrayV5.importantContext.join(" ")).toMatch(/baselinePercentile/);
+  });
+
+  it("v6 adds a fifth question and keeps the v4 four", () => {
+    const { approach_targeting, ...rest } = xrayV6.questions;
+    expect(rest).toEqual(xrayV4.questions);
+    expect(approach_targeting?.type).toBe("noul");
   });
 
   it("builds state from any set without the session id", () => {

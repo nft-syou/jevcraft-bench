@@ -1,6 +1,9 @@
 import type { MiningSessionFeatures } from "@jevcraft/schema";
-import type { JsonValue } from "@typesafe-ai/sdk";
+import type { JsonValue, NoulQuestion } from "@typesafe-ai/sdk";
 import type { XrayV1Questions } from "./xray-v1";
+
+/** v1 questions plus an optional dedicated approach question (xray-v6+). */
+export type XrayQuestions = XrayV1Questions & { approach_targeting?: NoulQuestion };
 
 /**
  * A versioned set of the four xray questions plus the framing sent as `state`.
@@ -10,7 +13,7 @@ export interface QuestionSet {
   version: string;
   task: string;
   importantContext: string[];
-  questions: XrayV1Questions;
+  questions: XrayQuestions;
 }
 
 export interface QuestionSetState {

@@ -17,7 +17,7 @@ export interface EvaluateDeps {
 }
 
 export const EVALUATE_USAGE =
-  "usage: jevcraft evaluate <input.json|input.jsonl|dir>... [--out <file.jsonl>] [--backend auto|typesafe|mock] [--model <name>] [--repeat <n>] [--questions xray-v1|...|xray-v5]";
+  "usage: jevcraft evaluate <input.json|input.jsonl|dir>... [--out <file.jsonl>] [--backend auto|typesafe|mock] [--model <name>] [--repeat <n>] [--questions xray-v1|...|xray-v6]";
 
 function chooseBackend(
   requested: string,

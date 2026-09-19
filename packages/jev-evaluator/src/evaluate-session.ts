@@ -8,11 +8,16 @@ import {
   type MiningSessionFeatures,
   MiningSessionFeaturesSchema,
 } from "@jevcraft/schema";
+import type { SystemOneResult } from "@typesafe-ai/sdk";
 import type { JevBackend } from "./backend";
 import { applyPolicy, DEFAULT_THRESHOLDS, type PolicyThresholds } from "./policy";
 import { DEFAULT_QUESTION_SET } from "./questions/index";
+import type { XrayQuestions } from "./questions/question-set";
 import { buildState, type QuestionSet } from "./questions/question-set";
-import { ROUTE_NATURALNESS_MAX, type XrayV1Answers } from "./questions/xray-v1";
+import { ROUTE_NATURALNESS_MAX } from "./questions/xray-v1";
+
+type XrayAnswers = SystemOneResult<XrayQuestions>["answers"];
+
 import { DEFAULT_MODEL } from "./typesafe-backend";
 
 export interface EvaluateSessionOptions {
@@ -29,7 +34,7 @@ export interface EvaluateSessionOptions {
 }
 
 /** Converts the SDK answer shape into the stored, validated shape. */
-export function toJevAnswers(raw: XrayV1Answers): JevAnswers {
+export function toJevAnswers(raw: XrayAnswers): JevAnswers {
   return JevAnswersSchema.parse({
     behaviorClass: {
       choice: raw.behavior_class.choice,
@@ -44,6 +49,7 @@ export function toJevAnswers(raw: XrayV1Answers): JevAnswers {
       probabilities: raw.route_naturalness.probabilities,
     },
     evidenceSufficiency: raw.evidence_sufficiency.noul,
+    ...(raw.approach_targeting ? { approachTargeting: raw.approach_targeting.noul } : {}),
   });
 }
 

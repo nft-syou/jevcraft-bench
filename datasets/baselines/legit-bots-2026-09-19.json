@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "metric": "valuableOrePer100Blocks",
+  "source": "bot batches 2/4/5, legit-branch-mining, y=-58, seed jevcraft-arena-1",
+  "sessionCount": 10,
+  "values": [0, 0, 0, 0.288, 0.341, 0.424, 0.464, 1.837, 2.288, 8.5]
+}

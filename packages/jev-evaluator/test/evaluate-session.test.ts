@@ -5,6 +5,7 @@ import {
   evaluateSession,
   type JevBackend,
   xrayV2,
+  xrayV6,
 } from "@jevcraft/jev-evaluator";
 import { DecisionRecordSchema, MiningSessionFeaturesSchema } from "@jevcraft/schema";
 import { describe, expect, it } from "vitest";
@@ -78,6 +79,17 @@ describe("evaluateSession", () => {
     });
     expect(record.questionSetVersion).toBe("xray-v2");
     expect(seen[0]).toMatch(/not whether cheating occurred/);
+  });
+
+  it("stores the extra approach_targeting answer when the question set asks it", async () => {
+    const record = await evaluateSession(loadFixture("xray-direct-001.json"), {
+      ...fixedOptions,
+      questionSet: xrayV6,
+    });
+    expect(record.questionSetVersion).toBe("xray-v6");
+    expect(record.answers?.approachTargeting).toBe(0.5);
+    const v4 = await evaluateSession(loadFixture("xray-direct-001.json"), fixedOptions);
+    expect(v4.answers?.approachTargeting).toBeUndefined();
   });
 
   it("passes the model override to the backend", async () => {

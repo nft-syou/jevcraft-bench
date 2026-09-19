@@ -41,6 +41,8 @@ export const JevAnswersSchema = z.strictObject({
   }),
   /** P(enough high-quality evidence to classify) */
   evidenceSufficiency: probability,
+  /** P(approaches changed course toward not-yet-visible ore); only question sets with the extra question fill it */
+  approachTargeting: probability.optional(),
 });
 export type JevAnswers = z.infer<typeof JevAnswersSchema>;
 

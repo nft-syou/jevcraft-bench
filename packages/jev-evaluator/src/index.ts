@@ -3,7 +3,12 @@ export { type EvaluateSessionOptions, evaluateSession, toJevAnswers } from "./ev
 export { createMockBackend } from "./mock-backend";
 export { applyPolicy, DEFAULT_THRESHOLDS, type PolicyThresholds } from "./policy";
 export { DEFAULT_QUESTION_SET, getQuestionSet, QUESTION_SETS } from "./questions/index";
-export { buildState, type QuestionSet, type QuestionSetState } from "./questions/question-set";
+export {
+  buildState,
+  type QuestionSet,
+  type QuestionSetState,
+  type XrayQuestions,
+} from "./questions/question-set";
 export {
   buildXrayV1State,
   ROUTE_NATURALNESS_MAX,
@@ -25,4 +30,5 @@ export {
 export { XRAY_V3_VERSION, xrayV3 } from "./questions/xray-v3";
 export { XRAY_V4_VERSION, xrayV4, xrayV4Questions } from "./questions/xray-v4";
 export { XRAY_V5_IMPORTANT_CONTEXT, XRAY_V5_VERSION, xrayV5 } from "./questions/xray-v5";
+export { XRAY_V6_VERSION, xrayV6, xrayV6Questions } from "./questions/xray-v6";
 export { createTypeSafeBackend, DEFAULT_MODEL } from "./typesafe-backend";
