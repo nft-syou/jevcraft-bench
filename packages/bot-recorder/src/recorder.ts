@@ -120,7 +120,9 @@ export async function recordRun(options: RecordOptions): Promise<RunManifest> {
     log(`${botName} spawned for ${scenario.name}`);
     bot.chat("/gamemode survival @s");
     bot.chat("/clear @s");
-    bot.chat("/give @s netherite_pickaxe[enchantments={efficiency:5}]");
+    // Plain pickaxe: enchanted items given via components are not visible to the 26.1 client
+    // behind ViaBackwards, which leaves the bot digging bare-handed.
+    bot.chat("/give @s netherite_pickaxe");
     bot.chat("/effect give @s night_vision 3600 1 true");
     await sleep(1000);
     // Probe a few spots in the cell and start where diamonds are within reach of a scenario,
@@ -153,13 +155,19 @@ export async function recordRun(options: RecordOptions): Promise<RunManifest> {
     await sleep(1500);
     const here = bot.entity.position.floored();
     if (here.distanceTo(chosen) > 4) notes.push(`teleport landed at ${here} (wanted ${chosen})`);
-    let pickaxe = bot.inventory.items().find((i) => i.name.endsWith("_pickaxe"));
-    for (let attempt = 0; attempt < 10 && !pickaxe; attempt++) {
+    const findPickaxe = () => bot.inventory.items().find((i) => i.name.endsWith("_pickaxe"));
+    let pickaxe = findPickaxe();
+    for (let attempt = 0; attempt < 20 && !pickaxe; attempt++) {
+      if (attempt % 6 === 5) bot.chat("/give @s netherite_pickaxe");
       await sleep(500);
-      pickaxe = bot.inventory.items().find((i) => i.name.endsWith("_pickaxe"));
+      pickaxe = findPickaxe();
     }
-    if (pickaxe) await bot.equip(pickaxe, "hand");
-    else notes.push("no pickaxe in inventory");
+    if (pickaxe) {
+      await bot.equip(pickaxe, "hand");
+    } else {
+      notes.push("no pickaxe in inventory");
+      throw new Error("no pickaxe; refusing to record a bare-handed session");
+    }
 
     await Promise.race([
       scenario.run({
