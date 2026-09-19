@@ -16,7 +16,7 @@ export interface RecordDeps {
 }
 
 export const RECORD_USAGE =
-  "usage: jevcraft record --scenario <name|all> [--count <n>] [--out <manifest.jsonl>] [--host 127.0.0.1] [--port 25565] [--version 26.1] [--budget-seconds 180] [--human-noise 0.5] [--seed 1] [--start-index 0]";
+  "usage: jevcraft record --scenario <name|all> [--count <n>] [--out <manifest.jsonl>] [--host 127.0.0.1] [--port 25565] [--version 26.1] [--budget-seconds 180] [--human-noise 0.5] [--seed 1] [--start-index 0] [--parallel 1]";
 
 export async function runRecord(
   args: string[],
@@ -40,6 +40,7 @@ export async function runRecord(
       "base-x": { type: "string", default: "100" },
       "base-y": { type: "string", default: "-58" },
       "base-z": { type: "string", default: "100" },
+      parallel: { type: "string", default: "1" },
     },
   });
   if (values.scenario === undefined) throw new Error(RECORD_USAGE);
@@ -49,6 +50,10 @@ export async function runRecord(
   const secret = (env.JEVCRAFT_HMAC_SECRET ?? "").trim() || null;
   if (secret === null) stderr("JEVCRAFT_HMAC_SECRET is not set; manifest playerId will be null");
 
+  const parallel = Number(values.parallel);
+  if (!Number.isInteger(parallel) || parallel < 1 || parallel > 16) {
+    throw new Error("--parallel must be an integer between 1 and 16");
+  }
   const base = new Vec3(
     Number(values["base-x"]),
     Number(values["base-y"]),
@@ -57,31 +62,53 @@ export async function runRecord(
   const outPath = values.out;
   await mkdir(dirname(outPath), { recursive: true });
   const runs: RunManifest[] = [];
-  let index = Number(values["start-index"]);
+  const startIndex = Number(values["start-index"]);
+  const jobs: { index: number; scenario: (typeof scenarios)[number] }[] = [];
+  let index = startIndex;
   for (const scenario of scenarios) {
-    for (let i = 0; i < count; i++) {
-      const botName = `jevbot${String((index % 16) + 1).padStart(2, "0")}`;
-      const seed = Number(values.seed) * 1000 + index;
-      stderr(`run ${index}: ${scenario.name} as ${botName} (seed ${seed})`);
-      const run = await recordRun({
-        host: values.host,
-        port: Number(values.port),
-        version: values.version,
-        botName,
-        scenario,
-        origin: arenaOrigin(base, index),
-        seed,
-        humanNoise: Number(values["human-noise"]),
-        budgetMs: Number(values["budget-seconds"]) * 1000,
-        hmacSecret: secret,
-        log: (line) => stderr(`  ${line}`),
-      });
-      runs.push(run);
-      await appendFile(outPath, `${JSON.stringify(run)}\n`, "utf8");
-      if (run.notes.length > 0) stderr(`  notes: ${run.notes.join("; ")}`);
-      index++;
-    }
+    for (let i = 0; i < count; i++) jobs.push({ index: index++, scenario });
   }
+  const runJob = async (job: { index: number; scenario: (typeof scenarios)[number] }) => {
+    const botName = `jevbot${String((job.index % 16) + 1).padStart(2, "0")}`;
+    const seed = Number(values.seed) * 1000 + job.index;
+    stderr(`run ${job.index}: ${job.scenario.name} as ${botName} (seed ${seed})`);
+    const run = await recordRun({
+      host: values.host,
+      port: Number(values.port),
+      version: values.version,
+      botName,
+      scenario: job.scenario,
+      origin: arenaOrigin(base, job.index),
+      seed,
+      humanNoise: Number(values["human-noise"]),
+      budgetMs: Number(values["budget-seconds"]) * 1000,
+      hmacSecret: secret,
+      log: (line) => stderr(`  [${job.index}] ${line}`),
+    });
+    runs.push(run);
+    await appendFile(
+      outPath,
+      `${JSON.stringify(run)}
+`,
+      "utf8",
+    );
+    stderr(
+      `run ${job.index} done${run.notes.length > 0 ? ` (notes: ${run.notes.join("; ")})` : ""}`,
+    );
+  };
+  // N workers pull from the queue; starts are staggered so Paper's reconnect throttle (4 s) is not hit.
+  let next = 0;
+  const worker = async (slot: number) => {
+    await new Promise((resolve) => setTimeout(resolve, slot * 6000));
+    while (next < jobs.length) {
+      const job = jobs[next++];
+      if (job) await runJob(job);
+      await new Promise((resolve) => setTimeout(resolve, 6000));
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(parallel, jobs.length) }, (_, slot) => worker(slot)),
+  );
   // The plugin flushes on logout; give a bind-mounted data dir a moment to show the tail.
   await new Promise((resolve) => setTimeout(resolve, 3000));
   stderr(`recorded ${runs.length} run(s) -> ${outPath}`);

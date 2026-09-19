@@ -91,7 +91,7 @@ export async function recordRun(options: RecordOptions): Promise<RunManifest> {
     log(`${botName} spawned for ${scenario.name}`);
     bot.chat("/gamemode survival @s");
     bot.chat("/clear @s");
-    bot.chat("/give @s netherite_pickaxe");
+    bot.chat("/give @s netherite_pickaxe[enchantments={efficiency:5}]");
     bot.chat("/effect give @s night_vision 3600 1 true");
     await sleep(1000);
     // Probe a few spots in the cell and start where diamonds are within reach of a scenario,

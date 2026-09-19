@@ -24,7 +24,7 @@ services:
       TYPE: PAPER
       VERSION: "26.2"
       ONLINE_MODE: "false"
-      MEMORY: 2G
+      MEMORY: 4G
       # Fixed world so bot recordings are reproducible; peaceful so bots do not die underground.
       SEED: "jevcraft-arena-1"
       DIFFICULTY: peaceful
