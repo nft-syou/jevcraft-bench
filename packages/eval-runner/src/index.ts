@@ -21,9 +21,12 @@ export {
 } from "./metrics";
 export { buildReport, type ReportInput } from "./report";
 export {
+  DEFAULT_REVIEW_GATE_SWEEP,
   DEFAULT_SUFFICIENCY_SWEEP,
   type RepeatGroup,
+  type ReviewGatePoint,
   repeatVariance,
+  reviewGateSweep,
   type Spread,
   type SufficiencyPoint,
   spread,

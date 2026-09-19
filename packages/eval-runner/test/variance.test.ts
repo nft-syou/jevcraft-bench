@@ -1,4 +1,9 @@
-import { joinDecisionsWithLabels, repeatVariance, sufficiencySweep } from "@jevcraft/eval-runner";
+import {
+  joinDecisionsWithLabels,
+  repeatVariance,
+  reviewGateSweep,
+  sufficiencySweep,
+} from "@jevcraft/eval-runner";
 import type { DecisionRecord } from "@jevcraft/schema";
 import { describe, expect, it } from "vitest";
 import { decision, label } from "./helpers";
@@ -92,5 +97,21 @@ describe("sufficiencySweep", () => {
         negativeTotal: 2,
       },
     ]);
+  });
+});
+
+describe("reviewGateSweep", () => {
+  it("drops review rows below the likely_xray floor but keeps high priority ones", () => {
+    const rows = joinDecisionsWithLabels(
+      [
+        decision("lucky", "review", { likelyXray: 0.3 }),
+        decision("xray", "review", { likelyXray: 0.5 }),
+        decision("hp", "high_priority_review", { likelyXray: 0.2 }),
+      ],
+      [label("lucky", "legit"), label("xray", "simulated_xray"), label("hp", "simulated_xray")],
+    ).rows;
+    const [loose, strict] = reviewGateSweep(rows, [0, 0.35]);
+    expect(loose?.cm).toEqual({ tp: 2, fp: 1, tn: 0, fn: 0 });
+    expect(strict?.cm).toEqual({ tp: 2, fp: 0, tn: 1, fn: 0 });
   });
 });

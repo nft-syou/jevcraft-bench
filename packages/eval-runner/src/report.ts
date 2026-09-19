@@ -16,8 +16,10 @@ import {
   tokenTotals,
 } from "./metrics";
 import {
+  DEFAULT_REVIEW_GATE_SWEEP,
   DEFAULT_SUFFICIENCY_SWEEP,
   repeatVariance,
+  reviewGateSweep,
   type Spread,
   sufficiencySweep,
 } from "./variance";
@@ -86,6 +88,7 @@ export function buildReport(input: ReportInput): string {
   );
   const sufficiency = sufficiencySweep(rows, input.sufficiencySweep ?? DEFAULT_SUFFICIENCY_SWEEP);
   const repeats = repeatVariance(input.decisions);
+  const gates = reviewGateSweep(rows, DEFAULT_REVIEW_GATE_SWEEP);
   const versions = new Set(
     input.decisions.map(
       (d) => `${d.model} / ${d.questionSetVersion} / ${d.featureExtractorVersion}`,
@@ -138,6 +141,17 @@ export function buildReport(input: ReportInput): string {
     ...sufficiency.map(
       (p) =>
         `| ${p.threshold.toFixed(2)} | ${p.droppedPositive} / ${p.positiveTotal} | ${p.droppedNegative} / ${p.negativeTotal} |`,
+    ),
+    "",
+    "## Review gate sweep (policy variant)",
+    "",
+    "A `review` outcome additionally requires P(likely_xray) >= t; `high_priority_review` is unchanged.",
+    "",
+    "| min P(likely_xray) for review | TP | FP | TN | FN | Precision | Recall | FPR |",
+    "| --- | --- | --- | --- | --- | --- | --- | --- |",
+    ...gates.map(
+      (g) =>
+        `| ${g.minLikelyXray.toFixed(2)} | ${g.cm.tp} | ${g.cm.fp} | ${g.cm.tn} | ${g.cm.fn} | ${fmt(g.precision)} | ${fmt(g.recall)} | ${fmt(g.fpr)} |`,
     ),
     "",
     ...(repeats.length === 0

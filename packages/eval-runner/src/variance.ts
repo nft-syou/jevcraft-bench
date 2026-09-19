@@ -97,3 +97,43 @@ export function sufficiencySweep(
     negativeTotal: negatives.length,
   }));
 }
+
+export interface ReviewGatePoint {
+  minLikelyXray: number;
+  cm: { tp: number; fp: number; tn: number; fn: number };
+  precision: number | null;
+  recall: number | null;
+  fpr: number | null;
+}
+
+export const DEFAULT_REVIEW_GATE_SWEEP = [0, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5];
+
+/**
+ * Policy variant: a `review` (not high priority) additionally requires P(likely_xray) >= t.
+ * Shows what a floor on likely_xray would do to lucky-streak false positives.
+ */
+export function reviewGateSweep(rows: LabeledDecision[], thresholds: number[]): ReviewGatePoint[] {
+  return thresholds.map((minLikelyXray) => {
+    const cm = { tp: 0, fp: 0, tn: 0, fn: 0 };
+    for (const row of rows) {
+      const d = row.decision;
+      const p = d.answers?.behaviorClass.probabilities.likely_xray ?? 0;
+      const predicted =
+        d.policyOutcome === "high_priority_review" ||
+        (d.policyOutcome === "review" && p >= minLikelyXray);
+      const truth = isTruthPositive(row.label.label);
+      if (truth && predicted) cm.tp++;
+      else if (!truth && predicted) cm.fp++;
+      else if (truth) cm.fn++;
+      else cm.tn++;
+    }
+    const ratio = (n: number, d: number) => (d === 0 ? null : n / d);
+    return {
+      minLikelyXray,
+      cm,
+      precision: ratio(cm.tp, cm.tp + cm.fp),
+      recall: ratio(cm.tp, cm.tp + cm.fn),
+      fpr: ratio(cm.fp, cm.fp + cm.tn),
+    };
+  });
+}

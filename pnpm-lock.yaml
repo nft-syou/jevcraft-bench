@@ -238,6 +238,9 @@ importers:
       '@jevcraft/schema':
         specifier: workspace:*
         version: link:../schema
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
 
   packages/jev-evaluator:
     dependencies:

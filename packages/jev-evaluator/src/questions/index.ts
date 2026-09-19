@@ -3,8 +3,9 @@ import { xrayV1 } from "./xray-v1";
 import { xrayV2 } from "./xray-v2";
 import { xrayV3 } from "./xray-v3";
 import { xrayV4 } from "./xray-v4";
+import { xrayV5 } from "./xray-v5";
 
-export const QUESTION_SETS: readonly QuestionSet[] = [xrayV1, xrayV2, xrayV3, xrayV4];
+export const QUESTION_SETS: readonly QuestionSet[] = [xrayV1, xrayV2, xrayV3, xrayV4, xrayV5];
 
 /**
  * v4 since 2026-09-19: v1's sufficiency tracked suspicion; v3 fixed that but still demanded

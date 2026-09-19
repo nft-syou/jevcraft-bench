@@ -1,3 +1,4 @@
+export { type Baseline, BaselineSchema, buildBaseline, percentileOf } from "./baseline";
 export {
   DEFAULT_EXTRACT_OPTIONS,
   type ExtractOptions,

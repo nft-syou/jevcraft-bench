@@ -1,6 +1,7 @@
+import { readFile } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
 import { parseArgs } from "node:util";
-import { extractAll } from "@jevcraft/feature-extractor";
+import { BaselineSchema, extractAll } from "@jevcraft/feature-extractor";
 import {
   type MiningSessionFeatures,
   type RawTelemetryEvent,
@@ -13,7 +14,7 @@ export interface ExtractDeps {
 }
 
 export const EXTRACT_USAGE =
-  "usage: jevcraft extract <raw.jsonl|dir>... [--out <features.jsonl>] [--window-minutes <n>]";
+  "usage: jevcraft extract <raw.jsonl|dir>... [--out <features.jsonl>] [--window-minutes <n>] [--baseline <baseline.json>]";
 
 export async function runExtract(
   args: string[],
@@ -26,6 +27,7 @@ export async function runExtract(
     options: {
       out: { type: "string" },
       "window-minutes": { type: "string", default: "15" },
+      baseline: { type: "string" },
     },
   });
   if (positionals.length === 0) throw new Error(EXTRACT_USAGE);
@@ -45,7 +47,11 @@ export async function runExtract(
   }
   if (skipped > 0) stderr(`skipped ${skipped} line(s) that did not match RawTelemetryEventSchema`);
 
-  const features = extractAll(events, { windowMs: windowMinutes * 60_000 });
+  const baseline =
+    values.baseline === undefined
+      ? null
+      : BaselineSchema.parse(JSON.parse(await readFile(values.baseline, "utf8")));
+  const features = extractAll(events, { windowMs: windowMinutes * 60_000, baseline });
   const firstInput = positionals[0] ?? "features";
   const outPath =
     values.out ??

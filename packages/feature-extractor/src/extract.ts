@@ -3,6 +3,7 @@ import {
   MiningSessionFeaturesSchema,
   type RawTelemetryEvent,
 } from "@jevcraft/schema";
+import { type Baseline, percentileOf } from "./baseline";
 import {
   angleBetweenDeg,
   distance,
@@ -43,6 +44,8 @@ export interface ExtractOptions {
   coverageGapMs: number;
   /** Sessions longer than this are split (ms). Default 15 min. */
   windowMs: number;
+  /** Legit reference distribution for efficiency.baselinePercentile; null leaves it null. */
+  baseline: Baseline | null;
 }
 
 export const DEFAULT_EXTRACT_OPTIONS: ExtractOptions = {
@@ -54,6 +57,7 @@ export const DEFAULT_EXTRACT_OPTIONS: ExtractOptions = {
   maxBreakIntervalMs: 30_000,
   coverageGapMs: 5_000,
   windowMs: 15 * 60_000,
+  baseline: null,
 };
 
 const EYE_HEIGHT = 1.62;
@@ -320,7 +324,10 @@ export function extractFeatures(
       valuableOrePer100Blocks: blocksBroken === 0 ? null : round3((reveals / blocksBroken) * 100),
       nonOreBlocksPerHiddenReveal:
         reveals === 0 ? null : round3((blocksBroken - oreBlocksBroken) / reveals),
-      baselinePercentile: null,
+      baselinePercentile:
+        opts.baseline === null || blocksBroken === 0
+          ? null
+          : percentileOf(opts.baseline.values, (reveals / blocksBroken) * 100),
     },
     quality: {
       trajectoryCoverage: round3(coverage),
