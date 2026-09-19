@@ -94,7 +94,12 @@ describe("applyPolicy", () => {
       reviewBypassXrayProbability: 0.6,
     };
     const lucky = { ...answers({ likely_xray: 0.53, suspicious: 0.3 }), approachTargeting: 0.13 };
-    expect(applyPolicy(lucky, ok)).toBe("review");
+    const ungated = {
+      ...DEFAULT_THRESHOLDS,
+      reviewMinApproachTargeting: null,
+      reviewBypassXrayProbability: null,
+    };
+    expect(applyPolicy(lucky, ok, ungated)).toBe("review");
     expect(applyPolicy(lucky, ok, gated)).toBe("no_action");
     const targeted = { ...lucky, approachTargeting: 0.4 };
     expect(applyPolicy(targeted, ok, gated)).toBe("review");
