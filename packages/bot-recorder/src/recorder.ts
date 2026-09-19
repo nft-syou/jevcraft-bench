@@ -37,6 +37,19 @@ export interface RecordOptions {
   log: (line: string) => void;
 }
 
+/** Chunk loading is slow with many bots online; a timeout is a note, not a failure. */
+async function waitForChunks(bot: Bot, notes: string[]): Promise<void> {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await bot.waitForChunksToLoad();
+      return;
+    } catch {
+      await sleep(3000);
+    }
+  }
+  notes.push("chunks slow to load after teleport");
+}
+
 function waitForSpawn(bot: Bot, timeoutMs: number): Promise<void> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error("spawn timeout")), timeoutMs);
@@ -55,6 +68,22 @@ function waitForSpawn(bot: Bot, timeoutMs: number): Promise<void> {
   });
 }
 
+// Paper rejects reconnects from one IP within 4 s. Serialize connects across parallel
+// workers in this process and keep at least 5 s between them.
+let connectChain: Promise<void> = Promise.resolve();
+let lastConnectAt = 0;
+const MIN_CONNECT_GAP_MS = 5000;
+
+function gatedConnect<T>(fn: () => T): Promise<T> {
+  const turn = connectChain.then(async () => {
+    const wait = lastConnectAt + MIN_CONNECT_GAP_MS - Date.now();
+    if (wait > 0) await sleep(wait);
+    lastConnectAt = Date.now();
+  });
+  connectChain = turn.catch(() => undefined);
+  return turn.then(fn);
+}
+
 function createBot(options: RecordOptions): Bot {
   return mineflayer.createBot({
     host: options.host,
@@ -71,7 +100,7 @@ export async function recordRun(options: RecordOptions): Promise<RunManifest> {
   const uuid = offlineUuid(botName);
   const notes: string[] = [];
   // Paper throttles reconnects from one IP (default 4 s); parallel recorders trip it.
-  let bot = createBot(options);
+  let bot = await gatedConnect(() => createBot(options));
   let joinedAt = new Date().toISOString();
   try {
     for (let attempt = 1; ; attempt++) {
@@ -81,10 +110,10 @@ export async function recordRun(options: RecordOptions): Promise<RunManifest> {
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         if (attempt >= 4 || !/throttled/i.test(message)) throw error;
-        log(`connection throttled; retrying in 6 s (attempt ${attempt})`);
+        log(`connection throttled; retrying (attempt ${attempt})`);
         bot.quit();
-        await sleep(6000);
-        bot = createBot(options);
+        await sleep(3000 + Math.random() * 4000);
+        bot = await gatedConnect(() => createBot(options));
         joinedAt = new Date().toISOString();
       }
     }
@@ -106,7 +135,7 @@ export async function recordRun(options: RecordOptions): Promise<RunManifest> {
     for (const candidate of candidates) {
       bot.chat(`/tp @s ${candidate.x} ${candidate.y} ${candidate.z}`);
       await sleep(2000);
-      await bot.waitForChunksToLoad();
+      await waitForChunks(bot, notes);
       chosen = candidate;
       if (findOre(bot, DIAMOND_ORES, 24, 3, 6) !== null) break;
       log(`no diamond near ${candidate}; trying the next spot`);
