@@ -174,9 +174,9 @@ One request per mining session. Jev is asked four independent questions:
 | `route_naturalness` | score 0..4 | 0 = highly unnatural, 4 = strongly natural (`normalized = score / 4`) |
 | `evidence_sufficiency` | noul | P(enough evidence to classify) |
 
-Question sets are versioned (`--questions xray-v1|xray-v2|xray-v3`, default v3) and the version is
+Question sets are versioned (`--questions xray-v1|xray-v2|xray-v3|xray-v4`, default v4) and the version is
 stored on every decision record, so sets can be compared on the same dataset. See
-`docs/baselines/README.md` for why v3 replaced v1.
+`docs/baselines/README.md` for why v3 replaced v1 and v4 replaced v3.
 
 The policy (`packages/jev-evaluator/src/policy.ts`) turns these into
 `insufficient_evidence` / `high_priority_review` / `review` / `no_action`.

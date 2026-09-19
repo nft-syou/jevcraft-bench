@@ -15,6 +15,8 @@ Model for every run below: `jev-1.13.0` (what `jev-latest` resolved to on 2026-0
 | `2026-09-19-bot-batch1-live.md` | 12 Mineflayer bot runs × 240 s (real plugin telemetry) | 12 | xray-v3 |
 | `2026-09-19-bot-batch2-live.md` | 10 Mineflayer bot runs × 480 s (real plugin telemetry) | 10 | xray-v3 |
 | `2026-09-19-bot-batch4-live.md` | 16 bot runs × 480 s, 8 in parallel (17 sessions) | 17 | xray-v3 |
+| `2026-09-19-bot-batch4-v4-live.md` | same 17 sessions | 17 | xray-v4 |
+| `2026-09-19-bot-batch2-v4-live.md` | batch2's 10 sessions | 10 | xray-v4 |
 
 ## Question sets compared
 
@@ -23,6 +25,7 @@ Model for every run below: `jev-1.13.0` (what `jev-latest` resolved to on 2026-0
 | xray-v1 | "Is there enough high-quality behavioral evidence to classify this session?" | 4 lines (spec §10) |
 | xray-v2 | Reworded: telemetry quantity/quality, "not whether cheating occurred" | v1 + 1 line saying a legit session with complete telemetry has sufficient evidence |
 | xray-v3 | Same as v2 | Same as v1 |
+| xray-v4 | v3 wording, but "enough approaches **or** plenty of mining with no targeted digging" | Same as v1 |
 
 v3 isolates the question rewording from the added context line.
 
@@ -94,6 +97,13 @@ even with the extractor's `enoughEvidence: true`. The v3 sufficiency wording lit
 "enough hidden-ore approaches", so a reveal-free legit session cannot satisfy it; an `xray-v4`
 wording that also accepts "enough mining activity to show the absence of targeted digging" is
 the next cheap experiment.
+
+**xray-v4 result (same 17 + 10 sessions).** X-Ray outcomes did not move (all evidenced X-Ray
+sessions still `review`, P(likely_xray) 0.35–0.66). Every legit session that met `enoughEvidence`
+went from `insufficient_evidence` to `no_action`: sufficiency 0.87–0.93 instead of 0.43–0.49,
+P(likely_xray) 0.00–0.33. FPR stayed 0.000, recall unchanged (0.917 / 0.625). **v4 is now the
+default question set.** The remaining `insufficient_evidence` rows are sessions that never met a
+diamond (recording limitation) or a 22 s session fragment.
 
 What the bot data taught us, in order of importance:
 

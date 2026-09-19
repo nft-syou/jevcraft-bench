@@ -30,7 +30,7 @@ describe("evaluateSession", () => {
       evaluatedAt: "2026-09-19T00:00:00.000Z",
       model: "jev-latest",
       backend: "mock",
-      questionSetVersion: "xray-v3",
+      questionSetVersion: "xray-v4",
       featureExtractorVersion: "0.1.0",
       policyOutcome: "high_priority_review",
       error: null,

@@ -6,15 +6,21 @@ import {
   xrayV1,
   xrayV2,
   xrayV3,
+  xrayV4,
 } from "@jevcraft/jev-evaluator";
 import { MiningSessionFeaturesSchema } from "@jevcraft/schema";
 import { describe, expect, it } from "vitest";
 import { validFeatures } from "../../schema/test/helpers";
 
 describe("question set registry", () => {
-  it("knows xray-v1, v2 and v3 and defaults to v3", () => {
-    expect(QUESTION_SETS.map((s) => s.version)).toEqual(["xray-v1", "xray-v2", "xray-v3"]);
-    expect(DEFAULT_QUESTION_SET.version).toBe("xray-v3");
+  it("knows xray-v1..v4 and defaults to v4", () => {
+    expect(QUESTION_SETS.map((s) => s.version)).toEqual([
+      "xray-v1",
+      "xray-v2",
+      "xray-v3",
+      "xray-v4",
+    ]);
+    expect(DEFAULT_QUESTION_SET.version).toBe("xray-v4");
     expect(getQuestionSet("xray-v2")).toBe(xrayV2);
     expect(() => getQuestionSet("xray-v9")).toThrow(/unknown question set "xray-v9"/);
   });
@@ -37,6 +43,15 @@ describe("question set registry", () => {
     expect(xrayV3.questions).toBe(xrayV2.questions);
     expect(xrayV3.importantContext).toEqual(xrayV1.importantContext);
     expect(xrayV3.task).toBe(xrayV1.task);
+  });
+
+  it("v4 changes only the sufficiency wording relative to v3", () => {
+    const { evidence_sufficiency: v3Suff, ...v3Rest } = xrayV3.questions;
+    const { evidence_sufficiency: v4Suff, ...v4Rest } = xrayV4.questions;
+    expect(v4Rest).toEqual(v3Rest);
+    expect(String(v4Suff.instructions)).toMatch(/blocks broken/);
+    expect(String(v3Suff.instructions)).not.toMatch(/blocks broken/);
+    expect(xrayV4.importantContext).toEqual(xrayV3.importantContext);
   });
 
   it("builds state from any set without the session id", () => {
