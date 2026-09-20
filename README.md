@@ -159,6 +159,22 @@ Deviations from the handoff spec, recorded in `docs/superpowers/plans/2026-09-19
 Paper `26.2.build.124-stable` requires Java 25 (spec said 21), and commands are declared in
 `plugin.yml` rather than `paper-plugin.yml`.
 
+## Benchmark against existing heuristics
+
+`jevcraft benchmark` runs the heuristics existing anti-X-Ray tooling relies on (ore ratio,
+efficiency percentile, reveal pace, straight-line approach, and a hand-tuned combination) against
+JevCraft on the same labelled sessions, at the same false-positive ceiling, using archived Jev
+answers only:
+
+```bash
+pnpm jevcraft benchmark   --features datasets/features/all.jsonl   --labels datasets/labels/all.jsonl   --decisions datasets/decisions/all-gated.jsonl   --max-fpr 0.065 --out reports/benchmark.md
+```
+
+On 119 real sessions the shipped policy had the highest recall at FPR 0.065 (0.789 against 0.702
+for the best classic rule), with the gap concentrated on evasive X-Ray (0.789 against 0.474).
+That lead is not yet statistically significant (McNemar p = 0.36). See `docs/benchmark.md` for
+what the comparison does and does not establish.
+
 ## Packages
 
 | Package | Responsibility |

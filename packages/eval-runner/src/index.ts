@@ -1,3 +1,28 @@
+export {
+  type BenchmarkInput,
+  buildBenchmarkReport,
+  type DetectorResult,
+  evaluateDetector,
+  exactBinomialP,
+  type HeadToHead,
+  headToHead,
+  type OperatingPoint,
+  rocAuc,
+} from "./benchmark";
+export {
+  type BenchmarkRow,
+  CLASSIC_DETECTORS,
+  classicComboDetector,
+  type Detector,
+  deployedPolicyDetector,
+  JEV_DETECTORS,
+  jevApproachTargetingDetector,
+  jevLikelyXrayDetector,
+  orePercentileDetector,
+  oreRatioDetector,
+  revealPaceDetector,
+  straightLineDetector,
+} from "./detectors";
 export { type JoinResult, joinDecisionsWithLabels, type LabeledDecision } from "./join";
 export {
   accuracyByConfidenceBand,

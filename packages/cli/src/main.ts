@@ -1,4 +1,5 @@
 import { BASELINE_USAGE, runBaseline } from "./commands/baseline";
+import { BENCHMARK_USAGE, runBenchmark } from "./commands/benchmark";
 import { EVALUATE_USAGE, runEvaluate } from "./commands/evaluate";
 import { EXTRACT_USAGE, runExtract } from "./commands/extract";
 import { GENERATE_USAGE, runGenerate } from "./commands/generate";
@@ -15,6 +16,7 @@ commands:
   evaluate   ${EVALUATE_USAGE}
   report     ${REPORT_USAGE}
   repolicy   ${REPOLICY_USAGE}
+  benchmark  ${BENCHMARK_USAGE}
   generate   ${GENERATE_USAGE}
   record     ${RECORD_USAGE}
   label-runs ${LABEL_RUNS_USAGE}
@@ -37,6 +39,9 @@ async function main(argv: string[]): Promise<number> {
       return 0;
     case "repolicy":
       await runRepolicy(rest);
+      return 0;
+    case "benchmark":
+      await runBenchmark(rest);
       return 0;
     case "generate":
       await runGenerate(rest);
