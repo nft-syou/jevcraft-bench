@@ -27,7 +27,8 @@ describe("jevcraft repolicy", () => {
       { stderr: () => {} },
     );
     expect(same.changed).toBe(0);
-    // A review gate no session can pass turns every ordinary review into no_action.
+    // A gate no session can pass, with the approach-only path disabled, turns every ordinary
+    // review into no_action.
     const strict = await runRepolicy(
       [
         "--decisions",
@@ -37,6 +38,8 @@ describe("jevcraft repolicy", () => {
         "--min-approach-targeting",
         "0.99",
         "--bypass-xray",
+        "off",
+        "--approach-alone",
         "off",
         "--out",
         join(dir, "strict.jsonl"),
