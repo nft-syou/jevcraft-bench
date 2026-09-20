@@ -1,91 +1,136 @@
 # The JevCraft detection benchmark
 
-## What it claims to measure
+## The question
 
-Whether asking Jev structured questions about a mining session catches X-Ray that the heuristics
-in existing anti-cheat tooling miss, **at the same false-positive rate**, on the same real
-telemetry.
+Does asking Jev structured questions about a mining session catch X-Ray that the heuristics in
+existing anti-cheat tooling miss, **at the same false-positive rate**, on sessions nobody tuned on?
 
 False-positive rate is the ceiling, not an afterthought. A detector that flags twice as many
-cheaters while also flagging twice as many ordinary players has not improved anything, so every
-detector in the benchmark is given the threshold that maximises its recall while staying at or
-below one shared FPR ceiling.
+cheaters while also flagging twice as many ordinary players has improved nothing.
+
+## The short answer, as of 2026-09-20
+
+**No evidence of an advantage.** On held-out sessions the shipped policy and a plain ore-count
+heuristic are level: 3 sessions each where only one of them is right, p = 1.0. On threshold-free
+ranking the classic features do slightly better than Jev's answers. An earlier version of this
+document claimed a lead; that claim came from a benchmark that tuned on its own evaluation data
+and has been withdrawn.
 
 ## What it is compared against
 
-Existing servers fight X-Ray in two ways, and only one of them is a detector:
+Servers fight X-Ray in two ways, and only one of them is a detector:
 
-- **Obfuscation** (Paper's built-in anti-xray engine modes, Orebfuscator). The server lies to the
-  client about which blocks are ore. This is prevention, not detection, and it is out of scope
-  here: it changes what the cheater can see rather than judging what they did.
-- **Behavioural heuristics**, which is what plugins and staff tooling actually use to decide who
-  to investigate. These are what the benchmark stands up as baselines:
+- **Obfuscation** (Paper's anti-xray engine modes, Orebfuscator) lies to the client about which
+  blocks are ore. That is prevention, not detection, and it is out of scope.
+- **Behavioural heuristics** decide who to investigate. These are the baselines:
 
 | Detector | Stands for |
 | --- | --- |
-| `ore-ratio` | Valuable ore per 100 blocks broken. The dominant heuristic. |
-| `ore-percentile` | The same idea against a legitimate reference population instead of a fixed number. |
+| `ore-ratio` | Valuable ore blocks **mined** per 100 blocks broken. The dominant heuristic. |
+| `reveal-ratio` | The same shape of rule counting first exposures instead. The two differ on most sessions. |
+| `ore-percentile` | Efficiency ranked against a legitimate reference population. |
 | `reveal-pace` | Reveals per 10 minutes: "too lucky, too fast" streak detectors. |
-| `straight-line` | Mean directness of the approach to each hidden ore: the strongest purely geometric rule. |
-| `classic-combo` | A hand-tuned rule using efficiency and directness together, as a rule engine would. |
+| `straight-line` | Mean directness of the approach to each hidden ore. |
+| `classic-combo` | A hand-written rule combining efficiency and directness. |
+| `fitted-logistic` | Logistic regression over the same features, fitted on the development split. |
 
-The baselines are deliberately given every advantage. They read the same extracted features
-JevCraft uses, including `baselinePercentile`, and each one is allowed to pick the threshold that
-maximises its recall **on the test set itself**, which no real deployment could do.
+`fitted-logistic` is there so the comparison is not only against rules someone wrote by hand:
+anything JevCraft adds should beat a model that learns the best linear combination of exactly the
+numbers it is given.
 
-## Running it
+## How it is run
+
+The 119 labelled sessions split by when they were recorded:
+
+- **Development (77)**: the bot batches used to choose the question set, the approach gate and its
+  0.15 threshold.
+- **Held out (42)**: the second world seed and the human player's sessions, recorded after every
+  one of those decisions was frozen.
 
 ```bash
+node scripts/make-splits.mjs --dev-ids datasets/labels/bots-77.jsonl \
+  --features datasets/features/all.jsonl --labels datasets/labels/all.jsonl \
+  --decisions datasets/decisions/all-gated.jsonl --out-dir datasets/splits
+
 pnpm jevcraft benchmark \
-  --features datasets/features/all.jsonl \
-  --labels datasets/labels/all.jsonl \
-  --decisions datasets/decisions/all-gated.jsonl \
-  --max-fpr 0.065 --out reports/benchmark.md
+  --features datasets/splits/holdout-features.jsonl \
+  --labels   datasets/splits/holdout-labels.jsonl \
+  --decisions datasets/splits/holdout-decisions.jsonl \
+  --dev-features datasets/splits/dev-features.jsonl \
+  --dev-labels   datasets/splits/dev-labels.jsonl \
+  --dev-decisions datasets/splits/dev-decisions.jsonl \
+  --max-fpr 0.072 --out reports/benchmark-holdout.md
 ```
 
-It reads archived Jev answers, so it costs no API calls and can be re-run after any threshold or
-policy change (`jevcraft repolicy` rewrites outcomes offline first).
+Every tunable detector picks its threshold on the development split and is then frozen. The
+shipped policy has no threshold to pick: it emits one decision per session, so it is measured at
+that point and the report states whether the point clears the ceiling. Running without `--dev-*`
+is allowed but the report then says in its header that the numbers describe fit, not
+generalisation. No API calls: everything reads archived answers.
 
-## Result on 2026-09-20 (119 sessions, 2 seeds, bots + one human player)
+## Result on the 42 held-out sessions (14 X-Ray, 28 legitimate)
 
-57 X-Ray sessions, 62 legitimate, all from the Paper plugin's own telemetry. Ceiling: FPR ≤ 0.065.
+Ceiling: FPR ≤ 0.072, which is the shipped policy's own operating point on this split.
 
-| Detector | AUC | Recall | FPR | Precision |
-| --- | --- | --- | --- | --- |
-| ore-ratio | 0.866 | 0.649 | 0.065 | 0.902 |
-| ore-percentile | 0.843 | 0.158 | 0.016 | 0.900 |
-| reveal-pace | 0.850 | 0.596 | 0.065 | 0.895 |
-| straight-line | 0.817 | 0.474 | 0.065 | 0.871 |
-| classic-combo | 0.874 | 0.702 | 0.065 | 0.909 |
-| **jevcraft-policy** | 0.862 | **0.789** | 0.065 | 0.918 |
-
-Recall by X-Ray style at those operating points:
-
-| Detector | direct | detour | humanized |
+| Detector | Recall | FPR | AUC |
 | --- | --- | --- | --- |
-| ore-ratio | 0.842 | 0.474 | 0.632 |
-| classic-combo | 0.947 | 0.474 | 0.684 |
-| **jevcraft-policy** | 0.842 | **0.789** | **0.737** |
+| **jevcraft-policy** (fixed point) | 0.786 [0.52–0.92] | 0.071 | 0.857 |
+| reveal-ratio | 0.714 [0.45–0.88] | 0.036 | 0.912 |
+| reveal-pace | 0.643 [0.39–0.84] | 0.071 | 0.902 |
+| jev-approach-targeting | 0.571 [0.33–0.79] | 0.036 | 0.881 |
+| straight-line | 0.500 [0.27–0.73] | 0.000 | 0.904 |
+| jev-likely-xray | 0.429 [0.21–0.67] | 0.000 | 0.860 |
+| ore-percentile | 0.286 [0.12–0.55] | 0.000 | 0.894 |
+| ore-ratio | 0.714 | 0.107 (over ceiling) | 0.903 |
+| classic-combo | 0.857 | 0.107 (over ceiling) | 0.917 |
+| fitted-logistic | 0.929 | 0.500 (over ceiling) | 0.837 |
 
-## What this does and does not establish
+Ranges are 95% Wilson intervals. Three detectors spent more false positives on the held-out set
+than the ceiling allows, so their recall is not comparable and they are excluded from the duel.
 
-**It leads on the headline number.** The shipped policy has the highest recall of any detector at
-the shared ceiling, and the gap is concentrated exactly where the design predicted: evasive
-(`detour`) X-Ray, where the bot deliberately walks a crooked path to the ore it already knows
-about. Efficiency-based detectors cannot see that, because a detour bot's ore ratio sits inside
-the legitimate range — human cave mining reached 5.0 ore per 100 blocks while the humanized X-Ray
-bot averaged 4.6.
+Head to head, the policy against the strongest ceiling-respecting rival (`reveal-ratio`):
 
-**It is not yet statistically significant.** McNemar's exact test over the sessions where exactly
-one detector is right gives 12 for JevCraft against 7 for the best classic baseline, p = 0.36.
-Restricted to detour X-Ray the split is 10 against 4, p = 0.18. Both favour JevCraft; neither
-clears the usual bar. At this effect size roughly twice the current data (about 240 sessions,
-some four hours of parallel bot recording) would settle it either way.
+| Scope | Only policy right | Only reveal-ratio right | p |
+| --- | --- | --- | --- |
+| all sessions | 3 | 3 | 1.00 |
+| detour positives | 2 | 1 | 1.00 |
+| humanized positives | 1 | 1 | 1.00 |
 
-**The dataset is narrow.** Two world seeds, four mining styles, one human player, and the X-Ray
-side is entirely bots whose evasive behaviour is a guess at what a human cheater would do. The
-legit side is the sturdier half: human branch mining scored P(likely_xray) 0.00 where the bot
-scored 0.29, so the false-positive figures are, if anything, pessimistic.
+## Reading this honestly
 
-**Every number is reproducible.** `reports/benchmark-119.md` is generated from archived answers
-by one command, and `docs/baselines/` holds the per-batch reports it was built from.
+**The policy has the highest recall among detectors that stayed under the ceiling**, but
+`reveal-ratio` reaches 0.714 at half the false-positive rate, so it is not dominated, and the
+paired test is a dead heat. With 14 X-Ray sessions the recall interval spans 0.52 to 0.92: a
+7-point difference is noise.
+
+**On ranking quality the classics are ahead.** AUC needs no threshold, and there the ore-count
+features sit at 0.90–0.92 against 0.86–0.88 for Jev's answers. Whatever the policy is adding, it
+is not a better ordering of sessions.
+
+**A fitted model overfits this dataset badly.** The logistic regression picked a cut-off on 77
+development sessions that produced a 50% false-positive rate on the held-out ones. Eight features
+and 77 examples from one world is not enough to learn from, which is worth knowing before anyone
+proposes replacing the rules with a model.
+
+**Sample size.** Doubling the data will not settle the earlier 12-vs-7 split either: at that
+effect size roughly 750 sessions are needed for 80% power, not the 240 previously claimed here.
+
+## What the labels actually mean
+
+Positives are **scenario assignments, not observed cheating**. A session is labelled
+`simulated_xray` because the bot that produced it was running an X-Ray scenario, and five such
+sessions contain no ore reveal at all. So the benchmark measures "can the detector tell which
+scenario was running", which is close to but not the same as "did this player use hidden
+information".
+
+The legitimate side is 51 bot sessions plus 11 from one human player. Observed false-positive
+rates were 5.9% for bots and 9.1% for the human; both are small samples and neither supports a
+claim about which is harder.
+
+## Reproducibility
+
+`reports/benchmark-holdout.md` and `reports/benchmark-119.md` are generated by the commands above
+from `datasets/`, which is gitignored, so the archived copies under `docs/baselines/` are the
+record. `jevcraft repolicy` writes a `.meta.json` beside its output listing the thresholds it
+applied and a digest of the outcomes, so a rewritten decision file can be traced back to the
+policy that produced it.

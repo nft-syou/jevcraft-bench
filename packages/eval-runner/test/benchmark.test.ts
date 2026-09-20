@@ -2,6 +2,7 @@ import {
   type BenchmarkRow,
   buildBenchmarkReport,
   CLASSIC_DETECTORS,
+  createFittedLogisticDetector,
   type Detector,
   deployedPolicyDetector,
   evaluateDetector,
@@ -9,6 +10,7 @@ import {
   headToHead,
   oreRatioDetector,
   rocAuc,
+  wilsonInterval,
 } from "@jevcraft/eval-runner";
 import type { MiningSessionFeatures } from "@jevcraft/schema";
 import { describe, expect, it } from "vitest";
@@ -29,9 +31,10 @@ function features(overrides: {
     session: {
       durationSec: overrides.durationSec ?? 600,
       movementDistance: 100,
-      blocksBroken: 200,
+      blocksBroken: 100,
       valuableOreReveals: overrides.reveals ?? 5,
-      valuableOreBlocksBroken: 5,
+      // ore-ratio reads mined ore per 100 blocks; with 100 blocks broken this is the raw number.
+      valuableOreBlocksBroken: overrides.per100 === undefined ? 2 : (overrides.per100 ?? 0),
     },
     exploration: {
       branchMiningLikelihood: 0.5,
@@ -90,7 +93,9 @@ describe("rocAuc", () => {
   });
 
   it("ranks sessions the detector cannot score below every scored session", () => {
-    const rows = [row("a", true, { per100: 1 }), row("b", false, { per100: null })];
+    const unscorable = row("b", false);
+    unscorable.features.session.blocksBroken = 0;
+    const rows = [row("a", true, { per100: 1 }), unscorable];
     expect(rocAuc(rows, oreRatioDetector)).toBe(1);
   });
 
@@ -129,7 +134,7 @@ describe("evaluateDetector", () => {
     expect(result.recallBySubtype).toEqual({ direct_xray: 0.5, humanized_xray: 0 });
   });
 
-  it("falls back to flagging nothing when no real threshold meets the ceiling", () => {
+  it("falls back to flagging nothing when no tunable threshold meets the ceiling", () => {
     const indiscriminate: Detector = {
       name: "always",
       description: "gives every session the same score",
@@ -144,8 +149,11 @@ describe("evaluateDetector", () => {
   });
 
   it("counts how many sessions it could score", () => {
-    const withGaps = [row("a", true, { per100: null }), row("b", false, { per100: 3 })];
-    expect(evaluateDetector(withGaps, oreRatioDetector, 1).scored).toBe(1);
+    const unscorable = row("a", true);
+    unscorable.features.session.blocksBroken = 0;
+    expect(
+      evaluateDetector([unscorable, row("b", false, { per100: 3 })], oreRatioDetector, 1).scored,
+    ).toBe(1);
   });
 });
 
@@ -164,10 +172,10 @@ describe("buildBenchmarkReport", () => {
       maxFpr: 0,
     });
     expect(md).toMatch(/^# JevCraft detection benchmark: unit/);
-    expect(md).toContain("Sessions: 4 (2 X-Ray, 2 legitimate)");
+    expect(md).toContain("Evaluation set: 4 sessions (2 X-Ray, 2 legitimate)");
     expect(md).toContain("false-positive rate <= 0.000");
     expect(md).toContain("| ore-ratio |");
-    expect(md).toContain("## Recall by X-Ray style at that operating point");
+    expect(md).toContain("## Recall by X-Ray style at those operating points");
     expect(md).toContain("- **straight-line**:");
     expect(md).not.toContain("NaN");
   });
@@ -218,8 +226,112 @@ describe("benchmark report head to head", () => {
       maxFpr: 0.5,
       challenger: "jevcraft-policy",
     });
-    expect(md).toContain("## Head to head at those operating points");
-    expect(md).toContain("`jevcraft-policy` against the strongest classic baseline");
+    expect(md).toContain("## Head to head");
+    expect(md).toContain("`jevcraft-policy` against the strongest non-Jev detector");
     expect(md).toContain("| Two-sided p |");
+  });
+});
+
+describe("wilsonInterval", () => {
+  it("brackets the point estimate and stays inside 0..1", () => {
+    const ci = wilsonInterval(4, 62);
+    expect(ci?.low).toBeGreaterThan(0.02);
+    expect(ci?.high).toBeLessThan(0.16);
+    expect(wilsonInterval(0, 10)?.low).toBe(0);
+    expect(wilsonInterval(10, 10)?.high ?? 0).toBeCloseTo(1, 10);
+    expect(wilsonInterval(0, 0)).toBeNull();
+  });
+});
+
+describe("held-out evaluation", () => {
+  const dev = [
+    row("d-x1", true, { per100: 9 }),
+    row("d-x2", true, { per100: 7 }),
+    row("d-l1", false, { per100: 2 }),
+    row("d-l2", false, { per100: 1 }),
+  ];
+  const holdout = [
+    row("h-x1", true, { per100: 8 }),
+    row("h-x2", true, { per100: 3 }),
+    row("h-l1", false, { per100: 6 }),
+    row("h-l2", false, { per100: 0.5 }),
+  ];
+
+  it("freezes the threshold picked on dev and measures it on the evaluation set", () => {
+    // On dev the best cut under FPR 0 is 7 (catches both X-Ray, no legit above 2).
+    const result = evaluateDetector(holdout, oreRatioDetector, 0, dev);
+    expect(result.best?.threshold).toBe(7);
+    // Frozen at 7 the held-out set gives one hit and one miss, and no false positive.
+    expect(result.best?.recall).toBe(0.5);
+    expect(result.best?.fpr).toBe(0);
+  });
+
+  it("says in the report whether anything tuned on the evaluation set", () => {
+    const heldOut = buildBenchmarkReport({
+      title: "split",
+      rows: holdout,
+      tuningRows: dev,
+      detectors: CLASSIC_DETECTORS,
+      maxFpr: 0.5,
+    });
+    expect(heldOut).toContain("separate development set of 4 sessions");
+    const selfTuned = buildBenchmarkReport({
+      title: "self",
+      rows: holdout,
+      detectors: CLASSIC_DETECTORS,
+      maxFpr: 0.5,
+    });
+    expect(selfTuned).toContain("Thresholds are chosen on the evaluation set itself");
+  });
+});
+
+describe("fixed-point detectors", () => {
+  it("are measured at their own point and marked when they exceed the ceiling", () => {
+    const rows = [
+      { ...row("x1", true), decision: decision("x1", "review") },
+      { ...row("l1", false), decision: decision("l1", "review") },
+      { ...row("l2", false), decision: decision("l2", "no_action") },
+    ];
+    const result = evaluateDetector(rows, deployedPolicyDetector, 0);
+    expect(result.fixed).toBe(true);
+    expect(result.best?.threshold).toBe(1);
+    expect(result.best?.recall).toBe(1);
+    expect(result.best?.fpr).toBe(0.5);
+    expect(result.respectsCeiling).toBe(false);
+
+    const md = buildBenchmarkReport({
+      title: "fixed",
+      rows,
+      detectors: [deployedPolicyDetector],
+      maxFpr: 0,
+      challenger: "jevcraft-policy",
+    });
+    expect(md).toContain("(fixed point)");
+    expect(md).toContain("**over ceiling**");
+  });
+});
+
+describe("createFittedLogisticDetector", () => {
+  it("learns a separating direction from the development split", () => {
+    const dev = [
+      row("x1", true, { per100: 9, directness: 0.9 }),
+      row("x2", true, { per100: 8, directness: 0.85 }),
+      row("l1", false, { per100: 1, directness: 0.3 }),
+      row("l2", false, { per100: 0.5, directness: 0.2 }),
+    ];
+    const fitted = createFittedLogisticDetector(dev);
+    const xray = fitted.score(row("t1", true, { per100: 8.5, directness: 0.88 })) ?? 0;
+    const legit = fitted.score(row("t2", false, { per100: 0.8, directness: 0.25 })) ?? 1;
+    expect(xray).toBeGreaterThan(legit);
+    expect(fitted.name).toBe("fitted-logistic");
+  });
+
+  it("scores every session, imputing missing inputs from the training median", () => {
+    const dev = [row("x1", true, { per100: 9 }), row("l1", false, { per100: 1 })];
+    const fitted = createFittedLogisticDetector(dev);
+    const gap = row("t", false);
+    gap.features.hiddenOreApproach.meanDirectness = null;
+    gap.features.efficiency.valuableOrePer100Blocks = null;
+    expect(fitted.score(gap)).not.toBeNull();
   });
 });

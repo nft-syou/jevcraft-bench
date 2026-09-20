@@ -2,25 +2,49 @@ import { type BenchmarkRow, CLASSIC_DETECTORS, type Detector } from "./detectors
 import type { ConfusionMatrix } from "./metrics";
 import { isTruthPositive } from "./metrics";
 
+export interface Interval {
+  low: number;
+  high: number;
+}
+
 export interface OperatingPoint {
   threshold: number;
   cm: ConfusionMatrix;
   recall: number | null;
   fpr: number | null;
   precision: number | null;
+  /** 95% Wilson intervals; a point estimate from tens of sessions is not a performance figure. */
+  recallInterval: Interval | null;
+  fprInterval: Interval | null;
 }
 
 export interface DetectorResult {
   name: string;
   description: string;
-  /** Sessions the detector could score at all. */
+  /** Sessions the detector could score at all, on the evaluation split. */
   scored: number;
   /** Rank-based area under the ROC curve; 0.5 is chance. Null when a class is missing. */
   auc: number | null;
-  /** Best recall subject to FPR <= target, or null when no threshold satisfies it. */
   best: OperatingPoint | null;
-  /** Recall on each X-Ray subtype at `best`. */
+  /** True when the detector has one fixed decision point and cannot be moved along a ROC curve. */
+  fixed: boolean;
+  /** False when a fixed-point detector's own FPR exceeds the shared ceiling. */
+  respectsCeiling: boolean;
   recallBySubtype: Record<string, number | null>;
+}
+
+/** 95% Wilson score interval for a binomial proportion. */
+export function wilsonInterval(successes: number, trials: number): Interval | null {
+  if (trials === 0) return null;
+  const z = 1.959963984540054;
+  const p = successes / trials;
+  const denominator = 1 + (z * z) / trials;
+  const centre = p + (z * z) / (2 * trials);
+  const spread = z * Math.sqrt((p * (1 - p)) / trials + (z * z) / (4 * trials * trials));
+  return {
+    low: Math.max(0, (centre - spread) / denominator),
+    high: Math.min(1, (centre + spread) / denominator),
+  };
 }
 
 /** Flags a session when its score is at or above the threshold; unscorable sessions never flag. */
@@ -48,6 +72,8 @@ function pointAt(rows: BenchmarkRow[], detector: Detector, threshold: number): O
     recall: rate(cm.tp, cm.tp + cm.fn),
     fpr: rate(cm.fp, cm.fp + cm.tn),
     precision: rate(cm.tp, cm.tp + cm.fp),
+    recallInterval: wilsonInterval(cm.tp, cm.tp + cm.fn),
+    fprInterval: wilsonInterval(cm.fp, cm.fp + cm.tn),
   };
 }
 
@@ -82,43 +108,64 @@ export function rocAuc(rows: BenchmarkRow[], detector: Detector): number | null 
 }
 
 /**
- * Evaluates one detector: its AUC, and the threshold that maximises recall while keeping the
- * false-positive rate at or below `maxFpr`. Every distinct score is tried as a threshold, so
- * each detector is given the best cut-off this very dataset allows — deliberately generous to
- * the baselines, since a real deployment could not tune on its own test set.
+ * Picks a threshold on `tuningRows` and measures it on `evalRows`. When those are different
+ * splits, no detector sees the evaluation data while choosing its cut-off, which is the only way
+ * the comparison says anything about unseen sessions.
+ *
+ * Detectors with a `fixedThreshold` are measured there regardless; the result records whether
+ * that point clears the ceiling rather than silently degrading them to "flag nothing".
  */
 export function evaluateDetector(
-  rows: BenchmarkRow[],
+  evalRows: BenchmarkRow[],
   detector: Detector,
   maxFpr: number,
+  tuningRows: BenchmarkRow[] = evalRows,
 ): DetectorResult {
-  const scores = rows
-    .map((row) => detector.score(row))
-    .filter((s): s is number => s !== null)
-    .sort((a, b) => a - b);
-  const candidates = [...new Set([...scores, Number.POSITIVE_INFINITY])];
+  let best: OperatingPoint | null;
+  let respectsCeiling = true;
 
-  let best: OperatingPoint | null = null;
-  for (const threshold of candidates) {
-    const point = pointAt(rows, detector, threshold);
-    if (point.fpr !== null && point.fpr > maxFpr) continue;
-    if (best === null || (point.recall ?? 0) > (best.recall ?? 0)) best = point;
+  if (detector.fixedThreshold !== undefined) {
+    best = pointAt(evalRows, detector, detector.fixedThreshold);
+    respectsCeiling = best.fpr === null || best.fpr <= maxFpr;
+  } else {
+    const candidates = [
+      ...new Set([
+        ...tuningRows
+          .map((row) => detector.score(row))
+          .filter((s): s is number => s !== null)
+          .sort((a, b) => a - b),
+        Number.POSITIVE_INFINITY,
+      ]),
+    ];
+    let chosen: number | null = null;
+    let chosenRecall = -1;
+    for (const threshold of candidates) {
+      const onTuning = pointAt(tuningRows, detector, threshold);
+      if (onTuning.fpr !== null && onTuning.fpr > maxFpr) continue;
+      if ((onTuning.recall ?? 0) > chosenRecall) {
+        chosenRecall = onTuning.recall ?? 0;
+        chosen = threshold;
+      }
+    }
+    best = chosen === null ? null : pointAt(evalRows, detector, chosen);
+    respectsCeiling = best === null || best.fpr === null || best.fpr <= maxFpr;
   }
 
   const recallBySubtype: Record<string, number | null> = {};
   if (best !== null) {
+    const threshold = best.threshold;
     const subtypes = new Set(
-      rows
+      evalRows
         .filter((r) => isTruthPositive(r.label.label))
         .map((r) => r.label.subtype ?? "unspecified"),
     );
     for (const subtype of [...subtypes].sort()) {
-      const group = rows.filter(
+      const group = evalRows.filter(
         (r) => isTruthPositive(r.label.label) && (r.label.subtype ?? "unspecified") === subtype,
       );
       const caught = group.filter((r) => {
         const score = detector.score(r);
-        return score !== null && best !== null && score >= best.threshold;
+        return score !== null && score >= threshold;
       }).length;
       recallBySubtype[subtype] = rate(caught, group.length);
     }
@@ -127,9 +174,11 @@ export function evaluateDetector(
   return {
     name: detector.name,
     description: detector.description,
-    scored: scores.length,
-    auc: rocAuc(rows, detector),
+    scored: evalRows.filter((row) => detector.score(row) !== null).length,
+    auc: rocAuc(evalRows, detector),
     best,
+    fixed: detector.fixedThreshold !== undefined,
+    respectsCeiling,
     recallBySubtype,
   };
 }
@@ -137,9 +186,9 @@ export function evaluateDetector(
 export interface HeadToHead {
   challenger: string;
   baseline: string;
-  /** Sessions the challenger gets right and the baseline gets wrong. */
+  /** What the paired test ran over, e.g. "all sessions" or "detour_xray positives only". */
+  scope: string;
   challengerOnly: number;
-  /** Sessions the baseline gets right and the challenger gets wrong. */
   baselineOnly: number;
   /** Two-sided exact McNemar p-value over the discordant pairs. */
   pValue: number;
@@ -159,15 +208,15 @@ export function exactBinomialP(successes: number, trials: number): number {
   const observed = pmf(successes);
   let total = 0;
   for (let k = 0; k <= trials; k++) {
-    // Guard against floating-point noise making an equally likely outcome look larger.
     if (pmf(k) <= observed * (1 + 1e-9)) total += pmf(k);
   }
   return Math.min(1, total);
 }
 
 /**
- * Paired comparison of two detectors at their own operating points: McNemar's exact test over
- * the sessions where exactly one of them is correct. Answers "is the gap bigger than chance?".
+ * Paired comparison of two detectors at given thresholds: McNemar's exact test over the sessions
+ * where exactly one of them is correct. `scope` is carried through because the same counts mean
+ * different things over all sessions and over one subtype's positives.
  */
 export function headToHead(
   rows: BenchmarkRow[],
@@ -175,6 +224,7 @@ export function headToHead(
   challengerThreshold: number,
   baseline: Detector,
   baselineThreshold: number,
+  scope = "all sessions",
 ): HeadToHead {
   const correct = (detector: Detector, threshold: number, row: BenchmarkRow): boolean => {
     const score = detector.score(row);
@@ -192,6 +242,7 @@ export function headToHead(
   return {
     challenger: challenger.name,
     baseline: baseline.name,
+    scope,
     challengerOnly,
     baselineOnly,
     pValue: exactBinomialP(challengerOnly, challengerOnly + baselineOnly),
@@ -200,19 +251,27 @@ export function headToHead(
 
 export interface BenchmarkInput {
   title: string;
+  /** Sessions the reported numbers are measured on. */
   rows: BenchmarkRow[];
+  /**
+   * Sessions every tunable detector may use to pick its threshold. When omitted the evaluation
+   * set is used, which measures fit rather than generalisation and is labelled as such.
+   */
+  tuningRows?: BenchmarkRow[];
   detectors: readonly Detector[];
-  /** Operating points are compared at this false-positive rate. */
   maxFpr: number;
-  /** Detector whose gap against the best classic baseline is tested; defaults to the last one. */
   challenger?: string;
 }
 
 const fmt = (v: number | null, digits = 3): string => (v === null ? "n/a" : v.toFixed(digits));
+const withInterval = (v: number | null, ci: Interval | null): string =>
+  v === null ? "n/a" : ci === null ? fmt(v) : `${fmt(v)} [${fmt(ci.low, 2)}-${fmt(ci.high, 2)}]`;
 
-/** Markdown comparison of every detector at a matched false-positive rate. */
+/** Markdown comparison of every detector at a matched false-positive ceiling. */
 export function buildBenchmarkReport(input: BenchmarkInput): string {
-  const results = input.detectors.map((d) => evaluateDetector(input.rows, d, input.maxFpr));
+  const heldOut = input.tuningRows !== undefined && input.tuningRows !== input.rows;
+  const tuning = input.tuningRows ?? input.rows;
+  const results = input.detectors.map((d) => evaluateDetector(input.rows, d, input.maxFpr, tuning));
   const positives = input.rows.filter((r) => isTruthPositive(r.label.label)).length;
   const subtypes = [
     ...new Set(
@@ -222,53 +281,78 @@ export function buildBenchmarkReport(input: BenchmarkInput): string {
     ),
   ].sort();
 
-  // Head-to-head: the challenger against the strongest classic baseline by recall.
   const challengerName = input.challenger ?? input.detectors.at(-1)?.name;
   const challengerResult = results.find((r) => r.name === challengerName);
   const challengerDetector = input.detectors.find((d) => d.name === challengerName);
-  const classicNames = new Set(CLASSIC_DETECTORS.map((d) => d.name));
-  const bestClassic = results
-    .filter((r) => classicNames.has(r.name) && r.best !== null)
+  const rivalNames = new Set([...CLASSIC_DETECTORS.map((d) => d.name), "fitted-logistic"]);
+  // Only a rival that respects the shared ceiling is a fair comparison; one that blew past it
+  // bought its recall with false positives the challenger was not allowed to spend.
+  const bestRival = results
+    .filter((r) => rivalNames.has(r.name) && r.best !== null && r.respectsCeiling)
     .sort((a, b) => (b.best?.recall ?? 0) - (a.best?.recall ?? 0))[0];
-  const bestClassicDetector = input.detectors.find((d) => d.name === bestClassic?.name);
-  const duel =
-    challengerResult?.best && challengerDetector && bestClassic?.best && bestClassicDetector
-      ? headToHead(
-          input.rows,
+  const bestRivalDetector = input.detectors.find((d) => d.name === bestRival?.name);
+
+  const duels: HeadToHead[] = [];
+  if (challengerResult?.best && challengerDetector && bestRival?.best && bestRivalDetector) {
+    duels.push(
+      headToHead(
+        input.rows,
+        challengerDetector,
+        challengerResult.best.threshold,
+        bestRivalDetector,
+        bestRival.best.threshold,
+      ),
+    );
+    for (const subtype of subtypes) {
+      const group = input.rows.filter(
+        (r) => isTruthPositive(r.label.label) && (r.label.subtype ?? "unspecified") === subtype,
+      );
+      duels.push(
+        headToHead(
+          group,
           challengerDetector,
           challengerResult.best.threshold,
-          bestClassicDetector,
-          bestClassic.best.threshold,
-        )
-      : null;
+          bestRivalDetector,
+          bestRival.best.threshold,
+          `${subtype} positives only`,
+        ),
+      );
+    }
+  }
 
   const lines = [
     `# JevCraft detection benchmark: ${input.title}`,
     "",
-    `Sessions: ${input.rows.length} (${positives} X-Ray, ${input.rows.length - positives} legitimate).`,
-    `Every detector is compared at the same ceiling: false-positive rate <= ${input.maxFpr.toFixed(3)}.`,
-    "Each classic detector is given the threshold that maximises its recall on this very dataset,",
-    "which flatters it: a real deployment cannot tune on its own test set.",
+    `Evaluation set: ${input.rows.length} sessions (${positives} X-Ray, ${input.rows.length - positives} legitimate).`,
+    heldOut
+      ? `Thresholds are chosen on a separate development set of ${tuning.length} sessions, then frozen. Nothing tunes on the evaluation set.`
+      : "**Thresholds are chosen on the evaluation set itself.** These numbers describe fit, not generalisation.",
+    `Shared ceiling: false-positive rate <= ${input.maxFpr.toFixed(3)}.`,
     "Sessions a detector cannot score count as not flagged, as they would in production.",
+    "Ranges are 95% Wilson intervals.",
     "",
-    "## Recall at matched false-positive rate",
+    "## Recall at the matched false-positive ceiling",
+    "",
+    "A detector marked **over ceiling** spent more false positives on the evaluation set than the",
+    "ceiling allows, so its recall is not comparable with the rest and it is excluded from the duel.",
     "",
     "| Detector | Scored | AUC | Threshold | Recall | FPR | Precision |",
     "| --- | --- | --- | --- | --- | --- | --- |",
-    ...results.map(
-      (r) =>
-        [
-          `| ${r.name}`,
-          r.scored,
-          fmt(r.auc),
-          r.best === null ? "n/a" : fmt(r.best.threshold, 2),
-          r.best === null ? "n/a" : fmt(r.best.recall),
-          r.best === null ? "n/a" : fmt(r.best.fpr),
-          r.best === null ? "n/a" : fmt(r.best.precision),
-        ].join(" | ") + " |",
-    ),
+    ...results.map((r) => {
+      const mark = r.fixed ? " (fixed point)" : "";
+      const warn = r.respectsCeiling ? "" : " **over ceiling**";
+      return `${[
+        `| ${r.name}${mark}`,
+        r.scored,
+        fmt(r.auc),
+        r.best === null ? "n/a" : fmt(r.best.threshold, 2),
+        r.best === null ? "n/a" : withInterval(r.best.recall, r.best.recallInterval),
+        r.best === null ? "n/a" : withInterval(r.best.fpr, r.best.fprInterval) + warn,
+        r.best === null ? "n/a" : fmt(r.best.precision),
+      ].join(" | ")} |`;
+    }),
     "",
-    "## Recall by X-Ray style at that operating point",
+    "## Recall by X-Ray style at those operating points",
     "",
     `| Detector | ${subtypes.join(" | ")} |`,
     `| --- | ${subtypes.map(() => "---").join(" | ")} |`,
@@ -277,19 +361,21 @@ export function buildBenchmarkReport(input: BenchmarkInput): string {
         `| ${r.name} | ${subtypes.map((s) => fmt(r.recallBySubtype[s] ?? null)).join(" | ")} |`,
     ),
     "",
-    ...(duel === null
+    ...(duels.length === 0
       ? []
       : [
-          "## Head to head at those operating points",
+          "## Head to head",
           "",
-          `\`${duel.challenger}\` against the strongest classic baseline, \`${duel.baseline}\`, on the`,
-          "sessions where exactly one of them is right (McNemar's exact test).",
+          `\`${duels[0]?.challenger}\` against the strongest non-Jev detector, \`${duels[0]?.baseline}\`,`,
+          "counting sessions where exactly one of them is right (McNemar's exact test).",
+          "Subtype rows cover that style's positives only, so they say nothing about false positives.",
           "",
-          "| Item | Value |",
-          "| --- | --- |",
-          `| Sessions only \`${duel.challenger}\` gets right | ${duel.challengerOnly} |`,
-          `| Sessions only \`${duel.baseline}\` gets right | ${duel.baselineOnly} |`,
-          `| Two-sided p | ${duel.pValue.toFixed(4)} |`,
+          "| Scope | Only challenger right | Only baseline right | Two-sided p |",
+          "| --- | --- | --- | --- |",
+          ...duels.map(
+            (d) =>
+              `| ${d.scope} | ${d.challengerOnly} | ${d.baselineOnly} | ${d.pValue.toFixed(4)} |`,
+          ),
           "",
         ]),
     "## What each detector stands for",

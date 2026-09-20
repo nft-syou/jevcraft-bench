@@ -288,10 +288,11 @@ spectator probe). Settings unchanged (xray-v6, gate 0.15 / bypass 0.6, seed-1 ba
 | Cave / mineshaft | 6 | 1 | 0.167 |
 | All human | 11 | 1 | 0.091 |
 
-**Human branch mining is cleaner than the bot's.** 1400 blocks, zero reveals, P(likely_xray) 0.00
-and targeting 0.04–0.05, versus bot medians of 0.29 and 0.11. The bot tunnels mechanically at a
-fixed level and stumbles into veins; the human wandered and changed level. The bot legit
-population is therefore *harder* than the human one — the FPR measured on bots is not optimistic.
+**Human branch mining scored cleaner than the bot's.** 1400 blocks, zero reveals, P(likely_xray)
+0.00 and targeting 0.04–0.05, versus bot medians of 0.29 and 0.11. The bot tunnels mechanically at
+a fixed level and stumbles into veins; the human wandered and changed level. That says the two
+populations differ, but not that one is uniformly harder: the observed false-positive rates were
+3/51 for legitimate bots and 1/11 for the human, and both samples are far too small to rank.
 
 **Cave exploration is the risky class, and the gate is what saves it.** All six cave sessions
 produced `suspicious` mass (0.37–0.53) because ore is everywhere and the route is erratic
@@ -323,6 +324,27 @@ Gate sweep over all 119:
 
 0.15 remains the best trade: it costs two X-Ray sessions and removes thirteen false positives.
 Moving to 0.20 halves recall to buy two more, which is not worth it at this sample size.
+
+## Withdrawn claim (2026-09-20)
+
+An earlier version of this file and of `docs/benchmark.md` reported that JevCraft beat the best
+classic heuristic, recall 0.789 against 0.702 at FPR 0.065 on 119 sessions. **That comparison is
+withdrawn.** A review found that the 119 sessions include the 77 used to choose the question set
+and the approach-gate threshold, so the policy was measured partly on its own development data
+while the baselines were also allowed to tune on the evaluation set.
+
+Re-run properly — thresholds frozen on the 77 development sessions, measured on the 42 recorded
+afterwards — the advantage disappears:
+
+| Detector | Recall | FPR | AUC |
+| --- | --- | --- | --- |
+| jevcraft-policy | 0.786 [0.52–0.92] | 0.071 | 0.857 |
+| reveal-ratio | 0.714 [0.45–0.88] | 0.036 | 0.912 |
+| reveal-pace | 0.643 | 0.071 | 0.902 |
+
+Head to head the policy and `reveal-ratio` are level (3 vs 3, p = 1.0), and the classic features
+rank sessions slightly better by AUC. Details and the other corrections from that review (the
+`ore-ratio` definition, the sample-size estimate, what the labels mean) are in `docs/benchmark.md`.
 
 ## Caveats
 

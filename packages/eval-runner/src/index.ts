@@ -6,13 +6,16 @@ export {
   exactBinomialP,
   type HeadToHead,
   headToHead,
+  type Interval,
   type OperatingPoint,
   rocAuc,
+  wilsonInterval,
 } from "./benchmark";
 export {
   type BenchmarkRow,
   CLASSIC_DETECTORS,
   classicComboDetector,
+  createFittedLogisticDetector,
   type Detector,
   deployedPolicyDetector,
   JEV_DETECTORS,
@@ -21,6 +24,7 @@ export {
   orePercentileDetector,
   oreRatioDetector,
   revealPaceDetector,
+  revealRatioDetector,
   straightLineDetector,
 } from "./detectors";
 export { type JoinResult, joinDecisionsWithLabels, type LabeledDecision } from "./join";

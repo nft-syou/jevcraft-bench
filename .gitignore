@@ -23,3 +23,6 @@ datasets/features/*
 !datasets/features/.gitkeep
 datasets/recordings/*
 !datasets/recordings/.gitkeep
+datasets/splits/*
+!datasets/splits/.gitkeep
+datasets/decisions/*.meta.json

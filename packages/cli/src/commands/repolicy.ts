@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { writeFile } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { applyPolicy, DEFAULT_THRESHOLDS, type PolicyThresholds } from "@jevcraft/jev-evaluator";
@@ -84,6 +86,32 @@ export async function runRepolicy(
       `${basename(values.decisions, extname(values.decisions))}-repolicy.jsonl`,
     );
   await writeJsonl(outPath, records);
-  stderr(`repolicy: ${records.length} record(s), ${changed} outcome(s) changed -> ${outPath}`);
+  // A rewritten decision file is only reproducible if the thresholds that produced it are
+  // recorded next to it, together with a digest of what went in.
+  const digest = createHash("sha256")
+    .update(records.map((r) => `${r.sessionId}:${r.policyOutcome}`).join("|"))
+    .digest("hex")
+    .slice(0, 16);
+  await writeFile(
+    `${outPath}.meta.json`,
+    `${JSON.stringify(
+      {
+        generatedAt: new Date().toISOString(),
+        decisions: values.decisions,
+        features: values.features,
+        recordCount: records.length,
+        changed,
+        thresholds,
+        outcomeDigest: digest,
+      },
+      null,
+      2,
+    )}
+`,
+    "utf8",
+  );
+  stderr(
+    `repolicy: ${records.length} record(s), ${changed} outcome(s) changed -> ${outPath} (thresholds in ${outPath}.meta.json)`,
+  );
   return { outPath, records, changed };
 }

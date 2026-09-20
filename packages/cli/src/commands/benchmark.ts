@@ -5,6 +5,7 @@ import {
   type BenchmarkRow,
   buildBenchmarkReport,
   CLASSIC_DETECTORS,
+  createFittedLogisticDetector,
   JEV_DETECTORS,
 } from "@jevcraft/eval-runner";
 import {
@@ -19,52 +20,30 @@ export interface BenchmarkDeps {
 }
 
 export const BENCHMARK_USAGE =
-  "usage: jevcraft benchmark --features <jsonl|dir> --labels <jsonl|dir> --decisions <jsonl|dir> [--out <file.md>] [--max-fpr 0.065] [--title <text>]";
+  "usage: jevcraft benchmark --features <jsonl|dir> --labels <jsonl|dir> --decisions <jsonl|dir> [--dev-features <jsonl|dir> --dev-labels <jsonl|dir> --dev-decisions <jsonl|dir>] [--out <file.md>] [--max-fpr 0.065] [--title <text>]";
 
-/**
- * Compares JevCraft against the heuristics existing anti-X-Ray tooling relies on, on the same
- * labelled sessions, at the same false-positive ceiling. Uses only archived answers: no API calls.
- */
-export async function runBenchmark(
-  args: string[],
-  deps: BenchmarkDeps = {},
-): Promise<{ outPath: string; markdown: string; rows: number }> {
-  const stderr = deps.stderr ?? ((line) => console.error(line));
-  const { values } = parseArgs({
-    args,
-    options: {
-      features: { type: "string" },
-      labels: { type: "string" },
-      decisions: { type: "string" },
-      out: { type: "string" },
-      "max-fpr": { type: "string", default: "0.065" },
-      title: { type: "string" },
-    },
-  });
-  if (!values.features || !values.labels || !values.decisions) throw new Error(BENCHMARK_USAGE);
-  const maxFpr = Number(values["max-fpr"]);
-  if (!Number.isFinite(maxFpr) || maxFpr < 0 || maxFpr > 1) {
-    throw new Error("--max-fpr must be between 0 and 1");
-  }
-
+async function loadRows(
+  featuresPath: string,
+  labelsPath: string,
+  decisionsPath: string,
+): Promise<BenchmarkRow[]> {
   const labels = new Map<string, ReturnType<typeof SessionLabelSchema.parse>>();
-  for (const file of await resolveInputFiles([values.labels])) {
+  for (const file of await resolveInputFiles([labelsPath])) {
     for (const raw of await readRecords(file)) {
       const label = SessionLabelSchema.parse(raw);
       if (label.label !== "unknown") labels.set(label.sessionId, label);
     }
   }
   const decisions = new Map<string, ReturnType<typeof DecisionRecordSchema.parse>>();
-  for (const file of await resolveInputFiles([values.decisions])) {
+  for (const file of await resolveInputFiles([decisionsPath])) {
     for (const raw of await readRecords(file)) {
       const d = DecisionRecordSchema.parse(raw);
       decisions.set(d.sessionId, d);
     }
   }
-
   const rows: BenchmarkRow[] = [];
   const seen = new Set<string>();
-  for (const file of await resolveInputFiles([values.features])) {
+  for (const file of await resolveInputFiles([featuresPath])) {
     for (const raw of await readRecords(file)) {
       const features = MiningSessionFeaturesSchema.parse(raw);
       const label = labels.get(features.sessionId);
@@ -78,19 +57,79 @@ export async function runBenchmark(
       });
     }
   }
+  return rows;
+}
+
+/**
+ * Compares JevCraft against the heuristics existing anti-X-Ray tooling relies on, on the same
+ * labelled sessions, at the same false-positive ceiling. With `--dev-*` every tunable detector
+ * picks its threshold on the development split and is then frozen, so the reported numbers are
+ * about unseen sessions. Uses only archived answers: no API calls.
+ */
+export async function runBenchmark(
+  args: string[],
+  deps: BenchmarkDeps = {},
+): Promise<{ outPath: string; markdown: string; rows: number; devRows: number }> {
+  const stderr = deps.stderr ?? ((line) => console.error(line));
+  const { values } = parseArgs({
+    args,
+    options: {
+      features: { type: "string" },
+      labels: { type: "string" },
+      decisions: { type: "string" },
+      "dev-features": { type: "string" },
+      "dev-labels": { type: "string" },
+      "dev-decisions": { type: "string" },
+      out: { type: "string" },
+      "max-fpr": { type: "string", default: "0.065" },
+      title: { type: "string" },
+    },
+  });
+  if (!values.features || !values.labels || !values.decisions) throw new Error(BENCHMARK_USAGE);
+  const maxFpr = Number(values["max-fpr"]);
+  if (!Number.isFinite(maxFpr) || maxFpr < 0 || maxFpr > 1) {
+    throw new Error("--max-fpr must be between 0 and 1");
+  }
+  const devPaths = [values["dev-features"], values["dev-labels"], values["dev-decisions"]];
+  const devGiven = devPaths.filter((p) => p !== undefined).length;
+  if (devGiven !== 0 && devGiven !== 3) {
+    throw new Error("--dev-features, --dev-labels and --dev-decisions must be given together");
+  }
+
+  const rows = await loadRows(values.features, values.labels, values.decisions);
   if (rows.length === 0) throw new Error("no labelled sessions with features found");
+  const devRows =
+    devGiven === 3
+      ? await loadRows(
+          values["dev-features"] as string,
+          values["dev-labels"] as string,
+          values["dev-decisions"] as string,
+        )
+      : [];
+
+  const overlap = devRows.filter((d) => rows.some((r) => r.sessionId === d.sessionId)).length;
+  if (overlap > 0) {
+    stderr(`warning: ${overlap} session(s) appear in both the development and evaluation sets`);
+  }
+  const tuning = devRows.length > 0 ? devRows : rows;
+  const detectors = [...CLASSIC_DETECTORS, createFittedLogisticDetector(tuning), ...JEV_DETECTORS];
 
   const title = values.title ?? `${rows.length} sessions`;
   const markdown = buildBenchmarkReport({
     title,
     rows,
-    detectors: [...CLASSIC_DETECTORS, ...JEV_DETECTORS],
+    ...(devRows.length > 0 ? { tuningRows: devRows } : {}),
+    detectors,
     maxFpr,
     challenger: "jevcraft-policy",
   });
   const outPath = values.out ?? join("reports", "benchmark.md");
   await mkdir(dirname(outPath), { recursive: true });
   await writeFile(outPath, markdown, "utf8");
-  stderr(`benchmark over ${rows.length} session(s) at FPR <= ${maxFpr} -> ${outPath}`);
-  return { outPath, markdown, rows: rows.length };
+  stderr(
+    `benchmark over ${rows.length} session(s)` +
+      (devRows.length > 0 ? ` tuned on ${devRows.length}` : " (tuned on itself)") +
+      ` at FPR <= ${maxFpr} -> ${outPath}`,
+  );
+  return { outPath, markdown, rows: rows.length, devRows: devRows.length };
 }

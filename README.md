@@ -161,19 +161,24 @@ Paper `26.2.build.124-stable` requires Java 25 (spec said 21), and commands are 
 
 ## Benchmark against existing heuristics
 
-`jevcraft benchmark` runs the heuristics existing anti-X-Ray tooling relies on (ore ratio,
-efficiency percentile, reveal pace, straight-line approach, and a hand-tuned combination) against
-JevCraft on the same labelled sessions, at the same false-positive ceiling, using archived Jev
-answers only:
+`jevcraft benchmark` runs the heuristics existing anti-X-Ray tooling relies on (ore ratio, reveal
+ratio, efficiency percentile, reveal pace, straight-line approach, a hand-written combination and
+a logistic regression fitted on the development split) against JevCraft on the same labelled
+sessions, at the same false-positive ceiling, using archived Jev answers only:
 
 ```bash
-pnpm jevcraft benchmark   --features datasets/features/all.jsonl   --labels datasets/labels/all.jsonl   --decisions datasets/decisions/all-gated.jsonl   --max-fpr 0.065 --out reports/benchmark.md
+node scripts/make-splits.mjs --dev-ids datasets/labels/bots-77.jsonl   --features datasets/features/all.jsonl --labels datasets/labels/all.jsonl   --decisions datasets/decisions/all-gated.jsonl --out-dir datasets/splits
+
+pnpm jevcraft benchmark   --features datasets/splits/holdout-features.jsonl   --labels   datasets/splits/holdout-labels.jsonl   --decisions datasets/splits/holdout-decisions.jsonl   --dev-features datasets/splits/dev-features.jsonl   --dev-labels   datasets/splits/dev-labels.jsonl   --dev-decisions datasets/splits/dev-decisions.jsonl   --max-fpr 0.072 --out reports/benchmark-holdout.md
 ```
 
-On 119 real sessions the shipped policy had the highest recall at FPR 0.065 (0.789 against 0.702
-for the best classic rule), with the gap concentrated on evasive X-Ray (0.789 against 0.474).
-That lead is not yet statistically significant (McNemar p = 0.36). See `docs/benchmark.md` for
-what the comparison does and does not establish.
+Thresholds are chosen on the development split and frozen; without `--dev-*` the report says in
+its header that its numbers describe fit rather than generalisation.
+
+On the 42 held-out sessions the shipped policy reaches recall 0.786 at FPR 0.071, and a plain
+reveal-count heuristic reaches 0.714 at FPR 0.036. Head to head they are level (3 vs 3, p = 1.0),
+and the classic features rank sessions slightly better by AUC. **There is currently no evidence
+that JevCraft detects what existing heuristics miss.** See `docs/benchmark.md`.
 
 ## Packages
 
