@@ -45,7 +45,26 @@ On the 15 throttled sessions alone, at each detector's development threshold:
 | --- | --- |
 | straight-line (directness ≥ 0.74) | **12 / 15** |
 | jevcraft-policy | **10 / 15** |
-| ore-ratio (≥ 4.13 per 100 blocks) | **0 / 15** |
+| ore-ratio (≥ 4.13 per 100 blocks, its development threshold) | **0 / 15** |
+
+## Was the ratio detector simply given a bad threshold?
+
+No. `scripts/ratio-best-case.mjs` hands it the threshold that suits it best **on the evaluation
+set itself**, which no deployment could do, and the trade is still hopeless:
+
+| Ore-ratio threshold | Throttled caught | Legitimate flagged | FPR |
+| --- | --- | --- | --- |
+| 0.50 | 11 / 15 | 10 / 28 | 0.357 |
+| 1.00 | 8 / 15 | 6 / 28 | 0.214 |
+| 1.50 | 6 / 15 | 5 / 28 | 0.179 |
+| 2.00 | 1 / 15 | 4 / 28 | 0.143 |
+| 3.00 and above | 0 / 15 | 3 / 28 | 0.107 |
+
+There is no cut-off that catches throttled sessions while staying under the shared ceiling of
+0.072; the closest it comes is flagging four of every ten legitimate players to catch eleven of
+fifteen cheats. The ceiling itself is what defeats it, not the particular number 4.13. Held-out
+legitimate sessions reach a ratio of 8.26 (the lucky-streak session), which sets the floor on how
+low the threshold can go.
 
 ## What this establishes, and what it does not
 
