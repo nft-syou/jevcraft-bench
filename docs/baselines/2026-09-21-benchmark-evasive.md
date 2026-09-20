@@ -1,4 +1,4 @@
-# JevCraft detection benchmark: held-out with ratio-evading X-Ray: seed 2, human, and 15 throttled sessions
+# JevCraft detection benchmark: 57 sessions
 
 Evaluation set: 57 sessions (29 X-Ray, 28 legitimate).
 Thresholds are chosen on a separate development set of 77 sessions, then frozen. Nothing tunes on the evaluation set.
@@ -26,18 +26,18 @@ ceiling allows, so its recall is not comparable with the rest and it is excluded
 
 ## Recall by X-Ray style at those operating points
 
-| Detector | detour_xray | direct_xray | humanized_xray |
-| --- | --- | --- | --- |
-| ore-ratio | 0.800 | 1.000 | 0.100 |
-| reveal-ratio | 0.600 | 1.000 | 0.150 |
-| ore-percentile | 0.000 | 1.000 | 0.000 |
-| reveal-pace | 0.400 | 1.000 | 0.150 |
-| straight-line | 0.000 | 1.000 | 0.750 |
-| classic-combo | 0.800 | 1.000 | 0.450 |
-| fitted-logistic | 1.000 | 1.000 | 0.300 |
-| jev-likely-xray | 0.400 | 1.000 | 0.000 |
-| jev-approach-targeting | 0.200 | 1.000 | 0.750 |
-| jevcraft-policy | 0.800 | 1.000 | 0.650 |
+| Detector | detour_xray | direct_xray | humanized_xray | throttled_xray |
+| --- | --- | --- | --- | --- |
+| ore-ratio | 0.800 | 1.000 | 0.400 | 0.000 |
+| reveal-ratio | 0.600 | 1.000 | 0.600 | 0.000 |
+| ore-percentile | 0.000 | 1.000 | 0.000 | 0.000 |
+| reveal-pace | 0.400 | 1.000 | 0.600 | 0.000 |
+| straight-line | 0.000 | 1.000 | 0.600 | 0.800 |
+| classic-combo | 0.800 | 1.000 | 0.800 | 0.333 |
+| fitted-logistic | 1.000 | 1.000 | 0.800 | 0.133 |
+| jev-likely-xray | 0.400 | 1.000 | 0.000 | 0.000 |
+| jev-approach-targeting | 0.200 | 1.000 | 0.600 | 0.800 |
+| jevcraft-policy | 0.800 | 1.000 | 0.600 | 0.667 |
 
 ## Head to head
 
@@ -50,7 +50,8 @@ Subtype rows cover that style's positives only, so they say nothing about false 
 | all sessions | 4 | 4 | 1.0000 |
 | detour_xray positives only | 4 | 0 | 0.1250 |
 | direct_xray positives only | 0 | 0 | 1.0000 |
-| humanized_xray positives only | 0 | 2 | 0.5000 |
+| humanized_xray positives only | 0 | 0 | 1.0000 |
+| throttled_xray positives only | 0 | 2 | 0.5000 |
 
 ## What each detector stands for
 

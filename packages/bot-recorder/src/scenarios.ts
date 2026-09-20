@@ -201,7 +201,7 @@ export const xrayHumanized: Scenario = {
 export const xrayThrottled: Scenario = {
   name: "xray-throttled",
   label: "simulated_xray",
-  subtype: "humanized_xray",
+  subtype: "throttled_xray",
   description:
     "Walks straight to known ore, then dilutes the session with plain tunnelling to hold ore per 100 blocks near the legitimate median.",
   async run(ctx) {

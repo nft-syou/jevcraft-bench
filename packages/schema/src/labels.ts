@@ -11,6 +11,7 @@ export const BehaviorSubtypeSchema = z.enum([
   "direct_xray",
   "detour_xray",
   "humanized_xray",
+  "throttled_xray",
   "mixed",
 ]);
 export type BehaviorSubtype = z.infer<typeof BehaviorSubtypeSchema>;

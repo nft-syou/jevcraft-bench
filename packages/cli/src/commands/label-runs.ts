@@ -28,6 +28,7 @@ const ManifestEntrySchema = z.looseObject({
       "direct_xray",
       "detour_xray",
       "humanized_xray",
+      "throttled_xray",
       "mixed",
     ])
     .nullable(),
