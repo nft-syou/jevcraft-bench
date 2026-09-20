@@ -15,7 +15,7 @@ export interface RepolicyDeps {
 }
 
 export const REPOLICY_USAGE =
-  "usage: jevcraft repolicy --decisions <jsonl|dir> --features <jsonl|dir> [--out <jsonl>] [--min-approach-targeting <t|off>] [--bypass-xray <p|off>]";
+  "usage: jevcraft repolicy --decisions <jsonl|dir> --features <jsonl|dir> [--out <jsonl>] [--min-approach-targeting <t|off>] [--bypass-xray <p|off>] [--approach-alone <t|off>]";
 
 /**
  * Recomputes policyOutcome from the stored Jev answers with the current (or overridden)
@@ -34,6 +34,7 @@ export async function runRepolicy(
       out: { type: "string" },
       "min-approach-targeting": { type: "string" },
       "bypass-xray": { type: "string" },
+      "approach-alone": { type: "string" },
     },
   });
   if (!values.decisions || !values.features) throw new Error(REPOLICY_USAGE);
@@ -53,6 +54,10 @@ export async function runRepolicy(
     reviewBypassXrayProbability: num(
       values["bypass-xray"],
       DEFAULT_THRESHOLDS.reviewBypassXrayProbability,
+    ),
+    reviewApproachTargetingAlone: num(
+      values["approach-alone"],
+      DEFAULT_THRESHOLDS.reviewApproachTargetingAlone,
     ),
   };
 
