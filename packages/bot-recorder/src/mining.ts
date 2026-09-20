@@ -44,18 +44,35 @@ const isUndiggable = (bot: Bot, pos: Vec3): boolean => {
   return b !== null && !PASSABLE.has(b.name) && (b.name === "bedrock" || isLiquid(bot, pos));
 };
 
+type MinedListener = (bot: Bot, blockName: string) => void;
+const minedListeners = new Set<MinedListener>();
+
+/**
+ * Notifies a caller of every block this package mines, with the bot that mined it. Parallel
+ * recorders share one process, so listeners must filter by bot identity.
+ * Mineflayer's own `diggingCompleted` event did not fire for these digs, hence the direct hook.
+ */
+export function onBlockMined(listener: MinedListener): () => void {
+  minedListeners.add(listener);
+  return () => {
+    minedListeners.delete(listener);
+  };
+}
+
 /** Digs one block if it is solid, diggable and within reach. Never hangs on an unreachable block. */
 export async function digAt(bot: Bot, pos: Vec3): Promise<boolean> {
   const block = bot.blockAt(pos);
   if (!block || PASSABLE.has(block.name) || !bot.canDigBlock(block)) return false;
   if (bot.entity.position.distanceTo(pos.offset(0.5, 0.5, 0.5)) > 5) return false;
   try {
+    const name = block.name;
     await Promise.race([
       bot.dig(block, true),
       sleep(DIG_TIMEOUT_MS).then(() => {
         throw new Error("dig timeout");
       }),
     ]);
+    for (const listener of minedListeners) listener(bot, name);
     return true;
   } catch {
     try {

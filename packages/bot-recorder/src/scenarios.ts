@@ -9,6 +9,7 @@ import {
   findOre,
   LOW_VALUE_ORES,
   mineVisibleVein,
+  onBlockMined,
   type Rng,
   sleep,
   tunnelTo,
@@ -210,35 +211,42 @@ export const xrayThrottled: Scenario = {
     const targetRatio = 1.5;
     let blocksBroken = 0;
     let oreMined = 0;
-    const onDig = (block: { name: string }) => {
+    const stopCounting = onBlockMined((bot, name) => {
+      if (bot !== ctx.bot) return;
       blocksBroken++;
-      if (DIAMOND_ORES.includes(block.name)) oreMined++;
-    };
-    ctx.bot.on("diggingCompleted", onDig);
+      if (DIAMOND_ORES.includes(name)) oreMined++;
+    });
     let heading = new Vec3(1, 0, 0);
+    let failures = 0;
     try {
+      // Open with plain tunnel so the first vein is not the whole session.
+      await straight(ctx, heading, 30, until);
       while (Date.now() < until) {
-        // Dig plain tunnel until the ratio has room for another vein.
-        const required = (oreMined * 100) / targetRatio;
+        // Dig ordinary tunnel until the ratio leaves room for one more vein.
+        const required = ((oreMined + 1) * 100) / targetRatio;
         while (blocksBroken < required && Date.now() < until) {
-          const run = await straight(ctx, heading, 12, until);
-          if (!run.reached) heading = turn(heading, ctx.rng);
+          if (!(await straight(ctx, heading, 12, until)).reached) heading = turn(heading, ctx.rng);
         }
         if (Date.now() >= until) break;
-        const ore = findOre(ctx.bot, DIAMOND_ORES, 28, 3, 6);
+        const ore = failures >= 2 ? null : findOre(ctx.bot, DIAMOND_ORES, 28, 3, 6);
         if (!ore) {
+          failures = 0;
           if (!(await straight(ctx, heading, 12, until)).reached) heading = turn(heading, ctx.rng);
           continue;
         }
-        ctx.log(`throttled target ${ore} (ore ${oreMined}/${blocksBroken} blocks)`);
-        if (await approachAndMine(ctx.bot, ore, until))
+        ctx.log(`target ${ore} at ${oreMined}/${blocksBroken} blocks`);
+        if (await approachAndMine(ctx.bot, ore, until)) {
+          failures = 0;
           await mineVisibleVein(ctx.bot, DIAMOND_ORES);
+        } else {
+          failures++;
+        }
         await fidget(ctx.bot, ctx.rng, ctx.humanNoise);
       }
     } finally {
-      ctx.bot.removeListener("diggingCompleted", onDig);
+      stopCounting();
       ctx.log(
-        `final ratio ${((oreMined * 100) / Math.max(1, blocksBroken)).toFixed(2)} per 100 blocks`,
+        `final ratio ${((oreMined * 100) / Math.max(1, blocksBroken)).toFixed(2)} per 100 blocks (${oreMined}/${blocksBroken})`,
       );
     }
   },
