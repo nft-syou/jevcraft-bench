@@ -26,7 +26,8 @@ Model for every run below: `jev-1.13.0` (what `jev-latest` resolved to on 2026-0
 | `2026-09-19-bot-batch6-live.md` | 24 legit-only runs (21 sessions), held out from every choice above | 21 | xray-v6 |
 | `2026-09-19-bots-77-gated-live.md` | all 77 bot sessions, approach gate 0.15 / bypass 0.6 (`jevcraft repolicy`) | 77 | xray-v6 |
 | `2026-09-20-seed2-live.md` | second world (`SEED=jevcraft-arena-2`, level `arena2`), 32 runs → 31 sessions, settings frozen from seed 1 | 31 | xray-v6 |
-| `2026-09-20-human-legit-live.md` | first human-played legit sessions (one player, 47 min, seed 2) | 7 | xray-v6 |
+| `2026-09-20-human-legit-live.md` | human-played legit sessions (one player, 5 branch + 6 cave) | 11 | xray-v6 |
+| `2026-09-20-all-119-gated.md` | every labelled session so far (2 seeds, bots + human), gate applied | 119 | xray-v6 |
 
 ## Question sets compared
 
@@ -275,32 +276,53 @@ and scored P(likely_xray) 0.67–0.79, still short of the 0.90 needed for `high_
 
 Total labelled real-telemetry sessions so far: 108 (51 legit, 57 X-Ray) across two seeds.
 
-## First human-played legit sessions (2026-09-20)
+## Human-played legit sessions (2026-09-20)
 
-One person played on the seed-2 world for 47 minutes with no X-Ray tooling: five branch-mining
-sessions, then two spent exploring a cave system and an abandoned mineshaft. 1890 blocks broken,
-10 hidden-ore reveals. Settings unchanged (xray-v6, gate 0.15 / bypass 0.6, seed-1 baseline).
+One person played on the seed-2 world with no X-Ray tooling: five branch-mining sessions, then six
+spent in a deep cave system and an abandoned mineshaft (teleported to a cave pocket found by a
+spectator probe). Settings unchanged (xray-v6, gate 0.15 / bypass 0.6, seed-1 baseline).
 
-| | outcome |
+| | sessions | flagged | FPR |
+| --- | --- | --- | --- |
+| Branch mining | 5 | 0 | 0.000 |
+| Cave / mineshaft | 6 | 1 | 0.167 |
+| All human | 11 | 1 | 0.091 |
+
+**Human branch mining is cleaner than the bot's.** 1400 blocks, zero reveals, P(likely_xray) 0.00
+and targeting 0.04–0.05, versus bot medians of 0.29 and 0.11. The bot tunnels mechanically at a
+fixed level and stumbles into veins; the human wandered and changed level. The bot legit
+population is therefore *harder* than the human one — the FPR measured on bots is not optimistic.
+
+**Cave exploration is the risky class, and the gate is what saves it.** All six cave sessions
+produced `suspicious` mass (0.37–0.53) because ore is everywhere and the route is erratic
+(directness 0.36–0.54, detour 1.5–4.1). Ungated, two of them cross the review rule; with the gate
+at 0.15 one survives (targeting 0.17); at 0.20 none do. Cave sessions also show why
+`enoughEvidence` matters: two short ones were correctly held back as insufficient.
+
+## Everything so far: 119 labelled real-telemetry sessions
+
+Two seeds, bot and human, `xray-v6`, gate 0.15 / bypass 0.6 (`jevcraft repolicy` over archived
+answers — no new API calls).
+
+| | value |
 | --- | --- |
-| Branch mining (5 sessions, 0 reveals) | 4 `no_action` (P(likely_xray) 0.00, targeting 0.04–0.05), 1 `insufficient_evidence` |
-| Cave / mineshaft (2 sessions, 10 reveals) | 1 `no_action` (P 0.52), 1 `review` (P 0.29, `suspicious` 0.50, targeting 0.16) |
-| FPR | 1 / 7 = 0.143 (gate 0.20 would make it 0/7) |
+| Sessions | 119 (62 legit, 57 X-Ray) |
+| Policy TP / FP / TN / FN | 45 / 4 / 58 / 12 |
+| Precision / Recall / FPR | 0.918 / 0.789 / 0.065 |
+| FPR by legit style | branch mining 0.054 (3/56), cave mining 0.167 (1/6) |
+| Recall by X-Ray style | direct 0.842, detour 0.789, humanized 0.737 |
 
-Two things stand out.
+Gate sweep over all 119:
 
-**Human branch mining is cleaner than the bot's.** Zero reveals in 1400 blocks, P(likely_xray)
-exactly 0.00 and targeting 0.04–0.05, versus bot medians of 0.29 and 0.11. The bot tunnels
-mechanically in a straight line at a fixed level and stumbles into veins; the human wandered,
-changed level and mined nothing valuable. So the bot legit population is, if anything, *harder*
-than the human one — the FPR measured on bots is not optimistic.
+| t | TP | FP | Recall | FPR |
+| --- | --- | --- | --- | --- |
+| off | 47 | 17 | 0.825 | 0.274 |
+| 0.15 | 45 | 4 | 0.789 | 0.065 |
+| 0.20 | 31 | 2 | 0.544 | 0.032 |
+| 0.30 | 27 | 1 | 0.474 | 0.016 |
 
-**Cave exploration is the risky class.** Both cave sessions carried real reveals and produced
-`suspicious` mass (0.33 and 0.50); one crossed the review rule. This is the "ore is everywhere and
-the route is erratic" case, and the current features (low directness 0.44–0.54, high detour 2.1–4.1)
-do not tell Jev that erratic *is* the point. The gate held it to one false positive, and a gate of
-0.20 would have removed it, but with n=2 nothing is settled. More human cave sessions are the
-single most valuable data to collect next.
+0.15 remains the best trade: it costs two X-Ray sessions and removes thirteen false positives.
+Moving to 0.20 halves recall to buy two more, which is not worth it at this sample size.
 
 ## Caveats
 
