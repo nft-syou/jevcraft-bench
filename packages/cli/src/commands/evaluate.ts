@@ -8,7 +8,11 @@ import {
   getQuestionSet,
   type JevBackend,
 } from "@jevcraft/jev-evaluator";
-import { type DecisionRecord, MiningSessionFeaturesSchema } from "@jevcraft/schema";
+import {
+  type DecisionRecord,
+  MiningSessionFeaturesSchema,
+  SessionLabelSchema,
+} from "@jevcraft/schema";
 import { readRecords, resolveInputFiles, writeJsonl } from "../io";
 
 export interface EvaluateDeps {
@@ -17,7 +21,7 @@ export interface EvaluateDeps {
 }
 
 export const EVALUATE_USAGE =
-  "usage: jevcraft evaluate <input.json|input.jsonl|dir>... [--out <file.jsonl>] [--backend auto|typesafe|mock] [--model <name>] [--repeat <n>] [--questions xray-v1|...|xray-v6]";
+  "usage: jevcraft evaluate <input.json|input.jsonl|dir>... [--out <file.jsonl>] [--backend auto|typesafe|mock] [--model <name>] [--repeat <n>] [--questions xray-v1|...|xray-v6] [--labels <labels.jsonl>]";
 
 function chooseBackend(
   requested: string,
@@ -58,6 +62,7 @@ export async function runEvaluate(
       model: { type: "string" },
       repeat: { type: "string", default: "1" },
       questions: { type: "string", default: DEFAULT_QUESTION_SET.version },
+      labels: { type: "string" },
     },
   });
   if (positionals.length === 0) throw new Error(EVALUATE_USAGE);
@@ -78,6 +83,21 @@ export async function runEvaluate(
     }
   }
 
+  // With --labels only sessions that carry a usable ground-truth label are evaluated, so API
+  // calls are not spent on sessions the report would exclude anyway.
+  let selected = features;
+  if (values.labels !== undefined) {
+    const labelled = new Set<string>();
+    for (const file of await resolveInputFiles([values.labels])) {
+      for (const raw of await readRecords(file)) {
+        const label = SessionLabelSchema.parse(raw);
+        if (label.label !== "unknown") labelled.add(label.sessionId);
+      }
+    }
+    selected = features.filter((f) => labelled.has(f.sessionId));
+    stderr(`--labels: evaluating ${selected.length} of ${features.length} session(s)`);
+  }
+
   const questionSet = getQuestionSet(values.questions);
   const backend = chooseBackend(values.backend, env, stderr);
   const firstInput = positionals[0] ?? "decisions";
@@ -87,7 +107,7 @@ export async function runEvaluate(
 
   const records: DecisionRecord[] = [];
   for (let round = 0; round < repeat; round++) {
-    for (const f of features) {
+    for (const f of selected) {
       const record = await evaluateSession(f, {
         backend,
         questionSet,

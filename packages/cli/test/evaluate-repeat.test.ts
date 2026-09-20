@@ -57,6 +57,25 @@ describe("jevcraft evaluate --repeat", () => {
     ).rejects.toThrow(/unknown question set/);
   });
 
+  it("evaluates only labelled, non-unknown sessions when --labels is given", async () => {
+    const notes: string[] = [];
+    const { records } = await runEvaluate(
+      [
+        fixtures,
+        "--backend",
+        "mock",
+        "--labels",
+        join(root, "datasets/labels/fixtures.jsonl"),
+        "--out",
+        join(outDir, "labelled.jsonl"),
+      ],
+      { env: {}, stderr: (line) => notes.push(line) },
+    );
+    expect(records.map((r) => r.sessionId)).not.toContain("session_fixture_insufficient_001");
+    expect(records).toHaveLength(4);
+    expect(notes.join("\n")).toMatch(/evaluating 4 of 5/);
+  });
+
   it("rejects a non-positive repeat count", async () => {
     await expect(
       runEvaluate(

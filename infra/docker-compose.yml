@@ -26,7 +26,10 @@ services:
       ONLINE_MODE: "false"
       MEMORY: 4G
       # Fixed world so bot recordings are reproducible; peaceful so bots do not die underground.
-      SEED: "jevcraft-arena-1"
+      # A different seed needs a different level folder; the seed only applies when a world is created.
+      #   JEVCRAFT_SEED=jevcraft-arena-2 JEVCRAFT_LEVEL=arena2 docker compose -f infra/docker-compose.yml up -d paper
+      SEED: "${JEVCRAFT_SEED:-jevcraft-arena-1}"
+      LEVEL: "${JEVCRAFT_LEVEL:-world}"
       DIFFICULTY: peaceful
       MODE: survival
       SPAWN_PROTECTION: "0"
