@@ -8,6 +8,11 @@ existing anti-cheat tooling miss, **at the same false-positive rate**, on sessio
 False-positive rate is the ceiling, not an afterthought. A detector that flags twice as many
 cheaters while also flagging twice as many ordinary players has improved nothing.
 
+> **Update (2026-09-21).** The comparison below uses only greedy X-Ray bots, which ore counting
+> already catches. Against an adversary that throttles its ore ratio into the legitimate range,
+> ore counting drops to 0 of 15 while approach-based detection holds up. See `docs/evasion.md`;
+> that experiment, not this one, is the case for behavioural detection.
+
 ## The short answer, as of 2026-09-20
 
 **No evidence of an advantage.** On held-out sessions the shipped policy and a plain ore-count

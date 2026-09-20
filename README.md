@@ -175,10 +175,19 @@ pnpm jevcraft benchmark   --features datasets/splits/holdout-features.jsonl   --
 Thresholds are chosen on the development split and frozen; without `--dev-*` the report says in
 its header that its numbers describe fit rather than generalisation.
 
-On the 42 held-out sessions the shipped policy reaches recall 0.786 at FPR 0.071, and a plain
-reveal-count heuristic reaches 0.714 at FPR 0.036. Head to head they are level (3 vs 3, p = 1.0),
-and the classic features rank sessions slightly better by AUC. **There is currently no evidence
-that JevCraft detects what existing heuristics miss.** See `docs/benchmark.md`.
+Against greedy X-Ray bots there is no advantage: counting ore already solves that case. The
+interesting case is a cheater who dilutes their ore ratio into the legitimate range. Against 15
+such sessions (`xray-throttled`), at thresholds fixed on the development split:
+
+| Detector | Caught |
+| --- | --- |
+| approach directness (from this project's telemetry) | 12 / 15 |
+| JevCraft policy | 10 / 15 |
+| ore ratio, the dominant existing heuristic | **0 / 15** |
+
+So the contribution is the approach telemetry, not the language model: a hand-written directness
+rule does as well as Jev on this data. See `docs/evasion.md` for the full result and
+`docs/benchmark.md` for the method.
 
 ## Packages
 
