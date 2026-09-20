@@ -9,10 +9,12 @@ describe("scenario registry", () => {
       "xray-direct",
       "xray-detour",
       "xray-humanized",
+      "xray-throttled",
     ]);
     expect(SCENARIOS.filter((s) => s.label === "legit")).toHaveLength(1);
-    expect(SCENARIOS.filter((s) => s.label === "simulated_xray")).toHaveLength(3);
+    expect(SCENARIOS.filter((s) => s.label === "simulated_xray")).toHaveLength(4);
     expect(getScenario("xray-detour").subtype).toBe("detour_xray");
+    expect(getScenario("xray-throttled").description).toMatch(/ore per 100 blocks/);
     expect(() => getScenario("nope")).toThrow(/unknown scenario/);
   });
 });

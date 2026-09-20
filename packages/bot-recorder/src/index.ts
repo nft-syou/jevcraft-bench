@@ -10,4 +10,5 @@ export {
   xrayDetour,
   xrayDirect,
   xrayHumanized,
+  xrayThrottled,
 } from "./scenarios";

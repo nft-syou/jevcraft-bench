@@ -191,11 +191,65 @@ export const xrayHumanized: Scenario = {
   },
 };
 
+/**
+ * The adversary behavioural detection exists for: a cheater who knows where the ore is but keeps
+ * their ore-per-block ratio inside the legitimate range by digging ordinary tunnel between
+ * targets. Efficiency heuristics cannot flag it above the legitimate distribution by
+ * construction; only the shape of the approach still carries the hidden knowledge.
+ */
+export const xrayThrottled: Scenario = {
+  name: "xray-throttled",
+  label: "simulated_xray",
+  subtype: "humanized_xray",
+  description:
+    "Walks straight to known ore, then dilutes the session with plain tunnelling to hold ore per 100 blocks near the legitimate median.",
+  async run(ctx) {
+    const until = deadline(ctx);
+    // Legitimate sessions sit at 0.46 per 100 blocks (median) and 2.31 (90th percentile), so
+    // 1.5 is inside the ordinary range while still profitable.
+    const targetRatio = 1.5;
+    let blocksBroken = 0;
+    let oreMined = 0;
+    const onDig = (block: { name: string }) => {
+      blocksBroken++;
+      if (DIAMOND_ORES.includes(block.name)) oreMined++;
+    };
+    ctx.bot.on("diggingCompleted", onDig);
+    let heading = new Vec3(1, 0, 0);
+    try {
+      while (Date.now() < until) {
+        // Dig plain tunnel until the ratio has room for another vein.
+        const required = (oreMined * 100) / targetRatio;
+        while (blocksBroken < required && Date.now() < until) {
+          const run = await straight(ctx, heading, 12, until);
+          if (!run.reached) heading = turn(heading, ctx.rng);
+        }
+        if (Date.now() >= until) break;
+        const ore = findOre(ctx.bot, DIAMOND_ORES, 28, 3, 6);
+        if (!ore) {
+          if (!(await straight(ctx, heading, 12, until)).reached) heading = turn(heading, ctx.rng);
+          continue;
+        }
+        ctx.log(`throttled target ${ore} (ore ${oreMined}/${blocksBroken} blocks)`);
+        if (await approachAndMine(ctx.bot, ore, until))
+          await mineVisibleVein(ctx.bot, DIAMOND_ORES);
+        await fidget(ctx.bot, ctx.rng, ctx.humanNoise);
+      }
+    } finally {
+      ctx.bot.removeListener("diggingCompleted", onDig);
+      ctx.log(
+        `final ratio ${((oreMined * 100) / Math.max(1, blocksBroken)).toFixed(2)} per 100 blocks`,
+      );
+    }
+  },
+};
+
 export const SCENARIOS: readonly Scenario[] = [
   legitBranchMining,
   xrayDirect,
   xrayDetour,
   xrayHumanized,
+  xrayThrottled,
 ];
 
 export function getScenario(name: string): Scenario {
