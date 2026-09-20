@@ -141,6 +141,11 @@ Scenarios: `legit-branch-mining`, `xray-direct`, `xray-detour`, `xray-humanized`
 `label-runs` can attach ground truth to the plugin's sessions without the plugin ever writing names.
 Mineflayer speaks protocol 26.1; the server runs ViaVersion + ViaBackwards so it can join 26.2.
 
+Another world: `JEVCRAFT_SEED=jevcraft-arena-2 JEVCRAFT_LEVEL=arena2 docker compose -f infra/docker-compose.yml up -d paper`
+(the seed only applies when a level folder is first created). `scripts/session-table.mjs` and
+`scripts/gate-sweep.mjs` print per-session tables and sweep the approach gate over archived
+decisions without API calls.
+
 Bots move and look more regularly than people (`--human-noise` softens this). Treat bot data as
 the bulk set for wiring, extractor and threshold work, and keep a small human-played set for the
 final false-positive check (handoff spec §22).

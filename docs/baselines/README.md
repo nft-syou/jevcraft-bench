@@ -25,6 +25,7 @@ Model for every run below: `jev-1.13.0` (what `jev-latest` resolved to on 2026-0
 | `2026-09-19-bots-all-bl-xray-v6-noflag.md` | same, v6 with `quality.enoughEvidence` redacted from the state | 56 | xray-v6-noflag |
 | `2026-09-19-bot-batch6-live.md` | 24 legit-only runs (21 sessions), held out from every choice above | 21 | xray-v6 |
 | `2026-09-19-bots-77-gated-live.md` | all 77 bot sessions, approach gate 0.15 / bypass 0.6 (`jevcraft repolicy`) | 77 | xray-v6 |
+| `2026-09-20-seed2-live.md` | second world (`SEED=jevcraft-arena-2`, level `arena2`), 32 runs → 31 sessions, settings frozen from seed 1 | 31 | xray-v6 |
 
 ## Question sets compared
 
@@ -248,6 +249,30 @@ Across all 77 sessions (34 legit / 43 X-Ray):
 removes eight of ten false positives. It is still provisional: one seed, one world, bots only.
 `jevcraft repolicy` recomputes outcomes from archived answers, so future threshold changes can be
 compared on these 77 sessions without new API calls.
+
+## Second seed (2026-09-20): does it transfer?
+
+A new world (`JEVCRAFT_SEED=jevcraft-arena-2 JEVCRAFT_LEVEL=arena2`) was recorded with everything
+frozen from seed 1: question set xray-v6, approach gate 0.15 / bypass 0.6, and the *seed 1* legit
+baseline for `baselinePercentile`. 32 runs (17 legit, 15 X-Ray) gave 31 sessions.
+
+| | seed 1 (77 sessions) | seed 2 (31 sessions) |
+| --- | --- | --- |
+| Ungated FPR | 0.294 (10 / 34) | 0.294 (5 / 17) |
+| Gated FPR | 0.059 (2 / 34) | 0.059 (1 / 17) |
+| Gated recall | 0.791 | 0.786 |
+| Gated precision | 0.944 | 0.917 |
+| `approach_targeting` median: legit / direct / detour / humanized | 0.11 / 0.43 / 0.18 / 0.20 | 0.11 / 0.46 / 0.18 / 0.47 |
+| P(likely_xray) median: legit / direct / detour / humanized | 0.29 / 0.60 / 0.58 / 0.47 | 0.30 / 0.78 / 0.59 / 0.46 |
+
+The numbers carried over almost exactly, including the ungated false-positive rate, so the
+"lucky strip mining gets flagged by `suspicious` mass, and the approach gate removes most of it"
+story is not an artefact of one world. Of the three X-Ray misses on seed 2, two never gathered
+enough evidence (recording limitation) and one humanized run was gated out (`approach_targeting`
+0.14, P(likely_xray) 0.43). Direct X-Ray on this seed met richer ore (13.7 reveals per 100 blocks)
+and scored P(likely_xray) 0.67–0.79, still short of the 0.90 needed for `high_priority_review`.
+
+Total labelled real-telemetry sessions so far: 108 (51 legit, 57 X-Ray) across two seeds.
 
 ## Caveats
 
