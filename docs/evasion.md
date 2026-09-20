@@ -1,10 +1,10 @@
 # The evasion experiment
 
-> **Status: one confirmed result, one open hypothesis.** That session-wide ore counting fails
-> against a ratio-throttled cheater is a clean held-out finding. How well JevCraft's own policy
-> catches that cheater is *not* yet a measurement: the policy rule that does the catching was
-> added after these sessions were scored. A confirmation set recorded after the rule was fixed is
-> in progress.
+> **Status: both results now confirmed, on one adversary.** Session-wide ore counting fails
+> against a ratio-throttled cheater, and the policy rule that catches that cheater was originally
+> added after the sessions it was measured on had been scored. A confirmation set of 22 sessions
+> recorded after the rule was frozen reproduces the effect: 9 of 10 caught, against 3 of 10 for
+> the policy without the rule and 0 of 10 for ore counting. See the confirmation section.
 
 ## Why it was run
 
@@ -163,11 +163,50 @@ legitimate, all without an ore reveal); its 0/28 false positives include those 1
 observed cheating. Five sessions per evasion style, and fifteen for throttled, give intervals
 roughly 40 points wide, so none of the per-subtype differences is individually significant.
 
-## What would settle the open part
+## The confirmation set
 
-A confirmation set recorded *after* the 0.35 rule was committed, with nothing else changed. That
-is the only thing that turns "10 of 15" into a measurement rather than a hypothesis. It is
-running; this document will carry the result, whatever it says.
+10 fresh `xray-throttled` runs and 10 fresh `legit-branch-mining` runs, recorded 2026-09-21
+01:05-02:07 JST, more than half an hour after the 0.35 rule was committed and with no code or
+threshold touched in between. They produced 22 labelled sessions (10 X-Ray, 12 legitimate; two
+legitimate bots reconnected and so contributed two sessions each).
+
+The throttled bots again landed inside the legitimate range: 0.58 to 1.82 ore per 100 blocks,
+every one below the legitimate 90th percentile of 2.31.
+
+| Detector | Caught | False positives |
+| --- | --- | --- |
+| ore-ratio >= 4.13 (its development threshold) | 0 / 10 [0-28%] | 0 / 12 |
+| ore-ratio >= 2.31 (the legitimate 90th percentile) | 0 / 10 [0-28%] | 1 / 12 |
+| straight-line >= 0.74 | 9 / 10 [60-98%] | 0 / 12 |
+| jev-approach-targeting >= 0.20 | 10 / 10 [72-100%] | 0 / 12 |
+| jevcraft-policy, as frozen on development data | 3 / 10 [11-60%] | 1 / 12 |
+| **jevcraft-policy, with the 0.35 rule** | **9 / 10 [60-98%]** | 1 / 12 |
+
+The approach question separates the two populations completely on this set, with a clear gap:
+throttled sessions score 0.28 to 0.63, legitimate ones 0.04 to 0.15. The 0.35 threshold sits
+inside that gap, which is why it transfers. It is also visibly conservative: the single session
+the policy misses scores 0.28, and the 0.20 threshold that `jev-approach-targeting` picked on
+development data would have caught all ten at no cost here.
+
+The one legitimate session the policy flags was already flagged before the rule was added, so the
+rule bought its 6 extra detections without spending any error budget on this set either.
+
+**What this is and is not.** It is a genuine out-of-sample test of the rule: nothing about it was
+chosen after these sessions existed. It is not a new environment. Same world, same server, same
+two scenario generators, different bot seeds, all bots. It confirms the rule was not fitted to
+noise in the first 15 sessions. It says nothing about human players, other worlds, or evasion
+strategies the `xray-throttled` bot does not implement.
+
+**It still does not show a language-model advantage.** The hand-written directness rule caught 9
+of 10 at zero false positives; the policy caught 9 of 10 at one. The Jev approach question caught
+all ten, one more than the directness rule, on ten sessions. That is one session of difference and
+proves nothing.
+
+## What would settle what remains
+
+The open questions are now about generalisation, not about the rule: a different world seed, human
+legitimate players against the throttled adversary, and an evasion combining ratio dilution with
+the wandering approach the `detour` bot already uses, which no detector here handles.
 
 ## Reproducing
 
@@ -189,6 +228,13 @@ node scripts/window-count.mjs --raw <plugin data dir> --splits datasets/splits2 
 # the policy as it stood before the post-hoc rule:
 pnpm jevcraft repolicy --decisions datasets/decisions/all2-live.jsonl \
   --features datasets/features/all2.jsonl --approach-alone off --out prerule.jsonl
+# the confirmation set:
+pnpm jevcraft record --scenario xray-throttled --count 10 --budget-seconds 900 --parallel 8 --start-index 500 --seed 21 --out datasets/recordings/confirm.jsonl
+pnpm jevcraft record --scenario legit-branch-mining --count 10 --budget-seconds 900 --parallel 8 --start-index 520 --seed 21 --out datasets/recordings/confirm.jsonl
+pnpm jevcraft label-runs --raw <run file> --manifest datasets/recordings/confirm.jsonl --out datasets/labels/confirm.jsonl
+pnpm jevcraft extract <run file> --baseline datasets/baselines/legit-bots-2026-09-19.json --out all.jsonl   # then keep the rows the labels cover
+pnpm jevcraft evaluate datasets/features/confirm.jsonl --questions xray-v6 --labels datasets/labels/confirm.jsonl --out datasets/decisions/confirm-live.jsonl
+pnpm jevcraft repolicy --decisions datasets/decisions/confirm-live.jsonl --features datasets/features/confirm.jsonl --out datasets/decisions/confirm-gated.jsonl
 ```
 
 Archived output: `docs/baselines/2026-09-21-benchmark-evasive.md`.

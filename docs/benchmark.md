@@ -11,10 +11,10 @@ cheaters while also flagging twice as many ordinary players has improved nothing
 > **Update (2026-09-21).** The comparison below uses only greedy X-Ray bots, which ore counting
 > already catches. Against an adversary that throttles its ore ratio into the legitimate range,
 > the session-wide ore ratio drops to 0 of 15 at any threshold that respects the ceiling, while
-> approach-based detection holds up. That is the case for behavioural telemetry. It is not yet a
-> demonstrated advantage for JevCraft's policy: the policy rule that catches those sessions was
-> added after they were scored, and a hand-written directness rule matches it. See
-> `docs/evasion.md` for the timeline, the before-and-after and the open confirmation.
+> approach-based detection holds up. That is the case for behavioural telemetry, confirmed on a
+> fresh 22-session set recorded after every threshold was frozen. It is still not a demonstrated
+> advantage for JevCraft's policy over a hand-written directness rule, which matches it. See
+> `docs/evasion.md` for the timeline, the before-and-after and the confirmation set.
 
 ## The short answer, as of 2026-09-20
 
