@@ -43,6 +43,7 @@ describe("applyPolicy", () => {
       reviewCombinedProbability: 0.75,
       reviewMinApproachTargeting: 0.15,
       reviewBypassXrayProbability: 0.6,
+      reviewApproachTargetingAlone: 0.35,
     });
   });
 
@@ -119,6 +120,25 @@ describe("applyPolicy", () => {
     expect(applyPolicy(strongButUntargeted, ok, gated)).toBe("review");
     const noAnswer = answers({ likely_xray: 0.4, suspicious: 0.35 });
     expect(applyPolicy(noAnswer, ok, gated)).toBe("review");
+  });
+
+  it("asks for review on strong approach evidence even when the class probabilities are low", () => {
+    // A cheater who dilutes their ore ratio looks ordinary to behavior_class but still walks
+    // straight at ore they could not see.
+    const diluted = {
+      ...answers({ legit: 0.5, suspicious: 0.42, likely_xray: 0.08 }),
+      approachTargeting: 0.47,
+    };
+    expect(applyPolicy(diluted, ok)).toBe("review");
+    const withoutPath = {
+      ...DEFAULT_THRESHOLDS,
+      reviewApproachTargetingAlone: null,
+    };
+    expect(applyPolicy(diluted, ok, withoutPath)).toBe("no_action");
+    const ordinaryApproach = { ...diluted, approachTargeting: 0.2 };
+    expect(applyPolicy(ordinaryApproach, ok)).toBe("no_action");
+    // Evidence quality still comes first.
+    expect(applyPolicy(diluted, { enoughEvidence: false })).toBe("insufficient_evidence");
   });
 
   it("honours custom thresholds", () => {

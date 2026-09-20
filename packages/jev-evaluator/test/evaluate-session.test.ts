@@ -88,7 +88,7 @@ describe("evaluateSession", () => {
       questionSet: xrayV6,
     });
     expect(record.questionSetVersion).toBe("xray-v6");
-    expect(record.answers?.approachTargeting).toBe(0.5);
+    expect(record.answers?.approachTargeting ?? 0).toBeGreaterThan(0.8);
     const v4 = await evaluateSession(loadFixture("xray-direct-001.json"), {
       ...fixedOptions,
       questionSet: xrayV4,

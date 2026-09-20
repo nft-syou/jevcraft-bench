@@ -18,6 +18,13 @@ export interface PolicyThresholds {
    */
   reviewMinApproachTargeting: number | null;
   reviewBypassXrayProbability: number | null;
+  /**
+   * Approach evidence strong enough to ask for review on its own, whatever the class
+   * probabilities say. A cheater who dilutes their ore ratio to look ordinary drags
+   * `behavior_class` down with it, but cannot change the shape of the approach.
+   * Null disables the path; sessions without the answer are never promoted by it.
+   */
+  reviewApproachTargetingAlone: number | null;
 }
 
 /** Provisional values from spec §10. Tune from labeled data; never treat as final. */
@@ -32,6 +39,9 @@ export const DEFAULT_THRESHOLDS: PolicyThresholds = {
   // 9 to 2. Still provisional: bots, one seed, one world. See docs/baselines/README.md.
   reviewMinApproachTargeting: 0.15,
   reviewBypassXrayProbability: 0.6,
+  // 0.35 sits just above the highest approach_targeting seen on any legitimate development
+  // session (0.33), so it is set by the legitimate population rather than by the cheats.
+  reviewApproachTargetingAlone: 0.35,
 };
 
 /**
@@ -49,6 +59,7 @@ export function applyPolicy(
   }
 
   const p = answers.behaviorClass.probabilities;
+  const targeting = answers.approachTargeting;
   if (
     p.likely_xray >= thresholds.highPriorityXrayProbability &&
     answers.hiddenInformationUse >= thresholds.highPriorityHiddenInfo &&
@@ -56,9 +67,12 @@ export function applyPolicy(
   ) {
     return "high_priority_review";
   }
+  // Targeted approaches are evidence in their own right, not only a veto on other evidence.
+  const alone = thresholds.reviewApproachTargetingAlone;
+  if (alone !== null && targeting !== undefined && targeting >= alone) return "review";
+
   if (p.likely_xray + p.suspicious >= thresholds.reviewCombinedProbability) {
     const gate = thresholds.reviewMinApproachTargeting;
-    const targeting = answers.approachTargeting;
     if (gate !== null && targeting !== undefined && targeting < gate) {
       const bypass = thresholds.reviewBypassXrayProbability;
       if (bypass === null || p.likely_xray < bypass) return "no_action";

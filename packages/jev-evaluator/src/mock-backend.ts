@@ -90,12 +90,13 @@ function answerChoice(question: ChoiceQuestion, signals: MockSignals) {
 }
 
 function answerNoul(name: string, signals: MockSignals) {
-  const noul =
-    name === "hidden_information_use"
-      ? signals.suspicion
-      : name === "evidence_sufficiency"
-        ? signals.evidenceSufficiency
-        : 0.5;
+  let noul = 0.5;
+  if (name === "hidden_information_use" || name === "approach_targeting") {
+    // Both questions read the approach, so the mock answers them from the same signal.
+    noul = signals.suspicion;
+  } else if (name === "evidence_sufficiency") {
+    noul = signals.evidenceSufficiency;
+  }
   return { type: "noul" as const, noul };
 }
 

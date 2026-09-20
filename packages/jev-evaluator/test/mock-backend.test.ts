@@ -76,6 +76,14 @@ describe("mock backend", () => {
     expect(answers.evidence_sufficiency.noul).toBeLessThan(0.65);
   });
 
+  it("answers the approach question from the same signal as hidden information use", async () => {
+    const { answers } = await createMockBackend().systemOne({
+      state: buildXrayV1State(loadFixture("xray-direct-001.json")),
+      questions: { hidden_information_use: { type: "noul" }, approach_targeting: { type: "noul" } },
+    });
+    expect(answers.approach_targeting.noul).toBe(answers.hidden_information_use.noul);
+  });
+
   it("answers 0.5 for unknown noul questions and uniform for unknown choice labels", async () => {
     const result = await createMockBackend().systemOne({
       state: { unrelated: true },
