@@ -187,18 +187,10 @@ Against greedy X-Ray bots there is no advantage: counting ore already solves tha
 interesting case is a cheater who dilutes their ore ratio into the legitimate range. Against 15
 such sessions (`xray-throttled`), at thresholds fixed on the development split:
 
-```mermaid
-xychart-beta
-    title "Caught, of 15 ratio-throttled X-Ray sessions"
-    x-axis ["ore ratio", "reveal ratio", "reveal pace", "combo", "policy", "directness"]
-    y-axis "sessions caught" 0 --> 15
-    bar [0, 0, 0, 5, 10, 12]
-```
+![Share of ratio-throttled X-Ray sessions caught, by detector and cohort](docs/images/throttled-detection.svg)
 
-`policy` is JevCraft's own decision, `directness` a hand-written rule on the mean approach
-directness, and `combo` a hand-written mix of efficiency and directness. `combo` spends more false
-positives than the shared ceiling allows, so its 5 is not comparable with the rest. The three
-counting heuristics catch none of the 15.
+The held-out 15 are the sessions that motivated the policy's approach rule, so they cannot
+confirm it. The 10 confirmation sessions were recorded after that rule was frozen.
 
 So the contribution is the approach telemetry, not the language model: a hand-written directness
 rule does as well as Jev on this data. See `docs/evasion.md` for the full result and
@@ -282,11 +274,19 @@ under different ones and records what it applied in a `.meta.json` beside its ou
 ## Development
 
 ```bash
-pnpm check        # lint + typecheck + test
-pnpm format       # apply Biome formatting
+pnpm check            # lint + typecheck + test
+pnpm format           # apply Biome formatting
+pnpm figures          # redraw docs/images/*.svg from docs/figure-data.json
+pnpm figures:refresh  # recompute those aggregates from the datasets first
 ```
 
-CI runs the same commands plus a mock evaluation. Live Jev calls are never made in CI.
+CI runs the same commands plus a mock evaluation, and re-renders the figures to fail if the
+committed SVGs have drifted from the committed aggregates. Live Jev calls are never made in CI.
+
+Figures are generated, never hand-edited. The session-level datasets are gitignored, so
+`scripts/make-figures.mjs` keeps its inputs in `docs/figure-data.json`, which is committed and is
+the only thing CI needs. The pipeline diagram above is Mermaid because it is a graph layout rather
+than a chart.
 
 ## Project files
 

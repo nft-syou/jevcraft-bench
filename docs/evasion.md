@@ -37,36 +37,11 @@ policy rule that exploits it was not.
 
 ## Where the three populations sit
 
-Share of each population by valuable ore mined per 100 blocks broken, over all 156 labelled
-sessions. The ore-ratio detector's development threshold is 4.13, which falls in the `4-5` bin.
+![Distribution of valuable ore mined per 100 blocks broken, by session type](images/ore-ratio-distribution.svg)
 
-```mermaid
-xychart-beta
-    title "Legitimate mining (n=74), % of sessions"
-    x-axis ["0-1", "1-2", "2-3", "3-4", "4-5", "5-6", "6-8", "8-12", "12+"]
-    y-axis "% of population" 0 --> 75
-    bar [70.3, 13.5, 8.1, 1.4, 0, 2.7, 1.4, 2.7, 0]
-```
-
-```mermaid
-xychart-beta
-    title "X-Ray, greedy (n=57), % of sessions"
-    x-axis ["0-1", "1-2", "2-3", "3-4", "4-5", "5-6", "6-8", "8-12", "12+"]
-    y-axis "% of population" 0 --> 75
-    bar [8.8, 3.5, 5.3, 5.3, 15.8, 15.8, 19.3, 19.3, 7]
-```
-
-```mermaid
-xychart-beta
-    title "X-Ray, ratio-throttled (n=25), % of sessions"
-    x-axis ["0-1", "1-2", "2-3", "3-4", "4-5", "5-6", "6-8", "8-12", "12+"]
-    y-axis "% of population" 0 --> 75
-    bar [44, 52, 4, 0, 0, 0, 0, 0, 0]
-```
-
-43 of the 57 greedy sessions sit at or above 4.13, against 5 of 74 legitimate ones and **0 of 25**
-throttled ones. The throttled population is not merely harder to separate, it occupies the same
-bins as ordinary mining and a narrower range than legitimate play does.
+43 of the 57 greedy sessions sit at or above the 4.13 threshold, against 5 of 74 legitimate ones
+and **0 of 25** throttled ones. The throttled population is not merely harder to separate: it
+occupies the same bins as ordinary mining, over a narrower range than legitimate play does.
 
 ## What was fixed when
 
@@ -141,6 +116,8 @@ defeats it, not the particular number 4.13.
 
 Now that throttled sessions carry their own `throttled_xray` subtype, the held-out report splits
 recall by evasion style. Two styles defeat opposite detectors:
+
+![Recall by X-Ray evasion style](images/detector-complementarity.svg)
 
 | Detector | detour_xray (5) | direct_xray (4) | humanized_xray (5) | throttled_xray (15) |
 | --- | --- | --- | --- | --- |
@@ -268,6 +245,8 @@ pnpm jevcraft label-runs --raw <run file> --manifest datasets/recordings/confirm
 pnpm jevcraft extract <run file> --baseline datasets/baselines/legit-bots-2026-09-19.json --out all.jsonl   # then keep the rows the labels cover
 pnpm jevcraft evaluate datasets/features/confirm.jsonl --questions xray-v6 --labels datasets/labels/confirm.jsonl --out datasets/decisions/confirm-live.jsonl
 pnpm jevcraft repolicy --decisions datasets/decisions/confirm-live.jsonl --features datasets/features/confirm.jsonl --out datasets/decisions/confirm-gated.jsonl
+# the figures on this page:
+pnpm figures:refresh   # recompute docs/figure-data.json from the datasets, then redraw the SVGs
 ```
 
 Archived output: `docs/baselines/2026-09-21-benchmark-evasive.md`.

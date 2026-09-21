@@ -21,6 +21,10 @@ jobs:
       - run: pnpm test
       # Live Jev evaluation is intentionally not run in CI. The mock backend proves the pipeline.
       - run: pnpm jevcraft evaluate datasets/fixtures --backend mock --out /tmp/ci-decisions.jsonl
+      # The session-level datasets are gitignored, so the figures are re-rendered from the
+      # committed aggregates in docs/figure-data.json. This fails if the SVGs have drifted.
+      - run: pnpm figures
+      - run: git diff --exit-code -- docs/images
 
   plugin:
     runs-on: ubuntu-latest

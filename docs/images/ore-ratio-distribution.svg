@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="538" viewBox="0 0 860 538" role="img" aria-label="Distribution of valuable ore mined per 100 blocks broken, by session type">
+<rect width="860" height="538" fill="#ffffff"/>
+<text x="24.0" y="32.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="17" font-weight="600" fill="#1f2328" text-anchor="start">A throttled cheat hides inside the legitimate ore ratio</text>
+<text x="24.0" y="54.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start">Share of each population by valuable ore mined per 100 blocks broken. 156 labelled sessions.</text>
+<line x1="478.7" y1="86" x2="478.7" y2="474" stroke="#1f2328" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="486.7" y="80.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#1f2328" text-anchor="start">ore-ratio detection threshold, 4.13</text>
+<line x1="196" y1="216" x2="832" y2="216" stroke="#d8dee4" stroke-width="1"/>
+<text x="180.0" y="136.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="600" fill="#1f2328" text-anchor="end">Legitimate mining</text>
+<text x="180.0" y="156.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="400" fill="#57606a" text-anchor="end">74 sessions</text>
+<text x="180.0" y="175.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#1f2328" text-anchor="end">5 above the threshold</text>
+<rect x="198.0" y="118.6" width="66.7" height="97.4" fill="#1a7f37" fill-opacity="0.8"/>
+<text x="231.3" y="112.6" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">52</text>
+<rect x="268.7" y="197.3" width="66.7" height="18.7" fill="#1a7f37" fill-opacity="0.8"/>
+<text x="302.0" y="191.3" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">10</text>
+<rect x="339.3" y="204.8" width="66.7" height="11.2" fill="#1a7f37" fill-opacity="0.8"/>
+<text x="372.7" y="198.8" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">6</text>
+<rect x="410.0" y="214.0" width="66.7" height="2.0" fill="#1a7f37" fill-opacity="0.8"/>
+<text x="443.3" y="208.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">1</text>
+<rect x="551.3" y="212.3" width="66.7" height="3.7" fill="#1a7f37" fill-opacity="0.8"/>
+<text x="584.7" y="206.3" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">2</text>
+<rect x="622.0" y="214.0" width="66.7" height="2.0" fill="#1a7f37" fill-opacity="0.8"/>
+<text x="655.3" y="208.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">1</text>
+<rect x="692.7" y="212.3" width="66.7" height="3.7" fill="#1a7f37" fill-opacity="0.8"/>
+<text x="726.0" y="206.3" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">2</text>
+<line x1="196" y1="340" x2="832" y2="340" stroke="#d8dee4" stroke-width="1"/>
+<text x="180.0" y="260.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="600" fill="#1f2328" text-anchor="end">X-Ray, greedy</text>
+<text x="180.0" y="280.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="400" fill="#57606a" text-anchor="end">57 sessions</text>
+<text x="180.0" y="299.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#1f2328" text-anchor="end">43 above the threshold</text>
+<rect x="198.0" y="327.8" width="66.7" height="12.2" fill="#8250df" fill-opacity="0.8"/>
+<text x="231.3" y="321.8" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">5</text>
+<rect x="268.7" y="335.1" width="66.7" height="4.9" fill="#8250df" fill-opacity="0.8"/>
+<text x="302.0" y="329.1" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">2</text>
+<rect x="339.3" y="332.7" width="66.7" height="7.3" fill="#8250df" fill-opacity="0.8"/>
+<text x="372.7" y="326.7" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">3</text>
+<rect x="410.0" y="332.7" width="66.7" height="7.3" fill="#8250df" fill-opacity="0.8"/>
+<text x="443.3" y="326.7" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">3</text>
+<rect x="480.7" y="318.1" width="66.7" height="21.9" fill="#8250df" fill-opacity="0.8"/>
+<text x="514.0" y="312.1" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">9</text>
+<rect x="551.3" y="318.1" width="66.7" height="21.9" fill="#8250df" fill-opacity="0.8"/>
+<text x="584.7" y="312.1" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">9</text>
+<rect x="622.0" y="313.2" width="66.7" height="26.8" fill="#8250df" fill-opacity="0.8"/>
+<text x="655.3" y="307.2" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">11</text>
+<rect x="692.7" y="313.2" width="66.7" height="26.8" fill="#8250df" fill-opacity="0.8"/>
+<text x="726.0" y="307.2" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">11</text>
+<rect x="763.3" y="330.3" width="66.7" height="9.7" fill="#8250df" fill-opacity="0.8"/>
+<text x="796.7" y="324.3" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">4</text>
+<line x1="196" y1="464" x2="832" y2="464" stroke="#d8dee4" stroke-width="1"/>
+<text x="180.0" y="384.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="600" fill="#1f2328" text-anchor="end">X-Ray, ratio-throttled</text>
+<text x="180.0" y="404.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="400" fill="#57606a" text-anchor="end">25 sessions</text>
+<text x="180.0" y="423.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="600" fill="#1a7f37" text-anchor="end">0 above the threshold</text>
+<rect x="198.0" y="403.0" width="66.7" height="61.0" fill="#cf222e" fill-opacity="0.8"/>
+<text x="231.3" y="397.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">11</text>
+<rect x="268.7" y="391.9" width="66.7" height="72.1" fill="#cf222e" fill-opacity="0.8"/>
+<text x="302.0" y="385.9" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">13</text>
+<rect x="339.3" y="458.5" width="66.7" height="5.5" fill="#cf222e" fill-opacity="0.8"/>
+<text x="372.7" y="452.5" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#57606a" text-anchor="middle">1</text>
+<text x="231.3" y="494.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="middle">0-1</text>
+<text x="302.0" y="494.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="middle">1-2</text>
+<text x="372.7" y="494.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="middle">2-3</text>
+<text x="443.3" y="494.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="middle">3-4</text>
+<text x="514.0" y="494.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="middle">4-5</text>
+<text x="584.7" y="494.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="middle">5-6</text>
+<text x="655.3" y="494.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="middle">6-8</text>
+<text x="726.0" y="494.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="middle">8-12</text>
+<text x="796.7" y="494.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="middle">12+</text>
+<text x="514.0" y="518.0" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="middle">valuable ore mined per 100 blocks broken (bar labels are session counts)</text>
+</svg>

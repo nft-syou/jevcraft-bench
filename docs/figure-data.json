@@ -1,0 +1,189 @@
+{
+  "generatedFrom": "datasets/features/{all2,confirm}.jsonl + matching labels and decisions",
+  "sessionCount": 156,
+  "devThresholds": {
+    "oreRatio": 4.13,
+    "revealRatio": 4.36,
+    "revealPace": 17.74,
+    "directness": 0.74
+  },
+  "oreRatio": {
+    "threshold": 4.13,
+    "binLabels": [
+      "0-1",
+      "1-2",
+      "2-3",
+      "3-4",
+      "4-5",
+      "5-6",
+      "6-8",
+      "8-12",
+      "12+"
+    ],
+    "groups": [
+      {
+        "name": "Legitimate mining",
+        "n": 74,
+        "counts": [
+          52,
+          10,
+          6,
+          1,
+          0,
+          2,
+          1,
+          2,
+          0
+        ],
+        "above": 5
+      },
+      {
+        "name": "X-Ray, greedy",
+        "n": 57,
+        "counts": [
+          5,
+          2,
+          3,
+          3,
+          9,
+          9,
+          11,
+          11,
+          4
+        ],
+        "above": 43
+      },
+      {
+        "name": "X-Ray, ratio-throttled",
+        "n": 25,
+        "counts": [
+          11,
+          13,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "above": 0
+      }
+    ]
+  },
+  "throttledDetection": {
+    "cohorts": [
+      {
+        "key": "holdout",
+        "name": "held out",
+        "note": "motivated the rule",
+        "n": 15
+      },
+      {
+        "key": "confirmation",
+        "name": "confirmation",
+        "note": "recorded after it was frozen",
+        "n": 10
+      }
+    ],
+    "detectors": [
+      {
+        "name": "ore ratio",
+        "note": "the dominant existing heuristic",
+        "caught": [
+          0,
+          0
+        ]
+      },
+      {
+        "name": "reveal ratio",
+        "note": "the same rule on first exposures",
+        "caught": [
+          0,
+          0
+        ]
+      },
+      {
+        "name": "reveal pace",
+        "note": "too lucky, too fast",
+        "caught": [
+          0,
+          1
+        ]
+      },
+      {
+        "name": "JevCraft policy",
+        "note": "Jev answers plus the policy",
+        "caught": [
+          10,
+          9
+        ]
+      },
+      {
+        "name": "approach directness",
+        "note": "from this project's telemetry",
+        "caught": [
+          12,
+          9
+        ]
+      }
+    ]
+  },
+  "complementarity": {
+    "columns": [
+      {
+        "name": "detour",
+        "note": "wandering route",
+        "n": 5
+      },
+      {
+        "name": "humanized",
+        "note": "mixed pacing",
+        "n": 5
+      },
+      {
+        "name": "throttled",
+        "note": "diluted ore ratio",
+        "n": 15
+      }
+    ],
+    "rows": [
+      {
+        "name": "ore ratio",
+        "note": "the dominant existing heuristic",
+        "values": [
+          0.8,
+          0.4,
+          0
+        ]
+      },
+      {
+        "name": "reveal ratio",
+        "note": "the same rule on first exposures",
+        "values": [
+          0.6,
+          0.6,
+          0
+        ]
+      },
+      {
+        "name": "approach directness",
+        "note": "from this project's telemetry",
+        "values": [
+          0,
+          0.6,
+          0.8
+        ]
+      },
+      {
+        "name": "JevCraft policy",
+        "note": "Jev answers plus the policy",
+        "values": [
+          0.8,
+          0.6,
+          0.667
+        ]
+      }
+    ]
+  }
+}
