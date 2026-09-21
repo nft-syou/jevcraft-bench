@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security or privacy report
+    url: https://github.com/nft-syou/jevcraft-bench/security/advisories/new
+    about: Report a vulnerability, a leaked key path, or personal data in a dataset privately.

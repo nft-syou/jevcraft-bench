@@ -35,6 +35,39 @@ A qualitative prediction was committed before these sessions were recorded (`03a
 the ratio would not remove the information in the approach. That much was pre-registered. The
 policy rule that exploits it was not.
 
+## Where the three populations sit
+
+Share of each population by valuable ore mined per 100 blocks broken, over all 156 labelled
+sessions. The ore-ratio detector's development threshold is 4.13, which falls in the `4-5` bin.
+
+```mermaid
+xychart-beta
+    title "Legitimate mining (n=74), % of sessions"
+    x-axis ["0-1", "1-2", "2-3", "3-4", "4-5", "5-6", "6-8", "8-12", "12+"]
+    y-axis "% of population" 0 --> 75
+    bar [70.3, 13.5, 8.1, 1.4, 0, 2.7, 1.4, 2.7, 0]
+```
+
+```mermaid
+xychart-beta
+    title "X-Ray, greedy (n=57), % of sessions"
+    x-axis ["0-1", "1-2", "2-3", "3-4", "4-5", "5-6", "6-8", "8-12", "12+"]
+    y-axis "% of population" 0 --> 75
+    bar [8.8, 3.5, 5.3, 5.3, 15.8, 15.8, 19.3, 19.3, 7]
+```
+
+```mermaid
+xychart-beta
+    title "X-Ray, ratio-throttled (n=25), % of sessions"
+    x-axis ["0-1", "1-2", "2-3", "3-4", "4-5", "5-6", "6-8", "8-12", "12+"]
+    y-axis "% of population" 0 --> 75
+    bar [44, 52, 4, 0, 0, 0, 0, 0, 0]
+```
+
+43 of the 57 greedy sessions sit at or above 4.13, against 5 of 74 legitimate ones and **0 of 25**
+throttled ones. The throttled population is not merely harder to separate, it occupies the same
+bins as ordinary mining and a narrower range than legitimate play does.
+
 ## What was fixed when
 
 | Event | Time (JST) |

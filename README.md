@@ -9,22 +9,29 @@ players. The strongest outcome it produces is a request for human review.
 
 ## Status
 
-Phase 0 + Phase 1 (offline vertical slice) are implemented:
+Phases 0 to 3 are implemented: the offline slice, the Paper telemetry plugin, the feature
+extractor, and real recordings on fixed-seed worlds. The corpus is **156 labelled sessions**
+across two world seeds, from Mineflayer bots and one human player.
 
-```text
-MiningSessionFeatures -> Jev questions (xray-v1) -> typed probabilities
-  -> versioned DecisionRecord -> reproducible evaluation report
+```mermaid
+flowchart TB
+  BOT["bot-recorder<br/>Mineflayer scenarios"] --> SRV
+  HUM["human players"] --> SRV
+  SRV["Paper server<br/>JevCraft plugin, shadow mode"]
+  SRV -->|"raw telemetry JSONL"| EX["jevcraft extract"]
+  EX -->|"MiningSessionFeatures<br/>15-minute windows"| EV["jevcraft evaluate<br/>Jev, xray-v6"]
+  EV -->|"DecisionRecord<br/>typed probabilities"| PO["policy"]
+  PO --> RP["jevcraft report"]
+  PO --> BM["jevcraft benchmark<br/>vs classic heuristics"]
+  BOT -.->|"run manifest"| LB["jevcraft label-runs"]
+  SRV -.-> LB
+  LB -.->|"ground truth"| RP
+  LB -.-> BM
 ```
 
-Phase 2 (Paper telemetry plugin, `plugin/`) and the feature extractor that turns its JSONL into
-`MiningSessionFeatures` are implemented, so the whole chain runs end to end:
-
-```text
-Paper plugin JSONL -> jevcraft extract -> jevcraft evaluate -> jevcraft report
-```
-
-Next is Phase 3: recording real legit and simulated-X-Ray sessions on a fixed-seed world.
-See `docs/handoff/JevCraft_IMPLEMENTATION_HANDOFF.md`.
+The plugin never calls the Jev API; evaluation is a separate offline step over the JSONL it
+writes. See `docs/handoff/JevCraft_IMPLEMENTATION_HANDOFF.md` for the original spec and
+`docs/evasion.md` for the current result.
 
 ## Requirements
 
@@ -134,8 +141,9 @@ pnpm jevcraft evaluate datasets/features/batch1.jsonl --out datasets/decisions/b
 pnpm jevcraft report --decisions datasets/decisions/batch1.jsonl --labels datasets/labels/batch1.jsonl
 ```
 
-Scenarios: `legit-branch-mining`, `xray-direct`, `xray-detour`, `xray-humanized`
-(`packages/bot-recorder/src/scenarios.ts`). Each run joins as `jevbotNN`, teleports to a fresh
+Scenarios: `legit-branch-mining`, `xray-direct`, `xray-detour`, `xray-humanized`,
+`xray-throttled` (`packages/bot-recorder/src/scenarios.ts`). The last one holds its ore ratio
+inside the legitimate range on purpose; see `docs/evasion.md`. Each run joins as `jevbotNN`, teleports to a fresh
 64-block cell, mines for the budget, and leaves; the manifest records the bot's pseudonymous id
 (same HMAC as the plugin, computed from the offline UUID and the secret) and the time window, so
 `label-runs` can attach ground truth to the plugin's sessions without the plugin ever writing names.
@@ -179,11 +187,18 @@ Against greedy X-Ray bots there is no advantage: counting ore already solves tha
 interesting case is a cheater who dilutes their ore ratio into the legitimate range. Against 15
 such sessions (`xray-throttled`), at thresholds fixed on the development split:
 
-| Detector | Caught |
-| --- | --- |
-| approach directness (from this project's telemetry) | 12 / 15 |
-| JevCraft policy | 10 / 15 |
-| ore ratio, the dominant existing heuristic | **0 / 15** |
+```mermaid
+xychart-beta
+    title "Caught, of 15 ratio-throttled X-Ray sessions"
+    x-axis ["ore ratio", "reveal ratio", "reveal pace", "combo", "policy", "directness"]
+    y-axis "sessions caught" 0 --> 15
+    bar [0, 0, 0, 5, 10, 12]
+```
+
+`policy` is JevCraft's own decision, `directness` a hand-written rule on the mean approach
+directness, and `combo` a hand-written mix of efficiency and directness. `combo` spends more false
+positives than the shared ceiling allows, so its 5 is not comparable with the rest. The three
+counting heuristics catch none of the 15.
 
 So the contribution is the approach telemetry, not the language model: a hand-written directness
 rule does as well as Jev on this data. See `docs/evasion.md` for the full result and
@@ -237,7 +252,7 @@ times costs $32.
 
 ## How a session is judged
 
-One request per mining session. Jev is asked four independent questions:
+One request per mining session. Jev is asked five independent questions:
 
 | Key | Type | Meaning |
 | --- | --- | --- |
@@ -252,8 +267,9 @@ stored on every decision record, so sets can be compared on the same dataset. Se
 `docs/baselines/README.md` for how each version was chosen.
 
 The policy (`packages/jev-evaluator/src/policy.ts`) turns these into
-`insufficient_evidence` / `high_priority_review` / `review` / `no_action`.
-Thresholds are provisional and must be tuned from labeled data.
+`insufficient_evidence` / `high_priority_review` / `review` / `no_action`. Thresholds are chosen
+on the 77-session development split and frozen; `jevcraft repolicy` rewrites archived decisions
+under different ones and records what it applied in a `.meta.json` beside its output.
 `confidence` is a statistic of the distribution shape and is not `P(likely_xray)`.
 
 ## Data hygiene
@@ -271,6 +287,16 @@ pnpm format       # apply Biome formatting
 ```
 
 CI runs the same commands plus a mock evaluation. Live Jev calls are never made in CI.
+
+## Project files
+
+| File | What it is for |
+| --- | --- |
+| `CONTRIBUTING.md` | How to open a change, and the rules a change has to follow |
+| `CODE_OF_CONDUCT.md` | Community standards, plus the no-working-cheats and no-player-data rules |
+| `SECURITY.md` | How to report a vulnerability or a privacy problem privately |
+| `CHANGELOG.md` | What changed, and which claims were withdrawn and why |
+| `CITATION.cff` | How to cite this bench |
 
 ## License
 

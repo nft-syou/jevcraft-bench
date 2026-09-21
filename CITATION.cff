@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+title: "JevCraft: a behavioural anti-cheat research bench for Minecraft (Paper)"
+message: "If you use this bench or its findings, please cite it."
+type: software
+authors:
+  - name: "nft-syou"
+    alias: nft-syou
+license: MIT
+version: 0.1.0
+date-released: "2026-09-22"
+keywords:
+  - minecraft
+  - anti-cheat
+  - x-ray detection
+  - behavioural telemetry
+  - large language models
+  - benchmark
+abstract: >-
+  JevCraft records mining-session telemetry from a Paper server, reduces it to a small typed
+  feature object, asks a language model a few independent questions about it, and scores the
+  result offline against labelled sessions. It exists to test one claim: whether behavioural
+  telemetry catches X-Ray that ore-counting heuristics miss, at a matched false-positive rate.
+  It never bans, kicks, or rolls back players; the strongest outcome is a request for human
+  review.
