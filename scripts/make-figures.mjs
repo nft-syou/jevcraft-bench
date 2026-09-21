@@ -226,6 +226,210 @@ const text = (x, y, s, { size = 12.5, fill = MUTED, weight = 400, anchor = "star
 const open = (w, h, label) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(label)}">\n<rect width="${w}" height="${h}" fill="${BG}"/>`;
 
+/* figure 0: the pipeline, from a player breaking a block to a scored report */
+function drawPipeline() {
+  const ACCENT = "#0969da";
+  const SOFT = "#ddf4ff";
+  const DEEP = "#0a3069";
+  const W = 840;
+  const H = 846;
+  const boxH = 62;
+  // One column for the pipeline, one for the labelling path, so nothing has to cross.
+  const mainX = 84;
+  const mainW = 372;
+  const halfW = 176;
+  const rightHalfX = mainX + 196;
+  const sideX = 566;
+  const sideW = 232;
+  const cx = mainX + mainW / 2;
+  const sideCx = sideX + sideW / 2;
+
+  const srcY = 96;
+  const stageY = [216, 336, 456, 576];
+  const outY = 696;
+  const railY = 792; // the labelling path runs below everything, hugging the right margin
+
+  const out = [open(W, H, "How a broken block becomes a review request")];
+  out.push(
+    `<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="${MUTED}"/></marker>` +
+      `<marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="${ACCENT}"/></marker></defs>`,
+  );
+
+  const box = (x, y, w, title, subtitle, { stroke = GRID, titleFill = INK } = {}) =>
+    [
+      `<rect x="${n1(x)}" y="${n1(y)}" width="${n1(w)}" height="${boxH}" rx="7" fill="${BG}" stroke="${stroke}" stroke-width="1.5"/>`,
+      text(x + w / 2, y + 26, title, { size: 14, fill: titleFill, weight: 600, anchor: "middle" }),
+      text(x + w / 2, y + 44, subtitle, { size: 11.5, anchor: "middle" }),
+    ].join("\n");
+
+  // Points are joined with right angles only, which is what keeps the two paths from tangling.
+  const path = (points, { dashed = false, color = MUTED } = {}) =>
+    `<path d="M ${points.map((p) => `${n1(p[0])} ${n1(p[1])}`).join(" L ")}" stroke="${color}" stroke-width="1.5" fill="none" stroke-linejoin="round"${dashed ? ' stroke-dasharray="4 4"' : ""} marker-end="url(#${color === ACCENT ? "b" : "a"})"/>`;
+
+  // The artifact handed from one stage to the next, drawn on the arrow itself.
+  const chip = (x, y, label) => {
+    const w = label.length * 6.4 + 22;
+    return [
+      `<rect x="${n1(x - w / 2)}" y="${n1(y - 11)}" width="${n1(w)}" height="22" rx="11" fill="${SOFT}"/>`,
+      text(x, y + 4, label, { size: 11.5, fill: DEEP, anchor: "middle" }),
+    ].join("\n");
+  };
+
+  out.push(
+    text(24, 32, "How a broken block becomes a review request", {
+      size: 17,
+      fill: INK,
+      weight: 600,
+    }),
+  );
+  out.push(
+    text(
+      24,
+      54,
+      "The plugin only records. Every stage below it runs offline, over the JSONL the plugin wrote.",
+    ),
+  );
+
+  // sources, with the bot recorder on the right so its manifest reaches label-runs without crossing
+  out.push(box(mainX, srcY, halfW, "human players", "ordinary sessions"));
+  out.push(box(rightHalfX, srcY, halfW, "bot-recorder", "Mineflayer scenarios"));
+
+  const stages = [
+    ["Paper server", "JevCraft plugin, shadow mode"],
+    ["jevcraft extract", "6-neighbour hidden-ore rule"],
+    ["jevcraft evaluate", "Jev, question set xray-v6"],
+    ["policy", "review, or no action"],
+  ];
+  stages.forEach(([title, sub], i) => {
+    out.push(box(mainX, stageY[i], mainW, title, sub, { stroke: ACCENT, titleFill: ACCENT }));
+  });
+
+  out.push(
+    path([
+      [mainX + halfW / 2, srcY + boxH],
+      [mainX + halfW / 2, stageY[0] - 4],
+    ]),
+  );
+  out.push(
+    path([
+      [rightHalfX + halfW / 2, srcY + boxH],
+      [rightHalfX + halfW / 2, stageY[0] - 4],
+    ]),
+  );
+
+  const flows = [
+    "raw telemetry JSONL",
+    "MiningSessionFeatures, 15-minute windows",
+    "DecisionRecord, typed probabilities",
+  ];
+  flows.forEach((label, i) => {
+    const from = stageY[i] + boxH;
+    const to = stageY[i + 1];
+    out.push(
+      path(
+        [
+          [cx, from],
+          [cx, to - 4],
+        ],
+        { color: ACCENT },
+      ),
+    );
+    out.push(chip(cx, (from + to) / 2, label));
+  });
+
+  out.push(box(mainX, outY, halfW, "jevcraft report", "confusion matrix, FPR"));
+  out.push(box(rightHalfX, outY, halfW, "jevcraft benchmark", "vs classic heuristics"));
+  const policyBottom = stageY[3] + boxH;
+  out.push(
+    path(
+      [
+        [cx, policyBottom],
+        [cx, policyBottom + 20],
+        [mainX + halfW / 2, policyBottom + 20],
+        [mainX + halfW / 2, outY - 4],
+      ],
+      { color: ACCENT },
+    ),
+  );
+  out.push(
+    path(
+      [
+        [cx, policyBottom],
+        [cx, policyBottom + 20],
+        [rightHalfX + halfW / 2, policyBottom + 20],
+        [rightHalfX + halfW / 2, outY - 4],
+      ],
+      { color: ACCENT },
+    ),
+  );
+
+  // the labelling path: it feeds the scoring, never the decision
+  out.push(box(sideX, srcY, sideW, "jevcraft label-runs", "joins by HMAC id and time"));
+  out.push(
+    path(
+      [
+        [rightHalfX + halfW, srcY + boxH / 2],
+        [sideX - 4, srcY + boxH / 2],
+      ],
+      { dashed: true },
+    ),
+  );
+  out.push(
+    text((rightHalfX + halfW + sideX) / 2, srcY + boxH / 2 - 10, "run manifest", {
+      size: 11,
+      anchor: "middle",
+    }),
+  );
+  out.push(
+    path(
+      [
+        [mainX + mainW, stageY[0] + boxH / 2],
+        [sideCx, stageY[0] + boxH / 2],
+        [sideCx, srcY + boxH + 4],
+      ],
+      { dashed: true },
+    ),
+  );
+  out.push(
+    text(mainX + mainW + 12, stageY[0] + boxH / 2 - 10, "which session was whose", { size: 11 }),
+  );
+
+  const rail = sideX + sideW;
+  out.push(
+    `<path d="M ${rail} ${srcY + boxH / 2} L ${W - 24} ${srcY + boxH / 2} L ${W - 24} ${railY} L ${mainX + halfW / 2} ${railY}" stroke="${MUTED}" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-dasharray="4 4"/>`,
+  );
+  out.push(
+    path(
+      [
+        [mainX + halfW / 2, railY],
+        [mainX + halfW / 2, outY + boxH + 4],
+      ],
+      { dashed: true },
+    ),
+  );
+  out.push(
+    path(
+      [
+        [rightHalfX + halfW / 2, railY],
+        [rightHalfX + halfW / 2, outY + boxH + 4],
+      ],
+      { dashed: true },
+    ),
+  );
+  out.push(text(W - 34, railY - 12, "ground truth", { size: 11, anchor: "end" }));
+
+  out.push(
+    text(
+      24,
+      H - 18,
+      "Dashed is ground truth. It reaches the report and the benchmark, and never the policy.",
+      { size: 11.5 },
+    ),
+  );
+  out.push("</svg>");
+  return out.join("\n");
+}
+
 /* figure 1: where the three populations sit on the ore ratio */
 function drawOreRatio(agg) {
   const { groups, binLabels, threshold } = agg.oreRatio;
@@ -512,6 +716,7 @@ if (values.refresh) {
 const outDir = values["out-dir"];
 fs.mkdirSync(outDir, { recursive: true });
 const figures = [
+  ["pipeline.svg", drawPipeline()],
   ["ore-ratio-distribution.svg", drawOreRatio(aggregates)],
   ["throttled-detection.svg", drawThrottledDetection(aggregates)],
   ["detector-complementarity.svg", drawComplementarity(aggregates)],

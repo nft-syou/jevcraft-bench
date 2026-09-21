@@ -13,21 +13,7 @@ Phases 0 to 3 are implemented: the offline slice, the Paper telemetry plugin, th
 extractor, and real recordings on fixed-seed worlds. The corpus is **156 labelled sessions**
 across two world seeds, from Mineflayer bots and one human player.
 
-```mermaid
-flowchart TB
-  BOT["bot-recorder<br/>Mineflayer scenarios"] --> SRV
-  HUM["human players"] --> SRV
-  SRV["Paper server<br/>JevCraft plugin, shadow mode"]
-  SRV -->|"raw telemetry JSONL"| EX["jevcraft extract"]
-  EX -->|"MiningSessionFeatures<br/>15-minute windows"| EV["jevcraft evaluate<br/>Jev, xray-v6"]
-  EV -->|"DecisionRecord<br/>typed probabilities"| PO["policy"]
-  PO --> RP["jevcraft report"]
-  PO --> BM["jevcraft benchmark<br/>vs classic heuristics"]
-  BOT -.->|"run manifest"| LB["jevcraft label-runs"]
-  SRV -.-> LB
-  LB -.->|"ground truth"| RP
-  LB -.-> BM
-```
+![How a broken block becomes a review request](docs/images/pipeline.svg)
 
 The plugin never calls the Jev API; evaluation is a separate offline step over the JSONL it
 writes. See `docs/handoff/JevCraft_IMPLEMENTATION_HANDOFF.md` for the original spec and
@@ -285,8 +271,7 @@ committed SVGs have drifted from the committed aggregates. Live Jev calls are ne
 
 Figures are generated, never hand-edited. The session-level datasets are gitignored, so
 `scripts/make-figures.mjs` keeps its inputs in `docs/figure-data.json`, which is committed and is
-the only thing CI needs. The pipeline diagram above is Mermaid because it is a graph layout rather
-than a chart.
+the only thing CI needs.
 
 ## Project files
 
