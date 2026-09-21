@@ -735,3 +735,25 @@ console.log(`  throttled cohorts: ${cohortNames}`);
 for (const d of aggregates.throttledDetection.detectors) {
   console.log(`  ${d.name}: caught ${d.caught.join(", ")}`);
 }
+
+// The README states the corpus size in a badge and in its opening section. Both go stale
+// silently, so they are checked here rather than trusted; CI runs this script on every push.
+const readme = fs.readFileSync("README.md", "utf8");
+const claimed = [
+  ...readme.matchAll(/(\d+)%20labelled%20sessions/g),
+  ...readme.matchAll(/\*\*(\d+) labelled sessions\*\*/g),
+].map((m) => Number(m[1]));
+if (claimed.length === 0) {
+  console.error("README states no corpus size; the badge or the Status section lost it");
+  process.exit(1);
+}
+const wrong = claimed.filter((c) => c !== aggregates.sessionCount);
+if (wrong.length > 0) {
+  console.error(
+    `README says ${[...new Set(wrong)].join(" and ")} labelled sessions, the data says ${aggregates.sessionCount}`,
+  );
+  process.exit(1);
+}
+console.log(
+  `  README corpus size agrees in ${claimed.length} place(s): ${aggregates.sessionCount}`,
+);

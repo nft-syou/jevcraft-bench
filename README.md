@@ -1,5 +1,12 @@
 # JevCraft
 
+[![CI](https://github.com/nft-syou/jevcraft-bench/actions/workflows/ci.yml/badge.svg)](https://github.com/nft-syou/jevcraft-bench/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%E2%89%A524-brightgreen)](.node-version)
+[![Paper](https://img.shields.io/badge/paper-26.2%20%C2%B7%20java%2025-orange)](plugin/)
+![Shadow mode](https://img.shields.io/badge/shadow%20mode-never%20bans%20or%20kicks-8250df)
+![Corpus](https://img.shields.io/badge/corpus-156%20labelled%20sessions-informational)
+
 Behavioral anti-cheat research bench for Minecraft (Paper) servers. Mining-session
 telemetry is reduced to a small feature object, TypeSafe Jev answers a few typed
 questions about it, and the results are scored offline against human labels.
@@ -129,7 +136,9 @@ pnpm jevcraft report --decisions datasets/decisions/batch1.jsonl --labels datase
 
 Scenarios: `legit-branch-mining`, `xray-direct`, `xray-detour`, `xray-humanized`,
 `xray-throttled` (`packages/bot-recorder/src/scenarios.ts`). The last one holds its ore ratio
-inside the legitimate range on purpose; see `docs/evasion.md`. Each run joins as `jevbotNN`, teleports to a fresh
+inside the legitimate range on purpose; see `docs/evasion.md`.
+
+Each run joins as `jevbotNN`, teleports to a fresh
 64-block cell, mines for the budget, and leaves; the manifest records the bot's pseudonymous id
 (same HMAC as the plugin, computed from the offline UUID and the secret) and the time window, so
 `label-runs` can attach ground truth to the plugin's sessions without the plugin ever writing names.
@@ -278,8 +287,9 @@ pnpm figures          # redraw docs/images/*.svg from docs/figure-data.json
 pnpm figures:refresh  # recompute those aggregates from the datasets first
 ```
 
-CI runs the same commands plus a mock evaluation, and re-renders the figures to fail if the
-committed SVGs have drifted from the committed aggregates. Live Jev calls are never made in CI.
+CI runs the same commands plus a mock evaluation, and re-renders the figures. That step fails if
+the committed SVGs have drifted from the committed aggregates, or if the corpus size stated in the
+badge and in the Status section no longer matches the data. Live Jev calls are never made in CI.
 
 Figures are generated, never hand-edited. The session-level datasets are gitignored, so
 `scripts/make-figures.mjs` keeps its inputs in `docs/figure-data.json`, which is committed and is
