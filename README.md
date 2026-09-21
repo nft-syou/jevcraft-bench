@@ -193,7 +193,8 @@ rule does as well as Jev on this data. See `docs/evasion.md` for the full result
 
 Measured over 156 live evaluations (`xray-v6`, `jev-1.13.0`): **1,402 input tokens and 137 output
 tokens per session window**, with a spread of under 3%. TypeSafe bills input only, at $0.042 per
-million tokens, and output is free, so one judged window costs about **0.0091 JPY**.
+million tokens, and output is free, so one judged window costs about **$0.000059**, or roughly
+17,000 judged windows per dollar.
 
 Call volume follows underground mining time, not player count directly. The plugin opens a session
 after 10 stone breaks at or below y=40 or on any target-ore reveal, closes it after 120 s idle, and
@@ -205,11 +206,11 @@ Monthly cost, after the free local `enoughEvidence` gate drops 16% of windows:
 
 | Server profile | Player-hours/month | 25% underground | 50% underground | Per year at 50% |
 | --- | --- | --- | --- | --- |
-| Friends only, 4 players for 4 h/day | 480 | 9 JPY | 18 JPY | 220 JPY |
-| Small public, 5 average concurrent | 3,650 | 70 JPY | 140 JPY | 1,676 JPY |
-| Small public, 10 average concurrent | 7,300 | 140 JPY | 279 JPY | 3,353 JPY |
-| Busy, 30 average concurrent | 21,900 | 419 JPY | 838 JPY | 10,059 JPY |
-| Large, 100 average concurrent | 73,000 | 1,397 JPY | 2,794 JPY | 33,529 JPY |
+| Friends only, 4 players for 4 h/day | 480 | $0.06 | $0.12 | $1.42 |
+| Small public, 5 average concurrent | 3,650 | $0.45 | $0.90 | $11 |
+| Small public, 10 average concurrent | 7,300 | $0.90 | $1.81 | $22 |
+| Busy, 30 average concurrent | 21,900 | $2.71 | $5.42 | $65 |
+| Large, 100 average concurrent | 73,000 | $9.03 | $18 | $217 |
 
 **These are small absolute numbers, and that does not make them cheap for this audience.** Most
 Paper servers are run by one person paying for hosting out of their own pocket, and the
@@ -230,9 +231,9 @@ cheaper model.
 
 Because output is free and input is the only cost, the usual savings do not apply. Trimming the
 prompt or pre-filtering which windows to send buys very little: at 100 average concurrent, adding a
-cheap pre-filter on top of the evidence gate saves about 350 JPY a month. Spending more is the
-better trade. Evaluating every window, or repeating each evaluation three times to damp the
-variance in Jev's probabilities, stays within a few thousand JPY a month at that size.
+cheap pre-filter on top of the evidence gate saves about $2.26 a month. Spending more is the
+better trade. Evaluating every window costs $11 a month at that size, and repeating each
+evaluation three times to damp the variance in Jev's probabilities costs $32.
 
 ## Packages
 
