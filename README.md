@@ -189,18 +189,18 @@ So the contribution is the approach telemetry, not the language model: a hand-wr
 rule does as well as Jev on this data. See `docs/evasion.md` for the full result and
 `docs/benchmark.md` for the method.
 
-## Operating cost, and who pays it
+## Operating cost
 
 Measured over 156 live evaluations (`xray-v6`, `jev-1.13.0`): **1,402 input tokens and 137 output
 tokens per session window**, with a spread of under 3%. TypeSafe bills input only, at $0.042 per
-million tokens, and output is free, so one judged window costs about **$0.000059**, or roughly
-17,000 judged windows per dollar.
+million tokens, and output is free, so one judged window costs **$0.000059**, or about 17,000
+judged windows per dollar.
 
-Call volume follows underground mining time, not player count directly. The plugin opens a session
+Call volume follows underground mining time rather than player count. The plugin opens a session
 after 10 stone breaks at or below y=40 or on any target-ore reveal, closes it after 120 s idle, and
 the extractor cuts it into 15-minute windows. The one human player recorded so far produced 11
 windows in 66 minutes of mining, so roughly **10 windows per player-hour of mining**. That single
-82-minute sample is the weakest number in this estimate and it scales everything linearly.
+82-minute sample is the weakest number in the estimate and it scales the whole table linearly.
 
 Monthly cost, after the free local `enoughEvidence` gate drops 16% of windows:
 
@@ -212,28 +212,16 @@ Monthly cost, after the free local `enoughEvidence` gate drops 16% of windows:
 | Busy, 30 average concurrent | 21,900 | $2.71 | $5.42 | $65 |
 | Large, 100 average concurrent | 73,000 | $9.03 | $18 | $217 |
 
-**These are small absolute numbers, and that does not make them cheap for this audience.** Most
-Paper servers are run by one person paying for hosting out of their own pocket, and the
-alternatives they are choosing between are not metered:
+The cost is recurring and metered, and it tracks player activity, so it cannot be capped in
+advance. The X-Ray countermeasures servers use today are not metered: Paper ships anti-X-Ray
+obfuscation in the box, Orebfuscator is open source, and the established behavioural anti-cheat
+plugins are free or a one-time purchase.
 
-- Paper ships anti-X-Ray obfuscation in the box, for free, and Orebfuscator is open source. Those
-  prevent rather than detect, but they cost nothing per month and need no account.
-- The established behavioural anti-cheat plugins are free or a one-time purchase. A recurring bill
-  is a different commitment, even a small one.
-- The bill tracks player activity, so the operator cannot cap it in advance. A busy weekend or a
-  bot raid raises it.
-- It requires a payment method and an external account, which a hobbyist running a server for
-  friends may simply decline to set up.
-
-So the honest framing is that inference price is not the obstacle; the billing model is. Any
-deployment aimed at individual operators needs a hard spend cap, sampling, or a free tier, not a
-cheaper model.
-
-Because output is free and input is the only cost, the usual savings do not apply. Trimming the
-prompt or pre-filtering which windows to send buys very little: at 100 average concurrent, adding a
-cheap pre-filter on top of the evidence gate saves about $2.26 a month. Spending more is the
-better trade. Evaluating every window costs $11 a month at that size, and repeating each
-evaluation three times to damp the variance in Jev's probabilities costs $32.
+Because output is free, reducing cost means cutting calls or shortening the prompt. At 100 average
+concurrent and 25% underground: evaluating every window costs $11 a month, the `enoughEvidence`
+gate brings that to $9.03, and adding a cheap pre-filter on directness and ore ratio brings it to
+$6.77 while keeping 59 of 59 detections on the 134-session set. Repeating each evaluation three
+times costs $32.
 
 ## Packages
 
