@@ -44,7 +44,9 @@ services:
       PATCH_DEFINITIONS: /patches
       JEVCRAFT_HMAC_SECRET: change-me-local-only
     ports:
-      - "25565:25565"
+      # Loopback only: the server is offline-mode and ops 16 fixed bot UUIDs, so anyone who can
+      # reach this port can join as a bot and hold operator. Change this only for an isolated net.
+      - "127.0.0.1:25565:25565"
     volumes:
       - ./paper/data:/data
       - ./paper/patches:/patches:ro

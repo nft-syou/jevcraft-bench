@@ -48,6 +48,19 @@ released versions yet; everything below is unreleased work on `main`.
   the hand-written directness rule flag the same sessions; no ablation has isolated the model's
   contribution either way.
 
+### Corrected
+
+- **The operating-cost table assumed a saving the code does not make.** It was computed as if the
+  local `enoughEvidence` gate skipped 16% of API calls. `evaluate-session.ts` calls the backend
+  first and applies the policy to the answer, so every window is paid for. The table now states
+  today's cost, and the gate and pre-filter appear as what they would be worth if implemented.
+- **"scored offline against human labels"** in the opening line. Labels are scenario assignments;
+  no one reviewed a recording and ruled on it.
+- The benchmark example read `datasets/features/all.jsonl`, which is gitignored, so it could not
+  run from a clone. It now uses the committed `datasets/splits2/`.
+- The compose server publishes Minecraft on loopback only. It is offline-mode and grants operator
+  to 16 fixed bot UUIDs, so reaching the port was enough to hold operator.
+
 ### Disclosed
 
 - `reviewApproachTargetingAlone = 0.35` was committed after the sessions it was first measured on

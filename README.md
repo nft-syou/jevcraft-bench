@@ -9,7 +9,11 @@
 
 Behavioral anti-cheat research bench for Minecraft (Paper) servers. Mining-session
 telemetry is reduced to a small feature object, TypeSafe Jev answers a few typed
-questions about it, and the results are scored offline against human labels.
+questions about it, and the results are scored offline against labelled sessions.
+
+Labels are scenario assignments, not human judgements of observed cheating: a session counts as
+X-Ray because the bot that produced it was running an X-Ray scenario, and as legitimate because a
+legit scenario or a human player produced it. Nobody watched a recording and ruled on it.
 
 This repository is a proof of concept. It **never** bans, kicks, or rolls back
 players. The strongest outcome it produces is a request for human review.
@@ -94,6 +98,12 @@ daemon writer thread; when the queue is full lines are dropped and counted, neve
 tick. Player ids are `hmac-sha256:<hex>` derived from `JEVCRAFT_HMAC_SECRET`; raw UUIDs and
 names are never written. The plugin never bans, kicks, or rolls back.
 
+> **The compose server is for an isolated bench, not for the internet.** It runs with
+> `ONLINE_MODE: "false"`, so it never checks who is connecting, and it grants operator to 16
+> fixed offline UUIDs so the recorder bots can teleport and fill. Anyone who can reach the port
+> can join as `jevbotNN` and get those powers. It binds to `127.0.0.1` for that reason. Do not
+> publish it on a public interface, and do not reuse this compose file for a real server.
+
 **All JVM work runs in Docker; no JDK is installed on the host.**
 
 ```bash
@@ -169,11 +179,17 @@ ratio, efficiency percentile, reveal pace, straight-line approach, a hand-writte
 a logistic regression fitted on the development split) against JevCraft on the same labelled
 sessions, at the same false-positive ceiling, using archived Jev answers only:
 
-```bash
-node scripts/make-splits.mjs --dev-ids datasets/labels/bots-77.jsonl   --features datasets/features/all.jsonl --labels datasets/labels/all.jsonl   --decisions datasets/decisions/all-gated.jsonl --out-dir datasets/splits
+`datasets/splits2/` is committed, so this runs from a fresh clone with no server, no recordings
+and no API key:
 
-pnpm jevcraft benchmark   --features datasets/splits/holdout-features.jsonl   --labels   datasets/splits/holdout-labels.jsonl   --decisions datasets/splits/holdout-decisions.jsonl   --dev-features datasets/splits/dev-features.jsonl   --dev-labels   datasets/splits/dev-labels.jsonl   --dev-decisions datasets/splits/dev-decisions.jsonl   --max-fpr 0.072 --out reports/benchmark-holdout.md
+```bash
+pnpm jevcraft benchmark   --features datasets/splits2/holdout-features.jsonl   --labels   datasets/splits2/holdout-labels.jsonl   --decisions datasets/splits2/holdout-decisions.jsonl   --dev-features datasets/splits2/dev-features.jsonl   --dev-labels   datasets/splits2/dev-labels.jsonl   --dev-decisions datasets/splits2/dev-decisions.jsonl   --max-fpr 0.072 --out reports/benchmark-evasive.md
 ```
+
+Those splits hold 134 of the 156 sessions: 77 development and 57 held out. The remaining 22 are
+the confirmation set, which is scored separately in `docs/evasion.md` and deliberately kept out of
+this benchmark. `scripts/make-splits.mjs` rebuilds the splits from a full feature and decision
+set, which only someone who has run the recorder will have.
 
 Thresholds are chosen on the development split and frozen; without `--dev-*` the report says in
 its header that its numbers describe fit rather than generalisation.
@@ -216,26 +232,32 @@ the extractor cuts it into 15-minute windows. The one human player recorded so f
 windows in 66 minutes of mining, so roughly **10 windows per player-hour of mining**. That single
 82-minute sample is the weakest number in the estimate and it scales the whole table linearly.
 
-Monthly cost, after the free local `enoughEvidence` gate drops 16% of windows:
+Monthly cost **as the code behaves today**, which sends every window. `evaluate-session.ts` calls
+the backend first and only then applies the policy, so `enoughEvidence` decides the outcome but
+saves nothing; a session with no usable evidence is still paid for.
 
 | Server profile | Player-hours/month | 25% underground | 50% underground | Per year at 50% |
 | --- | --- | --- | --- | --- |
-| Friends only, 4 players for 4 h/day | 480 | $0.06 | $0.12 | $1.42 |
-| Small public, 5 average concurrent | 3,650 | $0.45 | $0.90 | $11 |
-| Small public, 10 average concurrent | 7,300 | $0.90 | $1.81 | $22 |
-| Busy, 30 average concurrent | 21,900 | $2.71 | $5.42 | $65 |
-| Large, 100 average concurrent | 73,000 | $9.03 | $18 | $217 |
+| Friends only, 4 players for 4 h/day | 480 | $0.07 | $0.14 | $1.70 |
+| Small public, 5 average concurrent | 3,650 | $0.54 | $1.07 | $13 |
+| Small public, 10 average concurrent | 7,300 | $1.07 | $2.15 | $26 |
+| Busy, 30 average concurrent | 21,900 | $3.22 | $6.45 | $77 |
+| Large, 100 average concurrent | 73,000 | $11 | $21 | $258 |
 
 The cost is recurring and metered, and it tracks player activity, so it cannot be capped in
 advance. The X-Ray countermeasures servers use today are not metered: Paper ships anti-X-Ray
 obfuscation in the box, Orebfuscator is open source, and the established behavioural anti-cheat
 plugins are free or a one-time purchase.
 
-Because output is free, reducing cost means cutting calls or shortening the prompt. At 100 average
-concurrent and 25% underground: evaluating every window costs $11 a month, the `enoughEvidence`
-gate brings that to $9.03, and adding a cheap pre-filter on directness and ore ratio brings it to
-$6.77 while keeping 59 of 59 detections on the 134-session set. Repeating each evaluation three
-times costs $32.
+Because output is free, reducing cost means cutting calls or shortening the prompt. Neither
+reduction is implemented. At 100 average concurrent and 25% underground, what each would be worth:
+
+| | Monthly |
+| --- | --- |
+| every window, as it works today | $11 |
+| skipping windows that already fail `enoughEvidence` locally, 16% of them | $9.03 |
+| plus a pre-filter on directness and ore ratio, keeping 59 of 59 detections on the 134-session set | $6.77 |
+| every window, evaluated three times to damp answer variance | $32 |
 
 ## Packages
 
@@ -266,10 +288,16 @@ stored on every decision record, so sets can be compared on the same dataset. Se
 `docs/baselines/README.md` for how each version was chosen.
 
 The policy (`packages/jev-evaluator/src/policy.ts`) turns these into
-`insufficient_evidence` / `high_priority_review` / `review` / `no_action`. Thresholds are chosen
-on the 77-session development split and frozen; `jevcraft repolicy` rewrites archived decisions
-under different ones and records what it applied in a `.meta.json` beside its output.
-`confidence` is a statistic of the distribution shape and is not `P(likely_xray)`.
+`insufficient_evidence` / `high_priority_review` / `review` / `no_action`. `jevcraft repolicy`
+rewrites archived decisions under different thresholds and records what it applied in a
+`.meta.json` beside its output. `confidence` is a statistic of the distribution shape and is not
+`P(likely_xray)`.
+
+Thresholds come from the 77-session development split, with one exception that matters:
+`reviewApproachTargetingAlone = 0.35` was added after the sessions it was first measured on had
+already been scored. Its effect there is a hypothesis, not a measurement. A 22-session set
+recorded after the rule was frozen gives 9 of 10 caught against 3 of 10 without it.
+`docs/evasion.md` has the timeline and the before-and-after.
 
 ## Data hygiene
 
