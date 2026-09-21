@@ -192,6 +192,8 @@ every one below the legitimate 90th percentile of 2.31.
 | jevcraft-policy, as frozen on development data | 3 / 10 [11-60%] | 1 / 12 |
 | **jevcraft-policy, with the 0.35 rule** | **9 / 10 [60-98%]** | 1 / 12 |
 
+![Share of ratio-throttled X-Ray sessions caught, by detector and cohort](images/throttled-detection.svg)
+
 The approach question separates the two populations completely on this set, with a clear gap:
 throttled sessions score 0.28 to 0.63, legitimate ones 0.04 to 0.15. The 0.35 threshold sits
 inside that gap, which is why it transfers. It is also visibly conservative: the single session

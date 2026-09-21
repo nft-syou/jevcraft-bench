@@ -170,17 +170,29 @@ Thresholds are chosen on the development split and frozen; without `--dev-*` the
 its header that its numbers describe fit rather than generalisation.
 
 Against greedy X-Ray bots there is no advantage: counting ore already solves that case. The
-interesting case is a cheater who dilutes their ore ratio into the legitimate range. Against 15
-such sessions (`xray-throttled`), at thresholds fixed on the development split:
+interesting case is a cheater who keeps their numbers ordinary. `xray-throttled` is that cheater.
+It reads ore positions from chunk data like the other X-Ray bots, then digs plain tunnel between
+targets until its ore ratio falls back inside the legitimate range.
+
+![Distribution of valuable ore mined per 100 blocks broken, by session type](docs/images/ore-ratio-distribution.svg)
+
+It works. Not one of the 25 throttled sessions reaches the ore-ratio threshold, and they occupy a
+narrower band than legitimate mining does, so no cut-off separates them without flagging ordinary
+players too. What the cheat cannot hide is the walk to the ore.
 
 ![Share of ratio-throttled X-Ray sessions caught, by detector and cohort](docs/images/throttled-detection.svg)
 
 The held-out 15 are the sessions that motivated the policy's approach rule, so they cannot
 confirm it. The 10 confirmation sessions were recorded after that rule was frozen.
 
+That is one evasion, not evasion in general. Wandering on the way to ore you already know about
+defeats the approach rule just as completely as diluting the ratio defeats counting:
+
+![Recall by X-Ray evasion style](docs/images/detector-complementarity.svg)
+
 So the contribution is the approach telemetry, not the language model: a hand-written directness
-rule does as well as Jev on this data. See `docs/evasion.md` for the full result and
-`docs/benchmark.md` for the method.
+rule does as well as Jev on this data. See `docs/evasion.md` for the full result, including how
+much of it was pre-registered, and `docs/benchmark.md` for the method.
 
 ## Operating cost
 
