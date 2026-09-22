@@ -26,6 +26,13 @@ released versions yet; everything below is unreleased work on `main`.
 
 ### Changed
 
+- `docs/deployment.md`: how to install the plugin on a server someone actually runs, and what it
+  will not do there. Measured 6.71 MiB of JSONL per player-hour of mining, with no rotation.
+- `scripts/flagged.mjs`: the shortlist of sessions marked for review. `jevcraft report` cannot
+  produce one because it requires labels, which a live server does not have.
+- A release workflow that attaches the plugin jar to a tagged GitHub Release, so an operator does
+  not have to clone and build. Nothing is published to npm, Hangar or Modrinth.
+
 - Default question set is `xray-v6`, which adds `approach_targeting` judged from the approach
   features alone.
 - The policy can promote a session to review on strong approach evidence by itself

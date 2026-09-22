@@ -32,6 +32,10 @@ The plugin never calls the Jev API; evaluation is a separate offline step over t
 writes. See `docs/handoff/JevCraft_IMPLEMENTATION_HANDOFF.md` for the original spec and
 `docs/evasion.md` for the current result.
 
+**Installing this on a server you actually run:** see `docs/deployment.md`. What you get there is
+a recorder, not a detector. Nothing judges anything at runtime, there is no alerting or review
+queue, and log files never rotate, so read that page before you copy a jar anywhere.
+
 ## Requirements
 
 - Node.js 24 (`.node-version`)
@@ -335,6 +339,7 @@ the only thing CI needs.
 | `SECURITY.md` | How to report a vulnerability or a privacy problem privately |
 | `CHANGELOG.md` | What changed, and which claims were withdrawn and why |
 | `CITATION.cff` | How to cite this bench |
+| `docs/deployment.md` | Installing the plugin on a live server, and what it will and will not do |
 
 ## License
 

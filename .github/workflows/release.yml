@@ -1,0 +1,40 @@
+name: release
+
+# Publishes the plugin jar so a server operator can install it without cloning and building.
+# Trigger by pushing a tag: git tag v0.1.0 && git push origin v0.1.0
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  plugin-jar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew test build --no-daemon --console=plain
+        working-directory: plugin
+      - name: Attach the jar to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: plugin/build/libs/*.jar
+          fail_on_unmatched_files: true
+          draft: true
+          body: |
+            The plugin records mining telemetry in shadow mode. It never bans, kicks or rolls
+            back, and it never calls the Jev API: scoring is a separate offline step.
+
+            Read `docs/deployment.md` before installing. In short: Paper 26.2 and Java 25, set
+            `JEVCRAFT_HMAC_SECRET` in the server environment, and plan for roughly 6.7 MiB of
+            JSONL per player-hour of mining with no log rotation.
+
+            Detection quality is unproven. On held-out data the shipped policy is level with a
+            hand-written rule on approach directness.
