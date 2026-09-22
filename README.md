@@ -7,6 +7,8 @@
 ![Shadow mode](https://img.shields.io/badge/shadow%20mode-never%20bans%20or%20kicks-8250df)
 ![Corpus](https://img.shields.io/badge/corpus-156%20labelled%20sessions-informational)
 
+**English** · [日本語](README.ja.md) · [简体中文](README.zh-CN.md) · [한국어](README.ko.md) · [Español](README.es.md)
+
 Behavioral anti-cheat research bench for Minecraft (Paper) servers. Mining-session
 telemetry is reduced to a small feature object, TypeSafe Jev answers a few typed
 questions about it, and the results are scored offline against labelled sessions.
@@ -177,7 +179,7 @@ Paper `26.2.build.124-stable` requires Java 25 (spec said 21), and commands are 
 `jevcraft benchmark` runs the heuristics existing anti-X-Ray tooling relies on (ore ratio, reveal
 ratio, efficiency percentile, reveal pace, straight-line approach, a hand-written combination and
 a logistic regression fitted on the development split) against JevCraft on the same labelled
-sessions, at the same false-positive ceiling, using archived Jev answers only:
+sessions, at the same false-positive ceiling, using archived Jev answers only.
 
 `datasets/splits2/` is committed, so this runs from a fresh clone with no server, no recordings
 and no API key:
@@ -316,8 +318,9 @@ pnpm figures:refresh  # recompute those aggregates from the datasets first
 ```
 
 CI runs the same commands plus a mock evaluation, and re-renders the figures. That step fails if
-the committed SVGs have drifted from the committed aggregates, or if the corpus size stated in the
-badge and in the Status section no longer matches the data. Live Jev calls are never made in CI.
+the committed SVGs have drifted from the committed aggregates, if the corpus size stated in any
+`README*.md` no longer matches the data, or if a language bar links to a translation that does not
+exist. Live Jev calls are never made in CI.
 
 Figures are generated, never hand-edited. The session-level datasets are gitignored, so
 `scripts/make-figures.mjs` keeps its inputs in `docs/figure-data.json`, which is committed and is

@@ -736,24 +736,39 @@ for (const d of aggregates.throttledDetection.detectors) {
   console.log(`  ${d.name}: caught ${d.caught.join(", ")}`);
 }
 
-// The README states the corpus size in a badge and in its opening section. Both go stale
-// silently, so they are checked here rather than trusted; CI runs this script on every push.
-const readme = fs.readFileSync("README.md", "utf8");
-const claimed = [
-  ...readme.matchAll(/(\d+)%20labelled%20sessions/g),
-  ...readme.matchAll(/\*\*(\d+) labelled sessions\*\*/g),
-].map((m) => Number(m[1]));
-if (claimed.length === 0) {
-  console.error("README states no corpus size; the badge or the Status section lost it");
-  process.exit(1);
-}
-const wrong = claimed.filter((c) => c !== aggregates.sessionCount);
-if (wrong.length > 0) {
-  console.error(
-    `README says ${[...new Set(wrong)].join(" and ")} labelled sessions, the data says ${aggregates.sessionCount}`,
+// Every README states the corpus size, and a translation is exactly the kind of file that gets
+// left behind. These claims are checked rather than trusted; CI runs this script on every push.
+// The badge URL stays English in every language, so it is the one string worth matching on.
+const readmes = fs.readdirSync(".").filter((f) => /^README(\.[\w-]+)?\.md$/.test(f));
+const problems = [];
+for (const file of readmes) {
+  const body = fs.readFileSync(file, "utf8");
+  const claimed = [...body.matchAll(/corpus-(\d+)%20labelled%20sessions/g)].map((m) =>
+    Number(m[1]),
   );
+  // The English README repeats the figure in prose, so check that too.
+  if (file === "README.md") {
+    claimed.push(
+      ...[...body.matchAll(/\*\*(\d+) labelled sessions\*\*/g)].map((m) => Number(m[1])),
+    );
+  }
+  if (claimed.length === 0) {
+    problems.push(`${file}: states no corpus size`);
+    continue;
+  }
+  const wrong = [...new Set(claimed.filter((c) => c !== aggregates.sessionCount))];
+  if (wrong.length > 0) {
+    problems.push(`${file}: says ${wrong.join(" and ")}, the data says ${aggregates.sessionCount}`);
+  }
+  // A language bar that points at a file nobody wrote is worse than no language bar.
+  for (const [, target] of body.matchAll(/\]\((README(?:\.[\w-]+)?\.md)\)/g)) {
+    if (!fs.existsSync(target)) problems.push(`${file}: links to ${target}, which does not exist`);
+  }
+}
+if (problems.length > 0) {
+  for (const p of problems) console.error(p);
   process.exit(1);
 }
 console.log(
-  `  README corpus size agrees in ${claimed.length} place(s): ${aggregates.sessionCount}`,
+  `  corpus size ${aggregates.sessionCount} agrees across ${readmes.length} README file(s)`,
 );
