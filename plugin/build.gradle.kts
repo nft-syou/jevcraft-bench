@@ -20,7 +20,7 @@ val paperApiVersion = "26.2.build.124-stable"
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:$paperApiVersion")
-    compileOnly("com.google.code.gson:gson:2.11.0")
+    compileOnly("com.google.code.gson:gson:2.14.0")
 
     testImplementation("io.papermc.paper:paper-api:$paperApiVersion")
     testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v26.2:4.116.1")
