@@ -106,6 +106,12 @@ Archived results from real runs live in `docs/baselines/`.
 - mining-session boundaries (underground stone breaks or an ore reveal start one; idle timeout,
   logout, world change, far teleport, game-mode change, `/jevcraft flush` end one).
 
+This was built for Overworld tunnel mining and only tested there. The Nether is half covered:
+netherrack counts and ancient debris is a target ore, but only `BlockBreakEvent` is handled, so bed
+blasting and TNT mining record nothing at all. The End records nothing. `undergroundYMax` is one
+global number applied to dimensions where the same y means different things. See the dimensions
+section of `docs/deployment.md`.
+
 Everything goes to `plugins/JevCraft/data/<serverRunId>.jsonl` through a bounded queue and a
 daemon writer thread; when the queue is full lines are dropped and counted, never blocking the
 tick. Player ids are `hmac-sha256:<hex>` derived from `JEVCRAFT_HMAC_SECRET`; raw UUIDs and
@@ -347,7 +353,7 @@ the only thing CI needs.
 | `CHANGELOG.md` | What changed, and which claims were withdrawn and why |
 | `CITATION.cff` | How to cite this bench |
 | `docs/deployment.md` | Installing the plugin on a live server, and what it will and will not do |
-| `Dockerfile` | The analysis CLI as an image, so a trial needs no Node install |
+| `Dockerfile` | The analysis CLI as a 312 MB image, so a trial needs no Node install |
 
 ## License
 

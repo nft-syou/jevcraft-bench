@@ -15,8 +15,9 @@ export interface RecordDeps {
   stderr?: (line: string) => void;
 }
 
-export const RECORD_USAGE =
-  "usage: jevcraft record --scenario <name|all> [--count <n>] [--out <manifest.jsonl>] [--host 127.0.0.1] [--port 25565] [--version 26.1] [--budget-seconds 180] [--human-noise 0.5] [--seed 1] [--start-index 0] [--parallel 1]";
+import { RECORD_USAGE } from "./record-usage";
+
+export { RECORD_USAGE };
 
 export async function runRecord(
   args: string[],

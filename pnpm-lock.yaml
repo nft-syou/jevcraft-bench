@@ -165,6 +165,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      tsx:
+        specifier: ^4.23.13
+        version: 4.23.13
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.5.14
@@ -172,9 +176,6 @@ importers:
       '@types/node':
         specifier: ^24.0.0
         version: 24.13.5
-      tsx:
-        specifier: ^4.23.13
-        version: 4.23.13
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

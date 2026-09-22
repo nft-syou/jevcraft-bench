@@ -30,7 +30,8 @@ released versions yet; everything below is unreleased work on `main`.
   needs no API key, no labels and no second tool. Defaults to the mock backend and says loudly
   that mock answers are not judgements.
 - A `Dockerfile` and a GHCR image, so an operator can analyse a recording with one `docker run`
-  and no Node, pnpm or clone. About 1.1 GB.
+  and no Node, pnpm or clone. 312 MB: Alpine, production dependencies only, no pnpm store, and
+  without the bot recorder's 390 MB of per-version game data. It runs the analysis commands only.
 - `docs/deployment.md`: how to install the plugin on a server someone actually runs, and what it
   will not do there. Measured 6.71 MiB of JSONL per player-hour of mining, with no rotation.
 - `scripts/flagged.mjs`: the shortlist of sessions marked for review. `jevcraft report` cannot

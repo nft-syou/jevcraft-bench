@@ -4,7 +4,7 @@ import { EVALUATE_USAGE, runEvaluate } from "./commands/evaluate";
 import { EXTRACT_USAGE, runExtract } from "./commands/extract";
 import { GENERATE_USAGE, runGenerate } from "./commands/generate";
 import { LABEL_RUNS_USAGE, runLabelRuns } from "./commands/label-runs";
-import { RECORD_USAGE, runRecord } from "./commands/record";
+import { RECORD_USAGE } from "./commands/record-usage";
 import { REPOLICY_USAGE, runRepolicy } from "./commands/repolicy";
 import { REPORT_USAGE, runReport } from "./commands/report";
 import { runTry, TRY_USAGE } from "./commands/try";
@@ -50,9 +50,18 @@ async function main(argv: string[]): Promise<number> {
     case "generate":
       await runGenerate(rest);
       return 0;
-    case "record":
+    case "record": {
+      // Loaded here, not at the top, so the Mineflayer stack stays out of every other command.
+      // The published analysis image leaves that stack out entirely, so say what happened.
+      const { runRecord } = await import("./commands/record").catch(() => {
+        throw new Error(
+          "jevcraft record needs @jevcraft/bot-recorder, which is not installed. " +
+            "The published Docker image ships the analysis commands only; run this from a clone.",
+        );
+      });
       await runRecord(rest);
       return 0;
+    }
     case "label-runs":
       await runLabelRuns(rest);
       return 0;

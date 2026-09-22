@@ -34,7 +34,7 @@ docker run --rm \
   ghcr.io/nft-syou/jevcraft try /data
 ```
 
-The image is about 1.1 GB. The data directory is mounted read-only, and without an API key the
+The image is about 310 MB. The data directory is mounted read-only, and without an API key the
 run makes no network calls at all.
 
 ```
@@ -62,7 +62,8 @@ A fifteen-minute trial costs well under a cent. The command prints the exact fig
 recording before you spend anything.
 
 If you would rather not use Docker, `pnpm jevcraft try /path/to/data` does the same thing from a
-clone with Node 24.
+clone with Node 24. The image carries the analysis commands only; `jevcraft record`, which drives
+the Mineflayer bots, needs a clone.
 
 **Before you leave it running,** read the rest of this page. The two things that bite are disk,
 because nothing rotates, and the fact that there is no detection at runtime at all.
@@ -233,6 +234,39 @@ If you promised your players you would stop recording, deleting the secret matte
 deleting the files: without it the pseudonymous ids in any copies you handed out cannot be linked
 back to accounts.
 
+## Dimensions: the Overworld is the only one this was built for
+
+A session opens when a player breaks ten stone-like blocks at or below y=40, or exposes a target
+ore. Everything below follows from that rule, and none of it has been tested: the 156 recorded
+sessions are all Overworld.
+
+**The Nether is half covered.** Netherrack, basalt and blackstone count as stone-like, and ancient
+debris is a target ore, so somebody tunnelling for debris at y=8 to 22 does open a session and does
+get recorded. But the plugin only listens to `BlockBreakEvent`, and **bed blasting and TNT mining
+produce no block breaks at all** — explosions are a different event the plugin does not handle. A
+player who hunts debris the usual way generates no session, no ore reveal and no approach features.
+Since netherite is the most valuable thing an X-Ray user can look for, that is a large hole rather
+than a rough edge.
+
+**The End is not covered.** End stone is not in the stone-like set and no End block is in the
+configured ore list, so mining there records nothing. In vanilla there is nothing worth X-raying in
+the End, so this costs little, but a server with custom ores there gets silence.
+
+**y=40 means different things per dimension.** It is one global number. In the Overworld it sits
+comfortably below sea level and above every diamond. In the Nether it is mid-dimension, so
+netherrack broken near a fortress or on the roof never counts toward starting a session. On a
+skyblock or custom world whose ground is at y=120, nothing is ever recorded. There is no per-world
+setting and no way to exclude a world, so a creative build world is recorded in full and costs you
+disk for nothing.
+
+**The pending-break counter leaks across worlds.** It is cleared when a session ends and when a
+player logs out, but not when they change world without an open session. Five stone broken in the
+Overworld plus five netherrack in the Nether starts a session that is recorded as Nether
+underground mining. Within one login there is no time decay either.
+
+If you run a server where mining happens anywhere other than Overworld tunnels, assume this
+records an unrepresentative slice of it.
+
 ## Known limits
 
 - No runtime detection, no alerting, no review queue.
@@ -245,3 +279,5 @@ back to accounts.
 - Detection quality unproven, and level with a hand-written rule on the data that exists.
 - Sessions are 15-minute windows; a cheater who mines for five minutes at a time produces windows
   the feature extractor often marks as having insufficient evidence.
+- Explosions are invisible: bed blasting and TNT mining generate no telemetry.
+- The End records nothing, and no world can be excluded or given its own depth threshold.
