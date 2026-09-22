@@ -7,10 +7,12 @@ import { LABEL_RUNS_USAGE, runLabelRuns } from "./commands/label-runs";
 import { RECORD_USAGE, runRecord } from "./commands/record";
 import { REPOLICY_USAGE, runRepolicy } from "./commands/repolicy";
 import { REPORT_USAGE, runReport } from "./commands/report";
+import { runTry, TRY_USAGE } from "./commands/try";
 
 const USAGE = `jevcraft <command>
 
 commands:
+  try        ${TRY_USAGE}
   extract    ${EXTRACT_USAGE}
   baseline   ${BASELINE_USAGE}
   evaluate   ${EVALUATE_USAGE}
@@ -25,6 +27,8 @@ commands:
 async function main(argv: string[]): Promise<number> {
   const [command, ...rest] = argv;
   switch (command) {
+    case "try":
+      return await runTry(rest);
     case "extract":
       await runExtract(rest);
       return 0;

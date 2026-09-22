@@ -4,6 +4,69 @@ This page is for someone who operates a real Paper server and wants to install t
 plugin on it. Read the first section before the rest: what you get today is narrower than the
 project's goal, and installing it under the wrong expectation wastes your disk and your time.
 
+## Trying it, in four steps
+
+No clone, no Node, no API key, no cost. This tells you whether the plugin records your server
+correctly and shows you the shape of the output. It does not tell you whether anyone is cheating.
+
+**1. Install the plugin.** Take `JevCraft-<version>.jar` from the GitHub Releases page, drop it in
+your server's `plugins/`, set one environment variable, restart.
+
+```bash
+JEVCRAFT_HMAC_SECRET='<a long random string you keep>'
+```
+
+**2. Mine for fifteen minutes.** Yourself or anyone else, below y=40. Surface building records
+nothing. Check it is working:
+
+```
+/jevcraft status     # a session should be open while you dig
+/jevcraft metrics    # events written should climb, dropped should stay 0
+```
+
+**3. Look at what it found.** One command, on any machine with Docker, pointed at the directory
+the plugin writes to:
+
+```bash
+docker run --rm \
+  -v /srv/minecraft/plugins/JevCraft/data:/data:ro \
+  -v "$PWD/jevcraft-out:/out" \
+  ghcr.io/nft-syou/jevcraft try /data
+```
+
+The image is about 1.1 GB. The data directory is mounted read-only, and without an API key the
+run makes no network calls at all.
+
+```
+42 session window(s) extracted, 33 with enough evidence to score.
+9 window(s) are too short or too sparse to judge. That is ordinary.
+
+6 session window(s) flagged for review, most suspicious first:
+
+  outcome                 P(xray)  hidden  approach  session
+  review                  0.41    0.65    0.65      session_6f4dc324-ae74-4bd9-9464-70a2d2729ebd
+  ...
+```
+
+**4. Decide whether to go further.** Those numbers came from the mock backend, which is a fixed
+function of the features and not a judgement. It proves the pipeline works on your server. For
+real answers, add your TypeSafe key and run the same command again:
+
+```bash
+docker run --rm -e TYPESAFE_API_KEY=... \
+  -v /srv/minecraft/plugins/JevCraft/data:/data:ro \
+  ghcr.io/nft-syou/jevcraft try /data
+```
+
+A fifteen-minute trial costs well under a cent. The command prints the exact figure for your own
+recording before you spend anything.
+
+If you would rather not use Docker, `pnpm jevcraft try /path/to/data` does the same thing from a
+clone with Node 24.
+
+**Before you leave it running,** read the rest of this page. The two things that bite are disk,
+because nothing rotates, and the fact that there is no detection at runtime at all.
+
 ## What you get, and what you do not
 
 **You get a recorder.** The plugin observes mining sessions and writes JSON Lines to disk. That is

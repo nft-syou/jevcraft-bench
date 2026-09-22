@@ -1,0 +1,11 @@
+node_modules
+**/node_modules
+.git
+datasets
+!datasets/baselines
+reports
+docs
+plugin/build
+plugin/.gradle
+infra/paper/data
+.env

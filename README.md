@@ -32,9 +32,16 @@ The plugin never calls the Jev API; evaluation is a separate offline step over t
 writes. See `docs/handoff/JevCraft_IMPLEMENTATION_HANDOFF.md` for the original spec and
 `docs/evasion.md` for the current result.
 
-**Installing this on a server you actually run:** see `docs/deployment.md`. What you get there is
-a recorder, not a detector. Nothing judges anything at runtime, there is no alerting or review
-queue, and log files never rotate, so read that page before you copy a jar anywhere.
+**Running this on a server you actually operate:** `docs/deployment.md` has a four-step trial that
+needs no clone, no Node and no API key. Install the jar, mine for fifteen minutes, then:
+
+```bash
+docker run --rm -v /srv/minecraft/plugins/JevCraft/data:/data:ro ghcr.io/nft-syou/jevcraft try /data
+```
+
+What you get is a recorder, not a detector. Nothing judges anything at runtime, there is no
+alerting or review queue, and log files never rotate, so read that page before you leave it
+running.
 
 ## Requirements
 
@@ -275,7 +282,7 @@ reduction is implemented. At 100 average concurrent and 25% underground, what ea
 | `@jevcraft/feature-extractor` | Raw plugin JSONL -> `MiningSessionFeatures` (spec §9 definitions; 15-min windows) |
 | `@jevcraft/scenario-generator` | Feature-level synthetic sessions from `scenarios/*.json` (spec §13A) |
 | `@jevcraft/bot-recorder` | Mineflayer bots that play legit / X-Ray scenarios on the compose server (spec §13B) |
-| `@jevcraft/cli` | `pnpm jevcraft extract` / `evaluate` / `report` / `generate` / `record` / `label-runs` |
+| `@jevcraft/cli` | `pnpm jevcraft try` / `extract` / `evaluate` / `report` / `generate` / `record` / `label-runs` |
 
 ## How a session is judged
 
@@ -340,6 +347,7 @@ the only thing CI needs.
 | `CHANGELOG.md` | What changed, and which claims were withdrawn and why |
 | `CITATION.cff` | How to cite this bench |
 | `docs/deployment.md` | Installing the plugin on a live server, and what it will and will not do |
+| `Dockerfile` | The analysis CLI as an image, so a trial needs no Node install |
 
 ## License
 
