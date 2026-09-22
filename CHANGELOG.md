@@ -7,6 +7,15 @@ its own conclusions is not worth reading.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This project has no
 released versions yet; everything below is unreleased work on `main`.
 
+## 0.1.1 - 2026-09-22
+
+Patch release. The only functional change is the plugin's declared API version; everything else
+below shipped in 0.1.0 and is repeated here because 0.1.0 was the first tag.
+
+- `plugin.yml` now declares `api-version: "26.2"`, matching the `paper-api` it compiles against.
+  The 0.1.0 jar declared `1.21`, which asked the server for legacy conversion this plugin has
+  never been tested under.
+
 ## Unreleased
 
 ### Added
