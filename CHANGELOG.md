@@ -80,4 +80,3 @@ released versions yet; everything below is unreleased work on `main`.
   had been scored, so its 10/15 was a hypothesis, not a measurement. A 22-session confirmation set
   recorded after the rule was frozen gives 9/10 against 3/10 for the policy without it. Both
   numbers, and the timeline, are in `docs/evasion.md`.
-
