@@ -1,7 +1,10 @@
 name: JevCraft
 version: "${version}"
 main: dev.jevcraft.plugin.JevCraftPlugin
-api-version: "1.21"
+# Matches currentApiVersion in the paper-api jar this compiles against (26.2.build.124-stable).
+# Declaring an older value would ask the server for legacy conversion the plugin has never been
+# tested under, and would contradict the Paper 26.2 requirement in the README.
+api-version: "26.2"
 description: Behavioral telemetry for X-Ray research. Shadow mode only; never punishes players.
 authors: [jevcraft]
 

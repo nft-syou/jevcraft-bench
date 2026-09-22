@@ -63,6 +63,11 @@ released versions yet; everything below is unreleased work on `main`.
 
 ### Corrected
 
+- `plugin.yml` declared `api-version: "1.21"` while the plugin compiles against
+  `paper-api:26.2.build.124-stable` and the README requires Paper 26.2. The Paper jar itself
+  reports `currentApiVersion: "26.2"`, so that is what it now declares. An older value asks the
+  server for legacy conversion the plugin has never been tested under.
+
 - **The operating-cost table assumed a saving the code does not make.** It was computed as if the
   local `enoughEvidence` gate skipped 16% of API calls. `evaluate-session.ts` calls the backend
   first and applies the policy to the answer, so every window is paid for. The table now states
