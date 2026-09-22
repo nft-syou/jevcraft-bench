@@ -5,6 +5,12 @@ updates:
     schedule:
       interval: monthly
     open-pull-requests-limit: 5
+    ignore:
+      # vec3 has to match whatever Mineflayer resolves, currently ^0.1.7. Taking 0.2.x on our
+      # side puts two structurally different Vec3 types in the tree and typecheck fails on every
+      # value that crosses a Mineflayer boundary. Revisit when Mineflayer moves.
+      - dependency-name: "vec3"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
   - package-ecosystem: gradle
     directory: "/plugin"
     schedule:
