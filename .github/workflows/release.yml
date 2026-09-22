@@ -24,7 +24,7 @@ jobs:
       - run: ./gradlew test build --no-daemon --console=plain
         working-directory: plugin
       - name: Attach the jar to the release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: plugin/build/libs/*.jar
           fail_on_unmatched_files: true
