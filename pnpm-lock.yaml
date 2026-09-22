@@ -195,8 +195,8 @@ importers:
         specifier: ^4.39.0
         version: 4.39.0
       vec3:
-        specifier: 0.1.10
-        version: 0.1.10
+        specifier: 0.2.0
+        version: 0.2.0
       zod:
         specifier: ^4.6.5
         version: 4.6.5
@@ -222,8 +222,8 @@ importers:
         specifier: workspace:*
         version: link:../schema
       vec3:
-        specifier: 0.1.10
-        version: 0.1.10
+        specifier: 0.2.0
+        version: 0.2.0
       zod:
         specifier: ^4.6.5
         version: 4.6.5
