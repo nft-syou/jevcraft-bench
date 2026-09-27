@@ -20,6 +20,11 @@ below shipped in 0.1.0 and is repeated here because 0.1.0 was the first tag.
 
 ### Added
 
+- `scripts/raw-vs-summary.mjs` and `docs/representation.md`: the same question asked from the
+  summarised features and from the raw approach trace. AUC on detour X-Ray goes 0.682 to 0.771,
+  which misses the pre-registered +0.10 bar, and a paired bootstrap puts the interval at
+  [-0.113, +0.312]. The experiment was underpowered before it ran: resolving a difference that
+  size needs about 490 sessions, not 42. Direction is as predicted; nothing is established.
 - `scripts/ablation-llm.mjs` and `scripts/ablation-llm-matched.mjs`: the ablation that isolates
   the language model. Once the feature-only baseline is fitted on the same 134 sessions the
   policy's thresholds saw, the two flag **exactly the same** confirmation sessions, 9 of 10, and
