@@ -355,6 +355,8 @@ the only thing CI needs.
 | `CHANGELOG.md` | What changed, and which claims were withdrawn and why |
 | `CITATION.cff` | How to cite this bench |
 | `docs/deployment.md` | Installing the plugin on a live server, and what it will and will not do |
+| `docs/external-data.md` | Public datasets checked for real human mining, and why none of them fit |
+| `docs/representation.md` | Asking the same question from raw traces instead of the summarised features |
 | `Dockerfile` | The analysis CLI as a 312 MB image, so a trial needs no Node install |
 
 ## License
