@@ -159,13 +159,35 @@ which wanders on its way to ore it already knows about, defeats the directness r
 evadable. Ratio dilution and path obfuscation are different evasions defeating different
 detectors, and no single detector here handles both.
 
-**On this adversary the language model added nothing measurable.** The Jev approach question and
-the hand-written directness rule flagged the *identical twelve* sessions. For ratio-diluted X-Ray
-with straight approaches the signal is in the telemetry and a simple rule extracts it. Across the
-whole held-out set the policy catches two more positives than the directness rule and pays two
-more false positives; the paired test is 4 vs 4, p = 1.0. That is a dead heat, which is neither
-proof of equivalence nor evidence that the model contributes nothing. No ablation isolating the
-model's contribution has been run.
+**The language model adds nothing once the baseline is given the same information.** The Jev
+approach question and the hand-written directness rule flagged the *identical twelve* throttled
+sessions. An ablation now settles what that means.
+
+`scripts/ablation-llm.mjs` was pre-registered and run first. It fits a three-term feature-only
+rule, `ore ratio OR directness OR reveal pace`, on the 77 development sessions and compares it
+with the shipped policy. The policy won by 7 positives on the held-out set, which reads like a
+contribution until the cause is clear: the development split contains **no throttled sessions at
+all**, while the policy's decisive term was added after the 15 held-out throttled sessions had
+been scored. The baseline was fitted blind to the evasion it was about to face and chose
+`directness >= 0.98`, which is useless against it.
+
+`scripts/ablation-llm-matched.mjs` repeats it fairly. The baseline is fitted on all 134 sessions
+the policy's thresholds saw, and both are then measured on the 22 confirmation sessions neither
+had seen. Giving the baseline all 134 is deliberately generous, since most of the policy's
+thresholds only ever saw the 77.
+
+| On the 22 confirmation sessions | Caught | False positives |
+| --- | --- | --- |
+| feature-only rule, `ore ratio >= 10.74 OR directness >= 0.74 OR reveal pace >= 20.20` | 9 / 10 | 0 / 12 |
+| shipped policy, with Jev | 9 / 10 | 1 / 12 |
+
+**Zero discordant pairs.** They flag exactly the same sessions, and the rule that needs no model
+spends one fewer false positive. The earlier +7 was an information asymmetry, not a capability.
+The pre-registered script is kept unedited beside the corrected one, because the gap between them
+is the finding.
+
+What this does not establish: that a language model cannot help here. It establishes that on this
+adversary, with these features, this one did not.
 
 **Caveats.** The directness rule cannot score 15 of the 57 held-out sessions (2 X-Ray, 13
 legitimate, all without an ore reveal); its 0/28 false positives include those 13 silences, and
@@ -237,6 +259,8 @@ node scripts/ratio-best-case.mjs --features datasets/splits2/holdout-features.js
   --labels datasets/splits2/holdout-labels.jsonl --evasive-labels datasets/labels/throttled.jsonl
 node scripts/window-count.mjs --raw <plugin data dir> --splits datasets/splits2 \
   --evasive-labels datasets/labels/throttled.jsonl --window-sec 300
+node scripts/ablation-llm.mjs           # the pre-registered run, kept as it was
+node scripts/ablation-llm-matched.mjs   # the fair one
 # the policy as it stood before the post-hoc rule:
 pnpm jevcraft repolicy --decisions datasets/decisions/all2-live.jsonl \
   --features datasets/features/all2.jsonl --approach-alone off --out prerule.jsonl

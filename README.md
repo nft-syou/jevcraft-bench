@@ -234,8 +234,10 @@ defeats the approach rule just as completely as diluting the ratio defeats count
 
 ![Recall by X-Ray evasion style](docs/images/detector-complementarity.svg)
 
-So the contribution is the approach telemetry, not the language model: a hand-written directness
-rule does as well as Jev on this data. See `docs/evasion.md` for the full result, including how
+So the contribution is the approach telemetry, not the language model. An ablation settles it:
+fit a feature-only rule on the same 134 sessions the policy's thresholds saw, and on the 22
+confirmation sessions it flags **exactly the same** ones, 9 of 10, for one fewer false positive.
+Zero discordant pairs. See `docs/evasion.md` for the full result, including how
 much of it was pre-registered, and `docs/benchmark.md` for the method.
 
 ## Operating cost
