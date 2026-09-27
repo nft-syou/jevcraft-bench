@@ -20,6 +20,16 @@ below shipped in 0.1.0 and is repeated here because 0.1.0 was the first tag.
 
 ### Added
 
+- `scripts/ablation-llm.mjs` and `scripts/ablation-llm-matched.mjs`: the ablation that isolates
+  the language model. Once the feature-only baseline is fitted on the same 134 sessions the
+  policy's thresholds saw, the two flag **exactly the same** confirmation sessions, 9 of 10, and
+  the baseline spends one fewer false positive. The first, pre-registered run showed the policy
+  ahead by 7; that gap was an information asymmetry, since the development split holds no
+  throttled sessions while the policy's decisive threshold was set after seeing 15 of them. The
+  pre-registered script is kept unedited beside the corrected one.
+
+### Added
+
 - `xray-throttled` adversary: an X-Ray bot that digs plain tunnel between targets to hold its ore
   ratio inside the legitimate range. Built because every earlier X-Ray bot was greedy enough for
   ore counting to catch, which made the benchmark unable to show anything.
