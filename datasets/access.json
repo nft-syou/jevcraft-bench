@@ -1,0 +1,82 @@
+{
+  "$comment": "Status of every dataset. See ACCESS.md. open = explore freely; sealed = one spend, question declared first; spent = report only, never feedback.",
+  "datasets": {
+    "datasets/splits2/dev-*.jsonl": {
+      "status": "open",
+      "sessions": 77,
+      "note": "The development split. All exploration belongs here. It holds 14 detour_xray, 15 direct_xray, 14 humanized_xray and 34 branch_mining, so most questions can be asked without spending anything."
+    },
+    "datasets/features/all2.jsonl": {
+      "status": "open",
+      "note": "Superset that includes the holdout sessions. Reading it for anything other than a whole-corpus description re-reads spent data; prefer the dev split."
+    },
+    "datasets/splits2/holdout-*.jsonl": {
+      "status": "spent",
+      "sessions": 57,
+      "uses": [
+        {
+          "date": "2026-09-20",
+          "question": "Does the shipped policy beat classic heuristics at a matched false-positive ceiling?",
+          "outcome": "No advantage; 3 vs 3 discordant, p = 1.0. docs/benchmark.md"
+        },
+        {
+          "date": "2026-09-21",
+          "question": "Does session-wide ore counting catch a ratio-throttled cheat?",
+          "outcome": "0 of 15 at any threshold under the ceiling. docs/evasion.md"
+        },
+        {
+          "date": "2026-09-27",
+          "question": "Does the language model add anything over a feature-only rule?",
+          "outcome": "Confounded on this set; the matched comparison used the confirmation set instead. scripts/ablation-llm.mjs"
+        },
+        {
+          "date": "2026-09-27",
+          "question": "EXPLORATORY, should have used dev: raw traces vs summarised features on detour.",
+          "outcome": "+0.089 AUC, underpowered. docs/representation.md"
+        },
+        {
+          "date": "2026-09-27",
+          "question": "EXPLORATORY, should have used dev: threshold-free categorical answer, and evidence-sufficiency routing.",
+          "outcome": "46% false positives; routing does not fire."
+        }
+      ]
+    },
+    "datasets/features/confirm.jsonl": {
+      "status": "spent",
+      "sessions": 22,
+      "recorded": "2026-09-21",
+      "uses": [
+        {
+          "date": "2026-09-21",
+          "question": "Does reviewApproachTargetingAlone = 0.35 hold on sessions recorded after it was frozen?",
+          "outcome": "9 of 10 caught at 1 of 12 false positives, against 3 of 10 without the rule. The use it was recorded for."
+        },
+        {
+          "date": "2026-09-27",
+          "question": "Matched ablation: feature-only rule fitted on the same 134 sessions, measured here.",
+          "outcome": "Identical to the policy, 9/10, zero discordant pairs."
+        },
+        {
+          "date": "2026-09-27",
+          "question": "EXPLORATORY, should have used dev: threshold-free categorical answer.",
+          "outcome": "9/10 recall at 8/12 false positives."
+        },
+        {
+          "date": "2026-09-27",
+          "question": "EXPLORATORY, should have used dev: escalating-evidence loop.",
+          "outcome": "4/10 recall at 4/12 false positives; escalation fires but the model is fooled at stage 2."
+        }
+      ]
+    },
+    "datasets/labels/confirm.jsonl": {
+      "status": "spent",
+      "see": "datasets/features/confirm.jsonl"
+    },
+    "datasets/decisions/confirm-gated.jsonl": {
+      "status": "spent",
+      "see": "datasets/features/confirm.jsonl"
+    }
+  },
+  "sealed": [],
+  "$note": "There is currently no sealed dataset. Every session in the corpus has been looked at, so no question can be answered cleanly until new sessions are recorded."
+}

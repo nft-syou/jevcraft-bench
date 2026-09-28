@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// ACCESS: spent-ok exploratory, and it should have used the open development split, which holds
+// 14 detour sessions of its own. Recorded as a rule violation in datasets/access.json.
 // Does the feature extractor throw away the thing that matters?
 //
 // Every comparison in this repository has fed the model the same eight numbers a threshold rule

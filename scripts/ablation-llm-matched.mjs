@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// ACCESS: spent-ok the confirmation set is the only data both sides were frozen before, which
+// is what the matched comparison needs; the outcome is reported, not used to tune either side.
 // The corrected ablation. scripts/ablation-llm.mjs is left as it was pre-registered and as it
 // ran; this is the follow-up it earned, not an edit of it.
 //

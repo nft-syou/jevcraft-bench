@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// ACCESS: spent-ok the figures describe outcomes that were already decided elsewhere; drawing
+// a number does not feed anything back into a threshold, a prompt or a design choice.
 // Renders the figures used by README.md and docs/evasion.md.
 //
 // Two modes, because the session-level datasets are gitignored and CI cannot see them:

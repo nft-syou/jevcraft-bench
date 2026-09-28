@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// ACCESS: spent-ok reporting the pre-registered ablation this data was read for; the result
+// is recorded in docs/evasion.md and nothing here decides anything new.
 // Does the language model earn its place?
 //
 // The shipped policy reads Jev's answers. Every detector it beats so far is a SINGLE

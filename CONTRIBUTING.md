@@ -7,6 +7,20 @@
 - Do not add automatic punishments (ban, kick, rollback). Review outcomes are the ceiling.
 - Record `model`, `questionSetVersion`, and `featureExtractorVersion` in every decision record.
 
+## Which data you may look at
+
+`datasets/ACCESS.md` is the rule and `datasets/access.json` is the state. In short: explore on the
+open development split, and treat a sealed test set as something you may spend once, on a question
+you wrote down first.
+
+- Never let a spent or sealed dataset change what you build. Reading it to report an outcome is
+  fine; reading it and then adjusting a threshold, a prompt, a feature or a choice between designs
+  is contamination whatever the adjustment was.
+- A script that reads spent or sealed data needs an `// ACCESS:` marker saying why. `pnpm access-check`
+  checks this and CI runs it.
+- The test is simple: if seeing the result would change your next commit, you should not be
+  reading it.
+
 ## Translations
 
 `README.md` is the source of truth. `README.ja.md`, `README.zh-CN.md`, `README.ko.md` and

@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// ACCESS: spent-ok development estimate on already-spent data; its numbers size the real test
+// and are not reportable. Should have used the open split. See datasets/access.json.
 // Raw approach traces against the summarised features, second attempt.
 //
 // WHY THERE IS A SECOND ONE. scripts/raw-vs-summary.mjs is left exactly as it was pre-registered
@@ -31,7 +33,7 @@ const { values } = parseArgs({
   options: {
     raw: { type: "string" },
     "limit-legit": { type: "string", default: "24" },
-    "point-budget": { type: "string", default: "300" },
+    "point-budget": { type: "string", default: "160" },
     out: { type: "string", default: "reports/raw-vs-summary-v2.json" },
     "dry-run": { type: "boolean", default: false },
   },
@@ -110,7 +112,7 @@ const buildTrace = (sessionId) => {
     // path and capped so a session with two approaches does not become enormous.
     const perApproach = Math.min(
       24,
-      Math.max(6, Math.floor(POINT_BUDGET / Math.max(1, reveals.length))),
+      Math.max(4, Math.floor(POINT_BUDGET / Math.max(1, reveals.length))),
     );
     const step = Math.max(1, Math.ceil(inWindow.length / perApproach));
     const pathPoints = inWindow
@@ -123,11 +125,15 @@ const buildTrace = (sessionId) => {
         yaw: Math.round(s.rotation?.yaw ?? 0),
         pitch: Math.round(s.rotation?.pitch ?? 0),
       }));
-    const brk = breaks
-      .filter((b) => {
-        const t = Date.parse(b.occurredAt);
-        return t >= t0 && t <= t1;
-      })
+    const inBreaks = breaks.filter((b) => {
+      const t = Date.parse(b.occurredAt);
+      return t >= t0 && t <= t1;
+    });
+    // Strided like the path. An unbounded break list is what exceeded the model's context on a
+    // session with 28 approaches.
+    const bStep = Math.max(1, Math.ceil(inBreaks.length / 6));
+    const brk = inBreaks
+      .filter((_, k) => k % bStep === 0)
       .map((b) => ({
         t: Math.round((Date.parse(b.occurredAt) - t1) / 1000),
         dx: r1(b.position.x - ore.x),

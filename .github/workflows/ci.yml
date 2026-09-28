@@ -19,6 +19,9 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      # Fails if a script reads a spent or sealed dataset without saying why.
+      # See datasets/ACCESS.md; convention alone did not stop this happening three times.
+      - run: pnpm access-check
       # Live Jev evaluation is intentionally not run in CI. The mock backend proves the pipeline.
       - run: pnpm jevcraft evaluate datasets/fixtures --backend mock --out /tmp/ci-decisions.jsonl
       # The session-level datasets are gitignored, so the figures are re-rendered from the
