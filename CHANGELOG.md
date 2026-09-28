@@ -20,6 +20,18 @@ below shipped in 0.1.0 and is repeated here because 0.1.0 was the first tag.
 
 ### Added
 
+- `datasets/ACCESS.md`, `datasets/access.json` and `pnpm access-check`. Every dataset is declared
+  open, sealed or spent; a script reading spent or sealed data must carry an `// ACCESS:` marker
+  saying why, and CI fails otherwise. Convention did not prevent contamination three times, and in
+  one afternoon the confirmation set was spent three further times on exploration the development
+  split could have carried. The ledger records all of it, violations included. There is currently
+  no sealed dataset, so nothing can be tested cleanly until new sessions are recorded.
+- `scripts/escalate.mjs`: ask with little, hand over more only when the model answers
+  `insufficient_evidence`. Withholding evidence makes the branch fire, 15 of 22 sessions against
+  1 of 22 when everything is sent up front, but the verdict is worse (4/10 at 4/12). Every session
+  stopped at the stage where the efficiency numbers a throttled cheat is built to disguise
+  convinced the model it had seen enough.
+
 - `scripts/vpt-ingest.mjs` and the VPT section of `docs/external-data.md`. OpenAI's VPT contractor
   data does carry world coordinates, and its `stats` block gives per-block mined counters, so the
   counting features come straight out of it. On 35 segments of real humans mining, the ore ratio
