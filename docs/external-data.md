@@ -5,6 +5,53 @@ the weakest thing about every false-positive rate on this page and in `benchmark
 obvious fix is to borrow real human mining from somewhere. This records what was checked, so the
 next person does not repeat it.
 
+## VPT contractor demonstrations: usable, and the correction to this page
+
+**Verdict: OpenAI's VPT contractor data does carry world coordinates. An earlier version of this
+page said it did not, on the assumption that it was MineRL-shaped. That was wrong, and it was
+caught by a second opinion rather than by re-reading the documentation.**
+
+Every tick of a [VPT](https://github.com/openai/Video-Pre-Training) action file carries:
+
+```json
+"yaw": -112.35, "pitch": 8.10,
+"xpos": 841.36, "ypos": 63.0, "zpos": 24.96,
+"tick": 0, "milli": 1649575088006,
+"inventory": [...], "stats": {...}
+```
+
+`stats` is the full Minecraft statistics block, which means `minecraft.mine_block:<block>` gives a
+per-block-type cumulative counter. Blocks broken and valuable ore mined therefore come straight
+out of the record, with no world save and no block-break events needed.
+
+The **10.x index is the Obtain Diamond Pickaxe task**, which is humans mining:
+`https://openaipublic.blob.core.windows.net/minecraft-rl/snapshots/all_10xx_Jun_29.json`, 5,661
+segments of five minutes each, downloaded anonymously from the same blob store. The repository is
+MIT. Some segments listed in the index were never uploaded and return an XML error; the README
+warns about this.
+
+`scripts/vpt-ingest.mjs` turns a segment into the counting features. On 55 downloaded segments,
+35 of which clear a floor of 60 blocks broken, 120 seconds and half the time underground:
+
+| Valuable ore per 100 blocks broken | n | median | p90 | max | at or above 4.13 |
+| --- | --- | --- | --- | --- | --- |
+| VPT human contractors | 35 | 0.00 | 1.90 | 8.00 | 1 (2.9%) |
+| This project's legitimate sessions | 71 | 0.33 | 2.45 | 8.26 | 5 (7.0%) |
+
+The distributions agree, and the real humans sit slightly *lower*. So the bot-heavy legitimate
+class here was not flattering its own false-positive rate; if anything it was conservative.
+
+The floor is not optional. VPT segments are cut at five minutes regardless of what the player is
+doing, so a segment that begins inside a vein reports an absurd ratio: the worst unfiltered value
+is 75.0, from 39 seconds and 8 blocks broken. Ten of the 55 fall under 60 blocks.
+
+**What VPT cannot do.** It has no cheaters, so the positive class must still be recorded here. And
+it cannot support the approach features: hidden-ore first exposure needs the surrounding blocks,
+which the record does not carry, and ore position has to be estimated by casting a ray along the
+player's view at the tick their counter increments. Mixing VPT sessions into an approach-feature
+experiment would let a detector separate the classes on pipeline artefacts rather than behaviour.
+It belongs in the counting comparison and nowhere else.
+
 ## MineRL: downloadable, and unusable here
 
 **Verdict: the data exists, is MIT licensed, and does not contain player coordinates.**

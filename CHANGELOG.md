@@ -20,6 +20,12 @@ below shipped in 0.1.0 and is repeated here because 0.1.0 was the first tag.
 
 ### Added
 
+- `scripts/vpt-ingest.mjs` and the VPT section of `docs/external-data.md`. OpenAI's VPT contractor
+  data does carry world coordinates, and its `stats` block gives per-block mined counters, so the
+  counting features come straight out of it. On 35 segments of real humans mining, the ore ratio
+  has median 0.00 and p90 1.90 against this project's 0.33 and 2.45, and 1 of 35 crosses the
+  ore-ratio threshold against 5 of 71 here. The bot-heavy legitimate class was conservative, not
+  flattering.
 - `scripts/raw-vs-summary.mjs` and `docs/representation.md`: the same question asked from the
   summarised features and from the raw approach trace. AUC on detour X-Ray goes 0.682 to 0.771,
   which misses the pre-registered +0.10 bar, and a paired bootstrap puts the interval at
@@ -86,6 +92,10 @@ below shipped in 0.1.0 and is repeated here because 0.1.0 was the first tag.
   contribution either way.
 
 ### Corrected
+
+- `docs/external-data.md` said VPT had no world coordinates. It does. The claim came from assuming
+  VPT was MineRL-shaped instead of reading its data-format section, and was caught by a second
+  opinion rather than by re-checking.
 
 - `plugin.yml` declared `api-version: "1.21"` while the plugin compiles against
   `paper-api:26.2.build.124-stable` and the README requires Paper 26.2. The Paper jar itself
