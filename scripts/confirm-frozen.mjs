@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // EVIDENCE: raw approach traces built from plugin telemetry, as decision D1 defines raw.
-// ACCESS: spend Do the questions frozen after the grid search rank X-Ray sessions above legitimate ones on sessions that shaped nothing?
+// ACCESS: spent-ok sealed1 was spent by this file on 2026-09-30; a re-run reports and decides nothing. Question: Do the questions frozen after the grid search rank X-Ray sessions above legitimate ones on sessions that shaped nothing?
 //
 // The one measurement of the frozen questions on the sealed set. Everything that could be tuned
 // was tuned on the open development split (docs/tuning-ledger.jsonl) and is written out below as
