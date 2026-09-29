@@ -91,21 +91,27 @@
       "see": "datasets/splits2/dev-*.jsonl"
     },
     "datasets/labels/sealed1.jsonl": {
-      "status": "sealed",
-      "sessions": 120,
+      "status": "spent",
+      "sessions": 118,
       "recorded": "2026-09-30",
-      "note": "Bot sessions recorded after the grid search stopped: 40 legit-branch-mining and 20 each of xray-direct, xray-detour, xray-humanized and xray-throttled, seed 91, start index 2000, world arena2. To be spent once by scripts/confirm-frozen.mjs on the question written at the top of that file. Session counts are as requested from the recorder; runs that fail to produce telemetry will make the labelled count smaller.",
-      "uses": []
+      "note": "Bot sessions recorded 2026-09-30 after the grid search stopped, seed 91, start index 2000, world arena2. 120 runs were requested and 118 produced a labelled session; 103 of those contain an ore reveal and were scored (32 legitimate, 17 direct, 18 detour, 20 humanized, 16 throttled).",
+      "uses": [
+        {
+          "date": "2026-09-30",
+          "question": "Do the questions frozen after the grid search rank X-Ray sessions above legitimate ones on sessions that shaped nothing?",
+          "outcome": "Supported on all three registered conditions. Configuration A, judge: AUC 0.948 [0.897, 0.985]; every style at least 0.92; A minus the approach-count control 0.197 [0.101, 0.296]. Plain single question 0.686. scripts/confirm-frozen.mjs at commit cec0050, reports/sealed1-frozen.json"
+        }
+      ]
     },
     "datasets/recordings/sealed1-*.jsonl": {
-      "status": "sealed",
+      "status": "spent",
       "see": "datasets/labels/sealed1.jsonl"
     },
     "datasets/features/sealed1*.jsonl": {
-      "status": "sealed",
+      "status": "spent",
       "see": "datasets/labels/sealed1.jsonl"
     }
   },
-  "sealed": ["datasets/labels/sealed1.jsonl"],
-  "$note": "One sealed dataset, sealed1, recorded 2026-09-30 and not yet read."
+  "sealed": [],
+  "$note": "There is currently no sealed dataset. sealed1 was spent on 2026-09-30."
 }
