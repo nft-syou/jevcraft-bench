@@ -13,8 +13,8 @@ server's rules.
 | | |
 |---|---|
 | Server | the compose Paper 26.2 server, `docker compose -f infra/docker-compose.yml up -d paper` |
-| Client | Minecraft Java Edition 26.2, no mods |
-| X-Ray | a resource pack that makes stone and deepslate transparent, for example Xray Ultimate 5.4.2 for 26.2 |
+| Client | Minecraft Java Edition 26.2 or 26.3, no mods. ViaVersion on the server lets a 26.3 client join; the sessions of 2026-09-20 were played that way |
+| X-Ray | a resource pack that makes stone and deepslate transparent, for example Xray Ultimate 5.4.2, which declares support for 26.0 and later |
 | Anti-xray | off. `infra/paper/data/config/paper-world-defaults.yml` has `anti-xray.enabled: false`; with it on, the pack shows fake ore |
 
 The server listens on `127.0.0.1:25565` and runs in offline mode, so the client has to be on the
