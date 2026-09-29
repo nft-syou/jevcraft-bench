@@ -7,6 +7,17 @@
 - Do not add automatic punishments (ban, kick, rollback). Review outcomes are the ceiling.
 - Record `model`, `questionSetVersion`, and `featureExtractorVersion` in every decision record.
 
+## Settled decisions
+
+`docs/decisions.md` records directions that have already been decided, and
+`pnpm decisions-check` enforces the parts that can be enforced. A decision is changed by editing
+that file in a commit that says why, never by quietly building something that contradicts it.
+
+The one with teeth today is D1: evidence sent to the model is the raw trace, not the summarised
+approach numbers, because those numbers were designed for a threshold rule to read and handing
+them to the model measures the bottleneck rather than the model. A script that calls the backend
+carries an `// EVIDENCE:` marker, and `raw` is the only value that needs no justification.
+
 ## Which data you may look at
 
 `datasets/ACCESS.md` is the rule and `datasets/access.json` is the state. In short: explore on the

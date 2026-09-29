@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// EVIDENCE: both measuring what the summary costs is the entire experiment, so both arms are
+// required; the summary arm is the thing being tested, not the evidence being relied on.
 // ACCESS: spent-ok exploratory, and it should have used the open development split, which holds
 // 14 detour sessions of its own. Recorded as a rule violation in datasets/access.json.
 // Does the feature extractor throw away the thing that matters?

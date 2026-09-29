@@ -3,8 +3,18 @@
   "datasets": {
     "datasets/splits2/dev-*.jsonl": {
       "status": "open",
-      "sessions": 77,
-      "note": "The development split. All exploration belongs here. It holds 14 detour_xray, 15 direct_xray, 14 humanized_xray and 34 branch_mining, so most questions can be asked without spending anything."
+      "sessions": 96,
+      "note": "The development split, and the only place exploration belongs. 34 branch_mining, 15 direct_xray, 14 humanized_xray, 14 detour_xray and 19 throttled_xray, so all four evasion styles can be tuned against without spending anything.",
+      "history": [
+        {
+          "date": "2026-09-20",
+          "change": "created from the first 77 bot sessions"
+        },
+        {
+          "date": "2026-09-28",
+          "change": "19 throttled_xray recorded straight into the open pool, because the only throttled sessions in the corpus were spent and question tuning needs data it is allowed to be influenced by"
+        }
+      ]
     },
     "datasets/features/all2.jsonl": {
       "status": "open",
@@ -75,6 +85,10 @@
     "datasets/decisions/confirm-gated.jsonl": {
       "status": "spent",
       "see": "datasets/features/confirm.jsonl"
+    },
+    "datasets/labels/dev-throttled.jsonl": {
+      "status": "open",
+      "see": "datasets/splits2/dev-*.jsonl"
     }
   },
   "sealed": [],

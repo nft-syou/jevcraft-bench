@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// EVIDENCE: both the ladder is the experiment: it starts from session totals and hands over more
+// only when the model asks, so the summarised stages are stages, not the evidence relied on.
 // ACCESS: spent-ok exploratory, and it should have run on the open development split instead.
 // The confirmation set was already spent, so these numbers are a reason to design a real test,
 // never a result. Recorded as a rule violation in datasets/access.json.

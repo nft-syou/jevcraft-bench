@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// EVIDENCE: both same comparison as the pre-registered version, with the approach cap removed;
+// the summary arm is the control it is measured against.
 // ACCESS: spent-ok development estimate on already-spent data; its numbers size the real test
 // and are not reportable. Should have used the open split. See datasets/access.json.
 // Raw approach traces against the summarised features, second attempt.

@@ -22,6 +22,9 @@ jobs:
       # Fails if a script reads a spent or sealed dataset without saying why.
       # See datasets/ACCESS.md; convention alone did not stop this happening three times.
       - run: pnpm access-check
+      # Fails if a script contradicts a settled direction in docs/decisions.md, such as
+      # sending the model the summarised features D1 rules out.
+      - run: pnpm decisions-check
       # Live Jev evaluation is intentionally not run in CI. The mock backend proves the pipeline.
       - run: pnpm jevcraft evaluate datasets/fixtures --backend mock --out /tmp/ci-decisions.jsonl
       # The session-level datasets are gitignored, so the figures are re-rendered from the
