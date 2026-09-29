@@ -89,8 +89,23 @@
     "datasets/labels/dev-throttled.jsonl": {
       "status": "open",
       "see": "datasets/splits2/dev-*.jsonl"
+    },
+    "datasets/labels/sealed1.jsonl": {
+      "status": "sealed",
+      "sessions": 120,
+      "recorded": "2026-09-30",
+      "note": "Bot sessions recorded after the grid search stopped: 40 legit-branch-mining and 20 each of xray-direct, xray-detour, xray-humanized and xray-throttled, seed 91, start index 2000, world arena2. To be spent once by scripts/confirm-frozen.mjs on the question written at the top of that file. Session counts are as requested from the recorder; runs that fail to produce telemetry will make the labelled count smaller.",
+      "uses": []
+    },
+    "datasets/recordings/sealed1-*.jsonl": {
+      "status": "sealed",
+      "see": "datasets/labels/sealed1.jsonl"
+    },
+    "datasets/features/sealed1*.jsonl": {
+      "status": "sealed",
+      "see": "datasets/labels/sealed1.jsonl"
     }
   },
-  "sealed": [],
-  "$note": "There is currently no sealed dataset. Every session in the corpus has been looked at, so no question can be answered cleanly until new sessions are recorded."
+  "sealed": ["datasets/labels/sealed1.jsonl"],
+  "$note": "One sealed dataset, sealed1, recorded 2026-09-30 and not yet read."
 }
