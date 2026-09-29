@@ -25,6 +25,14 @@ tie or a loss, which is the expected result of the setup rather than a finding a
 So an experiment that asks the model to judge approach behaviour sends the trace: position and
 view over the window before each reveal, and the blocks broken, as recorded.
 
+**What counts as raw (added 2026-09-29).** The trace is selected and re-expressed, never
+summarised. Samples are strided to a fixed count, time is given relative to the reveal, positions
+are given as offsets from the ore in blocks, and values are rounded. Each of these keeps one
+recorded sample as one row. Offsets replace world coordinates because the model ranked far worse
+on world coordinates (0.611 against 0.806, round r1) and the subtraction adds nothing the two
+positions did not already say. A value computed across samples, such as a directness ratio or a
+distance trend, is a summary and stays forbidden.
+
 **Forbidden:** sending `hiddenOreApproach` or another pre-computed summary as the evidence for a
 judgement, without saying in the file why that particular experiment needs it.
 
