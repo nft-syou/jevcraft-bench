@@ -61,16 +61,14 @@ if (!values.raw) {
   console.error("--raw <dir>[,<dir>] is required; it points at the plugin telemetry");
   process.exit(1);
 }
-{
-  for (const dir of values.raw.split(",")) {
-    for (const name of fs.readdirSync(dir)) {
-      if (!name.endsWith(".jsonl")) continue;
-      for (const line of fs.readFileSync(`${dir}/${name}`, "utf8").split("\n")) {
-        if (!line) continue;
-        const e = JSON.parse(line);
-        if (!telemetry.has(e.sessionId)) telemetry.set(e.sessionId, []);
-        telemetry.get(e.sessionId).push(e);
-      }
+for (const dir of values.raw.split(",")) {
+  for (const name of fs.readdirSync(dir)) {
+    if (!name.endsWith(".jsonl")) continue;
+    for (const line of fs.readFileSync(`${dir}/${name}`, "utf8").split("\n")) {
+      if (!line) continue;
+      const e = JSON.parse(line);
+      if (!telemetry.has(e.sessionId)) telemetry.set(e.sessionId, []);
+      telemetry.get(e.sessionId).push(e);
     }
   }
 }
