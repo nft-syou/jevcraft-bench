@@ -157,73 +157,101 @@ export const legitCaveMining: Scenario = {
 
     let blocked = 0;
     let lastOreAt = Date.now();
-    while (Date.now() < until) {
-      // A person stops for ore they can see, from some way off.
-      const seen = oreInSight(bot, CAVE_ORES, 16);
-      if (seen) {
-        lastOreAt = Date.now();
-        ctx.log(`ore in sight ${seen}`);
-        const inReach = () =>
-          bot.entity.position.offset(0, 1.62, 0).distanceTo(seen.offset(0.5, 0.5, 0.5)) <= 4;
-        await walkToward(bot, seen, { deadline: until, stopWhen: inReach, lookAt: seen });
-        let mined = false;
-        if (inReach()) {
-          await bot.lookAt(seen.offset(0.5, 0.5, 0.5), true);
-          mined = await digAt(bot, seen);
-        } else {
-          // Not walkable: dig the last few blocks, as a person would.
-          mined = await approachAndMine(bot, seen, until);
-        }
-        if (mined) {
-          await mineVisibleVein(bot, CAVE_ORES);
-          // Follow the vein a little into the wall.
-          await chipAround(bot, seen, 2 + Math.floor(rng.next() * 3));
-          await mineVisibleVein(bot, CAVE_ORES);
-        }
-        await fidget(bot, rng, ctx.humanNoise);
-        continue;
-      }
+    // Ore that could not be reached is left alone after two tries, as a person gives up on ore
+    // across a chasm or high in a ceiling.
+    const tried = new Map<string, number>();
+    const key = (p: Vec3) => `${p.x},${p.y},${p.z}`;
+    // The plugin ends a session after two minutes without a break. A person walking a cave
+    // pokes at the walls now and then; so does this bot, before the session would lapse.
+    let lastBreakAt = Date.now();
+    const stopCounting = onBlockMined((b) => {
+      if (b === bot) lastBreakAt = Date.now();
+    });
+    try {
+      await caveLoop();
+    } finally {
+      stopCounting();
+    }
 
-      // Otherwise wander: prefer an open cell some way off along the current heading, and take
-      // any open cell a few blocks away when the heading is blocked.
-      const here = bot.entity.position.floored();
-      const open = caveCellsNear(bot, 24, 1200).filter(
-        (c) => Math.abs(c.y - here.y) <= 8 && here.distanceTo(c) >= 3,
-      );
-      const ahead = open.filter((c) => {
-        const d = c.minus(here);
-        return d.x * heading.x + d.z * heading.z >= 4;
-      });
-      // Far cells first, so the bot crosses the cave instead of pacing one chamber.
-      const pool = (ahead.length > 0 ? ahead : open).sort(
-        (a, b) => b.distanceTo(here) - a.distanceTo(here),
-      );
-      const goal = pool[Math.floor(rng.next() * Math.min(pool.length, 8))];
-      if (goal) {
-        const { reached, cell } = await walkToward(bot, goal, {
-          deadline: until,
-          onStep: () => fidget(bot, rng, ctx.humanNoise),
+    async function caveLoop() {
+      while (Date.now() < until) {
+        if (Date.now() - lastBreakAt > 60_000) {
+          await chipAround(bot, bot.entity.position.floored(), 3);
+          if (Date.now() - lastBreakAt > 60_000) {
+            // Nothing diggable beside the bot: dig one step into the nearest wall.
+            const from = bot.entity.position.floored();
+            await tunnelTo(bot, from.plus(heading.scaled(2)), { deadline: until });
+          }
+        }
+        // A person stops for ore they can see, from some way off.
+        const seen = oreInSight(bot, CAVE_ORES, 16, (p) => (tried.get(key(p)) ?? 0) >= 2);
+        if (seen) {
+          lastOreAt = Date.now();
+          tried.set(key(seen), (tried.get(key(seen)) ?? 0) + 1);
+          ctx.log(`ore in sight ${seen}`);
+          const inReach = () =>
+            bot.entity.position.offset(0, 1.62, 0).distanceTo(seen.offset(0.5, 0.5, 0.5)) <= 4.5;
+          await walkToward(bot, seen, { deadline: until, stopWhen: inReach, lookAt: seen });
+          let mined = false;
+          if (inReach()) {
+            await bot.lookAt(seen.offset(0.5, 0.5, 0.5), true);
+            mined = await digAt(bot, seen);
+          } else if (bot.entity.position.distanceTo(seen) <= 8) {
+            // Close but not walkable: dig the last few blocks, as a person would.
+            mined = await approachAndMine(bot, seen, until);
+          }
+          if (mined) {
+            ctx.log(`mined ${seen}`);
+            await mineVisibleVein(bot, CAVE_ORES);
+            // Follow the vein a little into the wall.
+            await chipAround(bot, seen, 2 + Math.floor(rng.next() * 3));
+            await mineVisibleVein(bot, CAVE_ORES);
+          }
+          await fidget(bot, rng, ctx.humanNoise);
+          continue;
+        }
+
+        // Otherwise wander: prefer an open cell some way off along the current heading, and take
+        // any open cell a few blocks away when the heading is blocked.
+        const here = bot.entity.position.floored();
+        const open = caveCellsNear(bot, 24, 1200).filter(
+          (c) => Math.abs(c.y - here.y) <= 8 && here.distanceTo(c) >= 3,
+        );
+        const ahead = open.filter((c) => {
+          const d = c.minus(here);
+          return d.x * heading.x + d.z * heading.z >= 4;
         });
-        ctx.log(`wander ${here} -> ${goal}: ${reached ? "reached" : `stopped at ${cell}`}`);
-        blocked = reached ? 0 : blocked + 1;
-      } else {
-        ctx.log(`no open cell near ${here}`);
-        blocked++;
-      }
-      // A barren stretch of cave: dig into the wall for a while, as a person would.
-      if (Date.now() - lastOreAt > 90_000) {
-        blocked = 2;
-        lastOreAt = Date.now();
-      }
-      if (blocked >= 2) {
-        // The cave has run out here: dig a short way in a new direction, as a person would.
-        heading = turn(heading, rng);
-        const from = bot.entity.position.floored();
-        const goal2 = from.plus(heading.scaled(8));
-        ctx.log(`cave ends; digging toward ${goal2}`);
-        const dug = await tunnelTo(bot, goal2, { deadline: until });
-        if (!dug.reached) heading = turn(heading, rng);
-        blocked = 0;
+        // Far cells first, so the bot crosses the cave instead of pacing one chamber.
+        const pool = (ahead.length > 0 ? ahead : open).sort(
+          (a, b) => b.distanceTo(here) - a.distanceTo(here),
+        );
+        const goal = pool[Math.floor(rng.next() * Math.min(pool.length, 8))];
+        if (goal) {
+          const { reached, cell } = await walkToward(bot, goal, {
+            deadline: until,
+            onStep: () => fidget(bot, rng, ctx.humanNoise),
+          });
+          ctx.log(`wander ${here} -> ${goal}: ${reached ? "reached" : `stopped at ${cell}`}`);
+          blocked = reached ? 0 : blocked + 1;
+        } else {
+          ctx.log(`no open cell near ${here}`);
+          blocked++;
+        }
+        // A barren stretch of cave: dig into the wall for a while, as a person would.
+        if (Date.now() - lastOreAt > 90_000) {
+          blocked = 2;
+          lastOreAt = Date.now();
+        }
+        if (blocked >= 2) {
+          // The cave has run out here: dig a short way in a new direction, as a person would.
+          heading = turn(heading, rng);
+          const from = bot.entity.position.floored();
+          const goal2 = from.plus(heading.scaled(8));
+          ctx.log(`cave ends; digging toward ${goal2}`);
+          const dug = await tunnelTo(bot, goal2, { deadline: until });
+          if (!dug.reached) heading = turn(heading, rng);
+          blocked = 0;
+        }
       }
     }
   },
