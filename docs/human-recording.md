@@ -38,12 +38,12 @@ docker exec infra-paper-1 rcon-cli effect give <name> night_vision infinite
 1. Pick the kind of session and start the helper. It notes the time.
 
    ```sh
-   node scripts/human-session.mjs --name <name> --kind xray-detour
+   node scripts/human-session.mjs start --name <name> --kind xray-detour
    ```
 
 2. For an X-Ray kind, enable the resource pack. For a legitimate kind, disable it.
 3. Join the server and mine for 10 to 15 minutes, below y = 40.
-4. Leave the server, then press Enter in the helper. It appends one line to
+4. Leave the server, then run `node scripts/human-session.mjs stop`. It appends one line to
    `datasets/recordings/human-<name>.jsonl`.
 
 Leave the server between sessions. The plugin closes a session when the player leaves, and one
