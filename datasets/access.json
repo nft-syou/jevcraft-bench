@@ -139,8 +139,26 @@
     "datasets/labels/dev-cave3.jsonl": {
       "status": "open",
       "see": "datasets/splits2/dev-*.jsonl"
+    },
+    "datasets/labels/sealed2.jsonl": {
+      "status": "sealed",
+      "sessions": 128,
+      "recorded": "2026-09-30",
+      "note": "Bot sessions recorded after round 8 stopped: 64 legit-cave-mining, 16 legit-branch-mining and 12 each of xray-direct, xray-detour, xray-humanized and xray-throttled, seed 99, start index 4000, world arena2. To be spent once by scripts/confirm-frozen-v2.mjs on the question at the top of that file. Cave runs meet a diamond in roughly one run in ten, so the scorable cave count will be small.",
+      "uses": []
+    },
+    "datasets/labels/human-sealed2.jsonl": {
+      "status": "sealed",
+      "sessions": 0,
+      "recorded": "2026-09-30",
+      "note": "New sessions played by a person after round 8: cave mining without X-Ray and X-Ray play, recorded with scripts/human-session.mjs. Reported alongside sealed2 by scripts/confirm-frozen-v2.mjs; too few to enter the registered conditions. The count is filled in when the recording ends.",
+      "uses": []
+    },
+    "datasets/recordings/sealed2-*.jsonl": {
+      "status": "sealed",
+      "see": "datasets/labels/sealed2.jsonl"
     }
   },
-  "sealed": [],
-  "$note": "There is currently no sealed dataset. sealed1 and human-sealed were spent on 2026-09-30."
+  "sealed": ["datasets/labels/sealed2.jsonl", "datasets/labels/human-sealed2.jsonl"],
+  "$note": "Two sealed datasets, sealed2 and human-sealed2, registered 2026-09-30 and not yet read."
 }
