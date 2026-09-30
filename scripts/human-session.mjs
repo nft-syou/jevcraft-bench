@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 // Writes the manifest entry for one session played by a person, so `jevcraft label-runs` can
-// label it the same way it labels a bot run. Start it before joining the server, play, leave the
-// server, then press Enter here.
+// label it the same way it labels a bot run. Run `start` before joining the server, play, leave
+// the server, then run `stop`. Nothing needs to stay running in between.
 //
 // The label is what the player says they did. Nothing in the telemetry is used to decide it.
 //
-// usage: node scripts/human-session.mjs --name <minecraft name> --kind <kind> [--out <manifest.jsonl>] [--note <text>]
+// usage: node scripts/human-session.mjs start --name <minecraft name> --kind <kind> [--note <text>]
+//        node scripts/human-session.mjs stop [--out <manifest.jsonl>]
+//        node scripts/human-session.mjs status
 //   kinds: legit-branch, legit-cave, xray-direct, xray-detour, xray-throttled, xray-free
 import { createHash, createHmac } from "node:crypto";
 import fs from "node:fs";
-import readline from "node:readline";
 import { parseArgs } from "node:util";
 
 const KINDS = {
@@ -24,8 +25,10 @@ const KINDS = {
   // Whatever the player would do to avoid being caught; no instruction given.
   "xray-free": { label: "known_cheat", subtype: "mixed", tool: "x-ray in use" },
 };
+const PENDING = "datasets/recordings/.human-session-pending.json";
 
-const { values } = parseArgs({
+const { values, positionals } = parseArgs({
+  allowPositionals: true,
   options: {
     name: { type: "string" },
     kind: { type: "string" },
@@ -33,50 +36,80 @@ const { values } = parseArgs({
     note: { type: "string" },
   },
 });
-const kind = KINDS[values.kind];
-if (!values.name || !kind) {
+const [command] = positionals;
+
+const usage = () => {
   console.error(
-    `usage: node scripts/human-session.mjs --name <minecraft name> --kind <${Object.keys(KINDS).join("|")}>`,
+    `usage: node scripts/human-session.mjs start --name <minecraft name> --kind <${Object.keys(KINDS).join("|")}>\n       node scripts/human-session.mjs stop`,
   );
   process.exit(1);
-}
-const secret = process.env.JEVCRAFT_HMAC_SECRET ?? "change-me-local-only";
-const out = values.out ?? `datasets/recordings/human-${values.name}.jsonl`;
+};
 
-// The same two mappings the server and the plugin apply: an offline-mode UUID from the name,
-// then the keyed hash the plugin writes in place of it.
-const h = createHash("md5").update(`OfflinePlayer:${values.name}`, "utf8").digest();
-h[6] = (h[6] & 0x0f) | 0x30;
-h[8] = (h[8] & 0x3f) | 0x80;
-const x = h.toString("hex");
-const uuid = `${x.slice(0, 8)}-${x.slice(8, 12)}-${x.slice(12, 16)}-${x.slice(16, 20)}-${x.slice(20)}`;
-const playerId = `hmac-sha256:${createHmac("sha256", secret).update(uuid, "utf8").digest("hex")}`;
+if (command === "start") {
+  const kind = KINDS[values.kind];
+  if (!values.name || !kind) usage();
+  if (fs.existsSync(PENDING)) {
+    const p = JSON.parse(fs.readFileSync(PENDING, "utf8"));
+    console.error(
+      `a session is already open: ${p.kind} as ${p.name} since ${p.joinedAt}. Run stop first.`,
+    );
+    process.exit(1);
+  }
+  const joinedAt = new Date().toISOString();
+  fs.writeFileSync(
+    PENDING,
+    `${JSON.stringify({ name: values.name, kind: values.kind, note: values.note, joinedAt })}\n`,
+  );
+  console.log(`${values.kind} as ${values.name}, started ${joinedAt}`);
+  console.log(
+    "Join the server and play. Leave the server when done, then run: node scripts/human-session.mjs stop",
+  );
+} else if (command === "stop") {
+  if (!fs.existsSync(PENDING)) {
+    console.error("no open session. Run start first.");
+    process.exit(1);
+  }
+  const p = JSON.parse(fs.readFileSync(PENDING, "utf8"));
+  const kind = KINDS[p.kind];
+  const secret = process.env.JEVCRAFT_HMAC_SECRET ?? "change-me-local-only";
+  const out = values.out ?? `datasets/recordings/human-${p.name}.jsonl`;
 
-const joinedAt = new Date().toISOString();
-console.log(`${values.kind} as ${values.name}, started ${joinedAt}`);
-console.log("Join the server and play. Leave the server when done, then press Enter here.");
+  // The same two mappings the server and the plugin apply: an offline-mode UUID from the name,
+  // then the keyed hash the plugin writes in place of it.
+  const h = createHash("md5").update(`OfflinePlayer:${p.name}`, "utf8").digest();
+  h[6] = (h[6] & 0x0f) | 0x30;
+  h[8] = (h[8] & 0x3f) | 0x80;
+  const x = h.toString("hex");
+  const uuid = `${x.slice(0, 8)}-${x.slice(8, 12)}-${x.slice(12, 16)}-${x.slice(16, 20)}-${x.slice(20)}`;
+  const playerId = `hmac-sha256:${createHmac("sha256", secret).update(uuid, "utf8").digest("hex")}`;
 
-const rl = readline.createInterface({ input: process.stdin });
-rl.once("line", () => {
   const leftAt = new Date().toISOString();
-  const minutes = (Date.parse(leftAt) - Date.parse(joinedAt)) / 60000;
+  const minutes = (Date.parse(leftAt) - Date.parse(p.joinedAt)) / 60000;
   fs.appendFileSync(
     out,
     `${JSON.stringify({
       botName: "human",
       uuid,
       playerId,
-      scenario: `human-${values.kind}`,
+      scenario: `human-${p.kind}`,
       label: kind.label,
       subtype: kind.subtype,
       seed: 0,
       humanNoise: 1,
       origin: { x: 0, y: 0, z: 0 },
-      joinedAt,
+      joinedAt: p.joinedAt,
       leftAt,
-      notes: [`played by a person; ${kind.tool}`, ...(values.note ? [values.note] : [])],
+      notes: [`played by a person; ${kind.tool}`, ...(p.note ? [p.note] : [])],
     })}\n`,
   );
-  console.log(`${minutes.toFixed(1)} minutes -> ${out}`);
-  rl.close();
-});
+  fs.unlinkSync(PENDING);
+  console.log(`${p.kind} as ${p.name}, ${minutes.toFixed(1)} minutes -> ${out}`);
+} else if (command === "status") {
+  if (!fs.existsSync(PENDING)) console.log("no open session");
+  else {
+    const p = JSON.parse(fs.readFileSync(PENDING, "utf8"));
+    console.log(
+      `${p.kind} as ${p.name}, open since ${p.joinedAt} (${((Date.now() - Date.parse(p.joinedAt)) / 60000).toFixed(1)} minutes)`,
+    );
+  }
+} else usage();
