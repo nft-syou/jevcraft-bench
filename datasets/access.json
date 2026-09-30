@@ -3,8 +3,8 @@
   "datasets": {
     "datasets/splits2/dev-*.jsonl": {
       "status": "open",
-      "sessions": 96,
-      "note": "The development split, and the only place exploration belongs. 34 branch_mining, 15 direct_xray, 14 humanized_xray, 14 detour_xray and 19 throttled_xray, so all four evasion styles can be tuned against without spending anything.",
+      "sessions": 244,
+      "note": "The development split, and the only place exploration belongs. 34 branch_mining, 148 cave_mining (bots; 15 with an ore reveal), 15 direct_xray, 14 humanized_xray, 14 detour_xray and 19 throttled_xray, so all four evasion styles and both kinds of legitimate play can be tuned against without spending anything.",
       "history": [
         {
           "date": "2026-09-20",
@@ -13,6 +13,10 @@
         {
           "date": "2026-09-28",
           "change": "19 throttled_xray recorded straight into the open pool, because the only throttled sessions in the corpus were spent and question tuning needs data it is allowed to be influenced by"
+        },
+        {
+          "date": "2026-09-30",
+          "change": "148 legit cave_mining bot sessions added in three batches (datasets/labels/dev-cave*.jsonl). The reason is a spent result: the person's cave mining scored as X-Ray on human-sealed. That result chose what to record; the tuning that follows uses only these bot sessions."
         }
       ]
     },
@@ -123,6 +127,18 @@
           "outcome": "Not supported. 8 scorable sessions (3 X-Ray, 5 legitimate cave mining). Configuration A, judge: AUC 0.433 [0.000, 0.833]. Every reading of the model sits between 0.43 and 0.60. The count of approaches alone gives 1.000: the X-Ray sessions met 12 or more ores, the legitimate ones 1 to 7. reports/human1-frozen.json, docs/confirmation.md"
         }
       ]
+    },
+    "datasets/labels/dev-cave.jsonl": {
+      "status": "open",
+      "see": "datasets/splits2/dev-*.jsonl"
+    },
+    "datasets/labels/dev-cave2.jsonl": {
+      "status": "open",
+      "see": "datasets/splits2/dev-*.jsonl"
+    },
+    "datasets/labels/dev-cave3.jsonl": {
+      "status": "open",
+      "see": "datasets/splits2/dev-*.jsonl"
     }
   },
   "sealed": [],
