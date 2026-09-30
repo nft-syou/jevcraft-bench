@@ -340,7 +340,7 @@ export async function walkToward(
 }
 
 /** Standable cave cells within `maxDistance`, nearest first. Reads only air, which is no secret. */
-export function caveCellsNear(bot: Bot, maxDistance: number, count = 400): Vec3[] {
+export function caveCellsNear(bot: Bot, maxDistance: number, count = 400, maxY = 30): Vec3[] {
   const ids = CAVE_AIR.map((n) => bot.registry.blocksByName[n]?.id).filter(
     (id): id is number => id !== undefined,
   );
@@ -353,7 +353,7 @@ export function caveCellsNear(bot: Bot, maxDistance: number, count = 400): Vec3[
   };
   return bot
     .findBlocks({ matching: ids, maxDistance, count })
-    .filter((p) => p.y >= MIN_TARGET_Y && p.y <= 30 && isStandable(bot, p) && roofed(p))
+    .filter((p) => p.y >= MIN_TARGET_Y && p.y <= maxY && isStandable(bot, p) && roofed(p))
     .sort((a, b) => a.distanceTo(here) - b.distanceTo(here));
 }
 
