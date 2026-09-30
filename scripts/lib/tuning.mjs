@@ -76,6 +76,10 @@ export function makeTraceBuilder(telemetry) {
       breaks: breakCount = 8,
       view = true,
       revealMarker = false,
+      // The plugin records, for every break, how many faces of the block were already open
+      // before this player dug near it. In a tunnel that is 0; in a cave wall it is 1 or more.
+      // It is a recorded value per event, so it is raw under D1.
+      context = false,
     } = opts;
     const all = telemetry.get(sessionId.split(":")[0]) ?? [];
     const reveals = all.filter((e) => e.eventType === "hidden_ore_reveal").slice(0, maxApproaches);
@@ -103,6 +107,9 @@ export function makeTraceBuilder(telemetry) {
         // kept as a switch to find out whether stating the obvious helps the model anchor on it.
         ...(revealMarker ? { oreRevealedAtSecond: 0 } : {}),
         ...(frame === "absolute" ? { ore: { x: ore.x, y: ore.y, z: ore.z } } : {}),
+        ...(context
+          ? { revealingBreakOpenFacesBefore: rev.context?.preexistingOpenFaces ?? 0 }
+          : {}),
         path: win
           .filter((_, k) => k % step === 0)
           .map((x) => ({
@@ -123,6 +130,7 @@ export function makeTraceBuilder(telemetry) {
             t: Math.round((Date.parse(b.occurredAt) - t1) / 1000),
             ...pos(b.position),
             ...(materials && b.block?.material ? { block: b.block.material } : {}),
+            ...(context ? { openFacesBefore: b.context?.preexistingOpenFaces ?? 0 } : {}),
           }));
       }
       return out;
@@ -138,6 +146,7 @@ export function traceNote(opts = {}) {
     materials = false,
     breaks: breakCount = 8,
     view = true,
+    context = false,
   } = opts;
   const what = view ? "position and view" : "position";
   const where =
@@ -148,7 +157,10 @@ export function traceNote(opts = {}) {
     breakCount > 0
       ? `, with the blocks they broke${materials ? " and what each block was" : ""}`
       : "";
-  return `Each approach gives the player's ${what} over the ${windowSec} seconds before a hidden ore became visible, ${where}${broke}. Second 0 is the moment the ore was exposed.`;
+  const faces = context
+    ? " Each block break also says how many of its faces were already open before the player dug there, and each approach says the same for the break that exposed the ore: 0 means the block was buried in solid rock and reached only by digging, 1 or more means it was in the wall of a cave or other open space."
+    : "";
+  return `Each approach gives the player's ${what} over the ${windowSec} seconds before a hidden ore became visible, ${where}${broke}. Second 0 is the moment the ore was exposed.${faces}`;
 }
 
 /** A backend call that survives rate limits and transient failures. */
@@ -188,4 +200,4 @@ export async function pool(items, n, fn) {
   return out;
 }
 
-export { aboveEveryLegit, auc, mean, median, perStyle, sd } from "./tuning-score.mjs";
+export { aboveEveryLegit, auc, mean, median, perLegit, perStyle, sd } from "./tuning-score.mjs";

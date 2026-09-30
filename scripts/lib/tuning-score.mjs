@@ -17,6 +17,14 @@ export const perStyle = (rs) => {
   );
 };
 
+/** AUC of every cheat against one kind of legitimate play: where the false positives would come from. */
+export const perLegit = (rs) => {
+  const kinds = [...new Set(rs.filter((r) => !r.positive).map((r) => r.subtype))].sort();
+  return Object.fromEntries(
+    kinds.map((k) => [k, auc(rs.filter((r) => r.positive || r.subtype === k))]),
+  );
+};
+
 /** Cheats that outrank every legitimate session: separation at the top, with no cut chosen. */
 export const aboveEveryLegit = (rs) => {
   const neg = rs.filter((r) => !r.positive).map((r) => r.score);
