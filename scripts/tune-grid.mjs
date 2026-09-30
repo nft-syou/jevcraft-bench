@@ -180,6 +180,13 @@ const PROMPTS = {
     yes: "Yes: the approach was through rock and the position and view converge on the ore before it could have been seen.",
     no: "No: the player was in open cave following what they could see, or nothing anticipates the ore.",
   }),
+  // The cave wording with the reminder that most players are honest.
+  "detour+cave+base-rate": (note) => ({
+    task: `${TASK}\n\n${EVASION}\n\n${DETOUR}\n\n${CAVE}\n\nMost players are honest. Ore is common enough underground that an ordinary tunnel or cave meets it regularly, so meeting ore is not itself evidence of anything.`,
+    text: `${note} Does the movement anticipate the ore?`,
+    yes: YES_ANTICIPATES,
+    no: NO_ANTICIPATES,
+  }),
   "evasion-only": (note) => ({
     task: EVASION,
     text: `${note} Does the movement anticipate the ore?`,
@@ -245,6 +252,57 @@ const perApproach = (id, prompt, trace = {}, { qtype = "noul", judge = "set" } =
 const L = { points: 8, breaks: 0, maxApproaches: 12 };
 
 const ROUNDS = {
+  // Round 8: round 7 put the cave wording with the open-face counts ahead on every column,
+  // and the cave column rests on 15 sessions, so the leader is repeated and varied one thing at
+  // a time, with the earlier leader alongside for the comparison.
+  r8: [
+    perApproach("pa8-leader-again", "detour", { ...L, windowSec: 45 }),
+    perApproach("pa8-cave-context-again", "detour+cave", { ...L, windowSec: 45, context: true }),
+    perApproach("pa8-cave-context-w60", "detour+cave", { ...L, context: true }),
+    perApproach("pa8-cave-context-base-rate", "detour+cave+base-rate", {
+      ...L,
+      windowSec: 45,
+      context: true,
+    }),
+    perApproach("pa8-cave-context-a8", "detour+cave", {
+      ...L,
+      windowSec: 45,
+      context: true,
+      maxApproaches: 8,
+    }),
+    perApproach("pa8-cave-context-p12", "detour+cave", {
+      ...L,
+      windowSec: 45,
+      context: true,
+      points: 12,
+    }),
+    perApproach("pa8-cave-context-noview", "detour+cave", {
+      ...L,
+      windowSec: 45,
+      context: true,
+      view: false,
+    }),
+    perApproach(
+      "pa8-cave-context-choice",
+      "detour+cave",
+      { ...L, windowSec: 45, context: true },
+      {
+        qtype: "choice",
+      },
+    ),
+    perApproach(
+      "pa8-cave-context-first3",
+      "detour+cave",
+      { ...L, windowSec: 45, context: true },
+      {
+        judge: "first3",
+      },
+    ),
+    perApproach("pa8-breaks-again", "detour", { ...L, windowSec: 45, breaks: 8 }),
+    perApproach("pa8-cave-breaks", "detour+cave", { ...L, windowSec: 45, breaks: 8 }),
+    perApproach("pa8-evasion-cave-context", "evasion+cave", { ...L, windowSec: 45, context: true }),
+    perApproach("pa8-caveq-context", "detour+cave-q", { ...L, windowSec: 45, context: true }),
+  ],
   // Round 7: the open pool now holds cave mining by bots, the legitimate play that the frozen
   // questions scored as X-Ray on a person. The leader is re-measured with cave in the pool, and
   // then given what could tell cave from tunnel: the recorded open-face counts on breaks, block
