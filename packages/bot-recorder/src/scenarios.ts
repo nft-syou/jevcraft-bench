@@ -3,6 +3,8 @@ import type { Bot } from "mineflayer";
 import { Vec3 } from "vec3";
 import {
   approachAndMine,
+  caveCellsNear,
+  chipAround,
   DIAMOND_ORES,
   digAt,
   fidget,
@@ -10,10 +12,12 @@ import {
   LOW_VALUE_ORES,
   mineVisibleVein,
   onBlockMined,
+  oreInSight,
   type Rng,
   sleep,
   tunnelTo,
   visibleOreNear,
+  walkToward,
 } from "./mining";
 
 export interface ScenarioContext {
@@ -87,6 +91,140 @@ export const legitBranchMining: Scenario = {
         await mineVisibleVein(ctx.bot, [...DIAMOND_ORES, ...LOW_VALUE_ORES]);
       }
       await tunnelTo(ctx.bot, junction, { deadline: until });
+    }
+  },
+};
+
+/** Every ore a cave explorer would stop for. */
+const CAVE_ORES = [
+  ...DIAMOND_ORES,
+  ...LOW_VALUE_ORES,
+  "copper_ore",
+  "deepslate_copper_ore",
+  "gold_ore",
+  "deepslate_gold_ore",
+  "redstone_ore",
+  "deepslate_redstone_ore",
+  "lapis_ore",
+  "deepslate_lapis_ore",
+];
+
+/**
+ * Legit: walks through caves and mines the ore it can see. The only legitimate play in the
+ * corpus used to be branch mining, and a person exploring a cave was scored as a cheat because
+ * they walk toward ore they can see and expose the hidden ore next to it. This is that play.
+ */
+export const legitCaveMining: Scenario = {
+  name: "legit-cave-mining",
+  label: "legit",
+  subtype: "cave_mining",
+  description:
+    "Finds a cave, wanders through it and walks to any ore in sight to mine it and its vein. Digs only when the cave ends. Uses no hidden information.",
+  async run(ctx) {
+    const until = deadline(ctx);
+    const { bot } = ctx;
+    const rng = ctx.rng;
+
+    // Get into a cave. The teleport happens before the session starts, so nothing records it.
+    // A session begins after ten stone breaks, so open with a short dig into the cave wall and
+    // come back out, which is also how a person usually enters a cave from their own tunnel.
+    let cells = caveCellsNear(bot, 64, 2000);
+    // Caves are not everywhere at one depth. Look higher up and a little way off before giving up.
+    const probes: [number, number, number][] = [
+      [0, 20, 0],
+      [0, 40, 0],
+      [24, 0, 24],
+      [24, 20, 24],
+      [24, 40, 24],
+      [-24, 30, 24],
+    ];
+    for (const [dx, dy, dz] of probes) {
+      if (cells.length > 0) break;
+      const probe = ctx.origin.offset(dx, dy, dz);
+      bot.chat(`/tp @s ${probe.x} ${probe.y} ${probe.z}`);
+      await sleep(2500);
+      cells = caveCellsNear(bot, 64, 2000);
+    }
+    const target = cells[Math.floor(rng.next() * Math.min(cells.length, 8))] ?? cells[0];
+    if (!target) throw new Error("no cave near any probe; not a cave session");
+    bot.chat(`/tp @s ${target.x} ${target.y} ${target.z}`);
+    await sleep(1500);
+    ctx.log(`cave at ${target}`);
+    let heading = HEADINGS[Math.floor(rng.next() * HEADINGS.length)] ?? new Vec3(1, 0, 0);
+    const entrance = bot.entity.position.floored();
+    await straight(ctx, heading, 6, until);
+    await tunnelTo(bot, entrance, { deadline: until });
+
+    let blocked = 0;
+    let lastOreAt = Date.now();
+    while (Date.now() < until) {
+      // A person stops for ore they can see, from some way off.
+      const seen = oreInSight(bot, CAVE_ORES, 16);
+      if (seen) {
+        lastOreAt = Date.now();
+        ctx.log(`ore in sight ${seen}`);
+        const inReach = () =>
+          bot.entity.position.offset(0, 1.62, 0).distanceTo(seen.offset(0.5, 0.5, 0.5)) <= 4;
+        await walkToward(bot, seen, { deadline: until, stopWhen: inReach, lookAt: seen });
+        let mined = false;
+        if (inReach()) {
+          await bot.lookAt(seen.offset(0.5, 0.5, 0.5), true);
+          mined = await digAt(bot, seen);
+        } else {
+          // Not walkable: dig the last few blocks, as a person would.
+          mined = await approachAndMine(bot, seen, until);
+        }
+        if (mined) {
+          await mineVisibleVein(bot, CAVE_ORES);
+          // Follow the vein a little into the wall.
+          await chipAround(bot, seen, 2 + Math.floor(rng.next() * 3));
+          await mineVisibleVein(bot, CAVE_ORES);
+        }
+        await fidget(bot, rng, ctx.humanNoise);
+        continue;
+      }
+
+      // Otherwise wander: prefer an open cell some way off along the current heading, and take
+      // any open cell a few blocks away when the heading is blocked.
+      const here = bot.entity.position.floored();
+      const open = caveCellsNear(bot, 24, 1200).filter(
+        (c) => Math.abs(c.y - here.y) <= 8 && here.distanceTo(c) >= 3,
+      );
+      const ahead = open.filter((c) => {
+        const d = c.minus(here);
+        return d.x * heading.x + d.z * heading.z >= 4;
+      });
+      // Far cells first, so the bot crosses the cave instead of pacing one chamber.
+      const pool = (ahead.length > 0 ? ahead : open).sort(
+        (a, b) => b.distanceTo(here) - a.distanceTo(here),
+      );
+      const goal = pool[Math.floor(rng.next() * Math.min(pool.length, 8))];
+      if (goal) {
+        const { reached, cell } = await walkToward(bot, goal, {
+          deadline: until,
+          onStep: () => fidget(bot, rng, ctx.humanNoise),
+        });
+        ctx.log(`wander ${here} -> ${goal}: ${reached ? "reached" : `stopped at ${cell}`}`);
+        blocked = reached ? 0 : blocked + 1;
+      } else {
+        ctx.log(`no open cell near ${here}`);
+        blocked++;
+      }
+      // A barren stretch of cave: dig into the wall for a while, as a person would.
+      if (Date.now() - lastOreAt > 90_000) {
+        blocked = 2;
+        lastOreAt = Date.now();
+      }
+      if (blocked >= 2) {
+        // The cave has run out here: dig a short way in a new direction, as a person would.
+        heading = turn(heading, rng);
+        const from = bot.entity.position.floored();
+        const goal2 = from.plus(heading.scaled(8));
+        ctx.log(`cave ends; digging toward ${goal2}`);
+        const dug = await tunnelTo(bot, goal2, { deadline: until });
+        if (!dug.reached) heading = turn(heading, rng);
+        blocked = 0;
+      }
     }
   },
 };
@@ -254,6 +392,7 @@ export const xrayThrottled: Scenario = {
 
 export const SCENARIOS: readonly Scenario[] = [
   legitBranchMining,
+  legitCaveMining,
   xrayDirect,
   xrayDetour,
   xrayHumanized,
