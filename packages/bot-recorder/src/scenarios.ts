@@ -95,6 +95,10 @@ export const legitBranchMining: Scenario = {
   },
 };
 
+// The plugin counts hidden-ore reveals for diamonds only, so cave sessions that can meet one
+// have to be in the deepslate caves. Caves above this are ignored.
+const CAVE_MAX_Y = -20;
+
 /** Every ore a cave explorer would stop for. */
 const CAVE_ORES = [
   ...DIAMOND_ORES,
@@ -128,22 +132,22 @@ export const legitCaveMining: Scenario = {
     // Get into a cave. The teleport happens before the session starts, so nothing records it.
     // A session begins after ten stone breaks, so open with a short dig into the cave wall and
     // come back out, which is also how a person usually enters a cave from their own tunnel.
-    let cells = caveCellsNear(bot, 64, 2000);
+    let cells = caveCellsNear(bot, 64, 2000, CAVE_MAX_Y);
     // Caves are not everywhere at one depth. Look higher up and a little way off before giving up.
     const probes: [number, number, number][] = [
-      [0, 20, 0],
-      [0, 40, 0],
       [24, 0, 24],
-      [24, 20, 24],
-      [24, 40, 24],
-      [-24, 30, 24],
+      [-24, 0, 24],
+      [24, -6, -24],
+      [-24, 8, -24],
+      [48, 0, 0],
+      [0, 12, 48],
     ];
     for (const [dx, dy, dz] of probes) {
       if (cells.length > 0) break;
       const probe = ctx.origin.offset(dx, dy, dz);
       bot.chat(`/tp @s ${probe.x} ${probe.y} ${probe.z}`);
       await sleep(2500);
-      cells = caveCellsNear(bot, 64, 2000);
+      cells = caveCellsNear(bot, 64, 2000, CAVE_MAX_Y);
     }
     const target = cells[Math.floor(rng.next() * Math.min(cells.length, 8))] ?? cells[0];
     if (!target) throw new Error("no cave near any probe; not a cave session");
@@ -214,7 +218,7 @@ export const legitCaveMining: Scenario = {
         // Otherwise wander: prefer an open cell some way off along the current heading, and take
         // any open cell a few blocks away when the heading is blocked.
         const here = bot.entity.position.floored();
-        const open = caveCellsNear(bot, 24, 1200).filter(
+        const open = caveCellsNear(bot, 24, 1200, CAVE_MAX_Y).filter(
           (c) => Math.abs(c.y - here.y) <= 8 && here.distanceTo(c) >= 3,
         );
         const ahead = open.filter((c) => {
