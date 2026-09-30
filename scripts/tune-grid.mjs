@@ -29,6 +29,7 @@ import {
   mean,
   median,
   noul,
+  perLegit,
   perStyle,
   pool,
   score,
@@ -54,6 +55,11 @@ const EVASION =
   "Two things are not evidence of innocence. A cheat can dig ordinary tunnel between targets until its ore-per-block rate looks unremarkable, and a cheat can wander on the way to ore it already knows about so its paths are not straight. Both are produced on purpose. Judge on whether the movement and the view anticipate the ore.";
 const HONEST =
   "For contrast, an honest miner's view follows their own digging, and ore turns up in the face they were already cutting or in a wall they were passing. They have no reason to look at solid rock in one particular place.";
+
+const DETOUR =
+  "A wandering route says nothing either way. What matters is how the approach ends: whether the last part of the path and the view turn onto the position of the ore while it is still buried.";
+const CAVE =
+  "A player in a cave walks toward ore they can see in the wall and then digs into the wall around it, which exposes ore that was hidden behind. Their position and view converge on that hidden ore before it appears, but they were following ore they could see. That is ordinary play. Anticipation means converging on ore that was buried in solid rock with nothing visible to lead there.";
 
 /* ------------------------------------------------------------------ prompts
    Each returns { task, question } given the sentence describing the trace. */
@@ -153,6 +159,27 @@ const PROMPTS = {
     yes: YES_ANTICIPATES,
     no: NO_ANTICIPATES,
   }),
+  // The detour wording plus what a cave looks like, for traces that carry the open-face counts.
+  "detour+cave": (note) => ({
+    task: `${TASK}\n\n${EVASION}\n\n${DETOUR}\n\n${CAVE}`,
+    text: `${note} Does the movement anticipate the ore?`,
+    yes: YES_ANTICIPATES,
+    no: NO_ANTICIPATES,
+  }),
+  // Cave wording without the detour paragraph.
+  "evasion+cave": (note) => ({
+    task: `${TASK}\n\n${EVASION}\n\n${CAVE}`,
+    text: `${note} Does the movement anticipate the ore?`,
+    yes: YES_ANTICIPATES,
+    no: NO_ANTICIPATES,
+  }),
+  // The cave paragraph as a question about the rock, not the route.
+  "detour+cave-q": (note) => ({
+    task: `${TASK}\n\n${EVASION}\n\n${DETOUR}`,
+    text: `${note} Was this ore reached through solid rock by a player whose movement anticipated it, rather than found from open cave where ore is visible in the walls?`,
+    yes: "Yes: the approach was through rock and the position and view converge on the ore before it could have been seen.",
+    no: "No: the player was in open cave following what they could see, or nothing anticipates the ore.",
+  }),
   "evasion-only": (note) => ({
     task: EVASION,
     text: `${note} Does the movement anticipate the ore?`,
@@ -218,6 +245,51 @@ const perApproach = (id, prompt, trace = {}, { qtype = "noul", judge = "set" } =
 const L = { points: 8, breaks: 0, maxApproaches: 12 };
 
 const ROUNDS = {
+  // Round 7: the open pool now holds cave mining by bots, the legitimate play that the frozen
+  // questions scored as X-Ray on a person. The leader is re-measured with cave in the pool, and
+  // then given what could tell cave from tunnel: the recorded open-face counts on breaks, block
+  // breaks back in the trace, and wording that says what a cave looks like.
+  r7: [
+    perApproach("pa7-leader", "detour", { ...L, windowSec: 45 }),
+    perApproach("pa7-leader-w60", "detour", { ...L }),
+    perApproach("pa7-context", "detour", { ...L, windowSec: 45, context: true }),
+    perApproach("pa7-context-breaks", "detour", { ...L, windowSec: 45, context: true, breaks: 8 }),
+    perApproach("pa7-breaks", "detour", { ...L, windowSec: 45, breaks: 8 }),
+    perApproach("pa7-cave", "detour+cave", { ...L, windowSec: 45 }),
+    perApproach("pa7-cave-context", "detour+cave", { ...L, windowSec: 45, context: true }),
+    perApproach("pa7-cave-context-breaks", "detour+cave", {
+      ...L,
+      windowSec: 45,
+      context: true,
+      breaks: 8,
+    }),
+    perApproach("pa7-evasion-cave-context-breaks", "evasion+cave", {
+      ...L,
+      windowSec: 45,
+      context: true,
+      breaks: 8,
+    }),
+    perApproach("pa7-caveq-context-breaks", "detour+cave-q", {
+      ...L,
+      windowSec: 45,
+      context: true,
+      breaks: 8,
+    }),
+    perApproach("pa7-cave-context-breaks-mat", "detour+cave", {
+      ...L,
+      windowSec: 45,
+      context: true,
+      breaks: 8,
+      materials: true,
+    }),
+    perApproach("pa7-cave-context-breaks-a3", "detour+cave", {
+      ...L,
+      windowSec: 45,
+      context: true,
+      breaks: 8,
+      maxApproaches: 3,
+    }),
+  ],
   // Round 6: round 5 had three things edge ahead of the reference: the detour wording, a 45
   // second window and the base-rate reminder. Each lead is two or three standard deviations on
   // 80 sessions, which many readings will produce by chance, so this round repeats them and
@@ -488,7 +560,13 @@ async function runOnce(exp) {
 
 const summarise = (rows, key) => {
   const rs = rows.map((r) => ({ ...r, score: r.scores[key] }));
-  return { auc: auc(rs), perStyle: perStyle(rs), top: aboveEveryLegit(rs), n: rs.length };
+  return {
+    auc: auc(rs),
+    perStyle: perStyle(rs),
+    perLegit: perLegit(rs),
+    top: aboveEveryLegit(rs),
+    n: rs.length,
+  };
 };
 
 fs.mkdirSync("reports/grid", { recursive: true });
@@ -499,7 +577,7 @@ console.log(
   `round ${values.round}: ${experiments.length} experiments x ${REPEAT} repeats on ${sessions.length} sessions, concurrency ${CONCURRENCY}\n`,
 );
 console.log(
-  `${"experiment".padEnd(28)} ${"AUC mean".padStart(8)} ${"sd".padStart(6)}   detour direct human thrott   top`,
+  `${"experiment".padEnd(28)} ${"AUC mean".padStart(8)} ${"sd".padStart(6)}   detour direct human thrott   branch   cave   top`,
 );
 
 for (const exp of experiments) {
@@ -520,8 +598,10 @@ for (const exp of experiments) {
     const name = key === "main" ? exp.id : `${exp.id}#${key}`;
     const styles = ["detour_xray", "direct_xray", "humanized_xray", "throttled_xray"];
     const styleMeans = styles.map((s) => mean(per.map((x) => x.perStyle[s] ?? 0)));
+    const legitKinds = ["branch_mining", "cave_mining"];
+    const legitMeans = legitKinds.map((k) => mean(per.map((x) => x.perLegit[k] ?? 0)));
     console.log(
-      `${name.padEnd(28)} ${f3(mean(per.map((x) => x.auc))).padStart(8)} ${f3(sd(per.map((x) => x.auc))).padStart(6)}   ${styleMeans.map((v) => v.toFixed(2).padStart(6)).join(" ")}   ${mean(per.map((x) => x.top)).toFixed(1)}`,
+      `${name.padEnd(28)} ${f3(mean(per.map((x) => x.auc))).padStart(8)} ${f3(sd(per.map((x) => x.auc))).padStart(6)}   ${styleMeans.map((v) => v.toFixed(2).padStart(6)).join(" ")}   ${legitMeans.map((v) => v.toFixed(2).padStart(6)).join(" ")}   ${mean(per.map((x) => x.top)).toFixed(1)}`,
     );
     fs.appendFileSync(
       LEDGER,
@@ -541,6 +621,9 @@ for (const exp of experiments) {
         aucMean: Number(mean(per.map((x) => x.auc)).toFixed(4)),
         aucSd: Number(sd(per.map((x) => x.auc)).toFixed(4)),
         perStyle: Object.fromEntries(styles.map((s, i) => [s, Number(styleMeans[i].toFixed(4))])),
+        perLegit: Object.fromEntries(
+          legitKinds.map((k, i) => [k, Number(legitMeans[i].toFixed(4))]),
+        ),
         aboveEveryLegit: per.map((x) => x.top),
         calls: key === keys[0] ? ask.calls() - callsBefore : 0,
         seconds: key === keys[0] ? Math.round((Date.now() - started) / 1000) : 0,
