@@ -132,3 +132,51 @@ too few to tell, cannot be read from 15 pairs.
 So the bot result above stands for bots, and the question this repository set out to answer,
 whether the approach works on people, is open. The next recording should be legitimate branch
 mining by a person at a depth where ore is met, and X-Ray sessions by more than one person.
+
+## Second measurement: cave-aware questions on sealed2
+
+After the person's cave mining was scored as X-Ray, cave mining by bots was added to the open
+pool (148 sessions in three batches, 15 with an ore reveal) and rounds 7 and 8 of the search
+found two things that separate it: a paragraph in the question saying what a cave looks like,
+and the count the plugin records for every break of how many faces of the block were already
+open. That is configuration D in `scripts/confirm-frozen-v2.mjs`, frozen at commit `346af92`
+and measured once on sessions recorded afterwards.
+
+| | Sessions |
+|---|---|
+| runs requested | 128, of which 64 cave |
+| runs that found no cave | 31 |
+| labelled sessions | 99 |
+| with an ore reveal, scored | 66: 14 branch, 8 cave, 12 direct, 11 detour, 12 humanized, 9 throttled |
+
+| Reading | AUC | Interval | vs branch | vs cave | detour | direct | humanized | throttled |
+|---|---|---|---|---|---|---|---|---|
+| **D, judge (primary)** | **0.985** | 0.957 to 1.000 | 0.99 | 0.98 | 0.98 | 0.98 | 0.98 | 0.99 |
+| D, first three approaches | 0.975 | 0.931 to 0.999 | 0.99 | 0.95 | 0.95 | 0.99 | 0.98 | 0.98 |
+| A, judge (previous leader) | 0.976 | 0.943 to 0.997 | 0.99 | 0.95 | 0.93 | 0.98 | 1.00 | 1.00 |
+| A, first three approaches | 0.921 | 0.840 to 0.987 | 0.99 | 0.81 | 0.84 | 0.96 | 0.93 | 0.95 |
+| C, plain single question | 0.718 | 0.575 to 0.844 | 0.75 | 0.66 | 0.66 | 0.82 | 0.63 | 0.77 |
+| control, count of approaches | 0.921 | 0.840 to 0.983 | 0.89 | 0.98 | 0.95 | 0.92 | 0.92 | 0.89 |
+
+D minus the control, paired: 0.064, interval 0.006 to 0.137.
+
+| Registered condition | Outcome |
+|---|---|
+| D reaches AUC 0.90 | met, 0.985 |
+| cave mining alone reaches 0.85 under D | met, 0.98, with the caveat below |
+| every style reaches 0.80 under D | met, lowest 0.98 |
+| interval of D minus the control excludes zero | met, lower bound 0.006 |
+
+**The cave condition is met without saying much.** Eight cave sessions were scored, and the
+bots met few diamonds in them (1 to 9 reveals, median 1.5), so the count of approaches alone
+ranks every cheat above nearly every cave session (0.98). D does the same; the measurement
+cannot tell whether D would separate a cave session with many reveals, which is what the
+person's sessions were. The reading that ignores the count, the mean of the first three
+approaches, gives 0.95 against cave for D and 0.81 for A, and that difference is the one piece
+of evidence here that the cave wording does what it was tuned to do.
+
+The margin over the control is small on this set (0.064) because the control itself is strong
+on it: the cheats met 12 ores and most legitimate sessions met one or two.
+
+Sessions played by a person were registered as `human-sealed2` and had not been recorded when
+this was measured. They are the test that matters for the cave question and remain to be done.

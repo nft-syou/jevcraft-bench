@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // EVIDENCE: raw approach traces built from plugin telemetry, as decision D1 defines raw.
-// ACCESS: spend Do the questions frozen after round 8 rank X-Ray sessions above both branch mining and cave mining on sessions that shaped nothing?
+// ACCESS: spent-ok sealed2 was spent by this file on 2026-09-30; a re-run reports and decides nothing. Question: Do the questions frozen after round 8 rank X-Ray sessions above both branch mining and cave mining on sessions that shaped nothing?
 //
 // The second frozen measurement. The first (scripts/confirm-frozen.mjs) held on bot sessions and
 // failed on a person, whose cave mining was scored as X-Ray. Rounds 7 and 8 tuned, on bot cave
