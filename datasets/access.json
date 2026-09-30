@@ -141,11 +141,17 @@
       "see": "datasets/splits2/dev-*.jsonl"
     },
     "datasets/labels/sealed2.jsonl": {
-      "status": "sealed",
-      "sessions": 128,
+      "status": "spent",
+      "sessions": 99,
       "recorded": "2026-09-30",
-      "note": "Bot sessions recorded after round 8 stopped: 64 legit-cave-mining, 16 legit-branch-mining and 12 each of xray-direct, xray-detour, xray-humanized and xray-throttled, seed 99, start index 4000, world arena2. To be spent once by scripts/confirm-frozen-v2.mjs on the question at the top of that file. Cave runs meet a diamond in roughly one run in ten, so the scorable cave count will be small.",
-      "uses": []
+      "note": "Bot sessions recorded 2026-09-30 after round 8 stopped, seed 99, start index 4000, world arena2. 128 runs; 31 cave runs found no cave and 2 timed out; 99 labelled sessions, 66 with an ore reveal and scored (14 branch, 8 cave, 12 direct, 11 detour, 12 humanized, 9 throttled).",
+      "uses": [
+        {
+          "date": "2026-09-30",
+          "question": "Do the questions frozen after round 8 rank X-Ray sessions above both branch mining and cave mining on sessions that shaped nothing?",
+          "outcome": "Supported on all four registered conditions, with a caveat on the cave condition. Configuration D, judge: AUC 0.985 [0.957, 1.000]; against cave mining 0.98, but only 8 cave sessions were scored and the count of approaches alone separates them at 0.98, so the cave condition is met without saying much. Previous leader A 0.976 (cave 0.95). Plain question 0.718. D minus control 0.064 [0.006, 0.137]. scripts/confirm-frozen-v2.mjs at commit 346af92, reports/sealed2-frozen.json"
+        }
+      ]
     },
     "datasets/labels/human-sealed2.jsonl": {
       "status": "sealed",
@@ -155,10 +161,10 @@
       "uses": []
     },
     "datasets/recordings/sealed2-*.jsonl": {
-      "status": "sealed",
+      "status": "spent",
       "see": "datasets/labels/sealed2.jsonl"
     }
   },
-  "sealed": ["datasets/labels/sealed2.jsonl", "datasets/labels/human-sealed2.jsonl"],
-  "$note": "Two sealed datasets, sealed2 and human-sealed2, registered 2026-09-30 and not yet read."
+  "sealed": ["datasets/labels/human-sealed2.jsonl"],
+  "$note": "One sealed dataset, human-sealed2, registered 2026-09-30 and not yet recorded. sealed2 was spent on 2026-09-30."
 }
