@@ -74,3 +74,61 @@ It does not show:
 
 Configuration A made 1,082 calls for 103 sessions, 10.5 per session. Configuration B made 400,
 3.9 per session.
+
+## Sessions played by a person
+
+Measured once, the same day, with the same frozen script, on every session one person has played:
+11 legitimate sessions from 2026-09-20 and 3 X-Ray sessions from 2026-09-30 with an X-Ray resource
+pack. The X-Ray sessions were played as: whatever the player chose (twice), and a roundabout route
+to each ore (once). Registered in advance as a first reading, not a result: 3 positives against 5
+scorable negatives is 15 pairs.
+
+| | Sessions |
+|---|---|
+| labelled | 14 |
+| scored | 8: 3 X-Ray, 5 legitimate cave mining |
+| not scored, no ore reveal | 6 legitimate: all 5 branch mining sessions and 1 cave session |
+
+| Reading | AUC | Interval |
+|---|---|---|
+| A, judge (primary) | 0.433 | 0.000 to 0.833 |
+| A, first three approaches | 0.467 | 0.000 to 1.000 |
+| B, judge | 0.600 | 0.200 to 1.000 |
+| B, first three approaches | 0.500 | 0.067 to 0.900 |
+| C, plain single question | 0.467 | 0.000 to 1.000 |
+| control, count of approaches | 1.000 | 1.000 to 1.000 |
+
+None of the registered conditions is met. The model does not separate this player's X-Ray play
+from their cave mining; the count of ore encounters separates them completely, because the X-Ray
+sessions each met 12 or more ores and the cave sessions 1 to 7.
+
+Per session, configuration A, judge:
+
+| Session | Kind | Judge | First three |
+|---|---|---|---|
+| cave mining | legitimate | 0.83 | 0.66 |
+| X-Ray, free | cheat | 0.81 | 0.71 |
+| cave mining | legitimate | 0.81 | 0.68 |
+| cave mining | legitimate | 0.76 | 0.64 |
+| X-Ray, free | cheat | 0.72 | 0.62 |
+| cave mining | legitimate | 0.65 | 0.53 |
+| X-Ray, detour | cheat | 0.63 | 0.49 |
+| cave mining | legitimate, 1 approach | 0.26 | 0.53 |
+
+Two things stand out.
+
+**Cave mining looks like anticipation.** In a cave, ore becomes visible as the player walks toward
+it along the passage; the trace shows position and view converging on the ore before it is
+exposed, which is exactly what the questions ask for. Every legitimate session in the bot corpus
+is branch mining, where that never happens, so the search never met this case. The 5 human branch
+mining sessions cannot say whether tunnelling by a person looks different from tunnelling by a
+bot, because none of them met a hidden ore.
+
+**The X-Ray sessions did not look like the bot X-Ray.** The player with a resource pack scored no
+higher than their own cave mining, on either the per-approach answers or the judge. Whether that is
+because a person with X-Ray moves differently from the bots, or because these three sessions are
+too few to tell, cannot be read from 15 pairs.
+
+So the bot result above stands for bots, and the question this repository set out to answer,
+whether the approach works on people, is open. The next recording should be legitimate branch
+mining by a person at a depth where ore is met, and X-Ray sessions by more than one person.
