@@ -361,7 +361,12 @@ export function caveCellsNear(bot: Bot, maxDistance: number, count = 400): Vec3[
  * An ore the bot can actually see from where it stands: an open face and a clear line of sight,
  * which is what a person walking through a cave notices. No hidden information.
  */
-export function oreInSight(bot: Bot, names: string[], maxDistance: number): Vec3 | null {
+export function oreInSight(
+  bot: Bot,
+  names: string[],
+  maxDistance: number,
+  skip: (pos: Vec3) => boolean = () => false,
+): Vec3 | null {
   const ids = names
     .map((n) => bot.registry.blocksByName[n]?.id)
     .filter((id): id is number => id !== undefined);
@@ -370,7 +375,7 @@ export function oreInSight(bot: Bot, names: string[], maxDistance: number): Vec3
   let bestDistance = Number.POSITIVE_INFINITY;
   for (const pos of bot.findBlocks({ matching: ids, maxDistance, count: 256 })) {
     const block = bot.blockAt(pos);
-    if (!block || pos.y < MIN_TARGET_Y) continue;
+    if (!block || pos.y < MIN_TARGET_Y || skip(pos)) continue;
     const open = [
       new Vec3(1, 0, 0),
       new Vec3(-1, 0, 0),
