@@ -112,13 +112,19 @@
       "see": "datasets/labels/sealed1.jsonl"
     },
     "datasets/labels/human-sealed.jsonl": {
-      "status": "sealed",
+      "status": "spent",
       "sessions": 14,
       "recorded": "2026-09-20 and 2026-09-30",
       "note": "Every session played by a person: the 11 legitimate sessions of 2026-09-20 (5 branch mining without an ore reveal, 6 cave mining) and 3 X-Ray sessions of 2026-09-30 by the same player (mixed, detour, mixed), with an X-Ray resource pack. The 2026-09-20 sessions are also in the spent holdout; they did not shape the frozen questions, which were tuned on bot sessions only. To be spent once by scripts/confirm-frozen.mjs on: do the frozen questions rank X-Ray play by a person above legitimate play by the same person? With 3 positives and 5 scorable negatives this is 15 pairs; it is reported as a first reading, not a result.",
-      "uses": []
+      "uses": [
+        {
+          "date": "2026-09-30",
+          "question": "Do the frozen questions rank X-Ray play by a person above legitimate play by the same person?",
+          "outcome": "Not supported. 8 scorable sessions (3 X-Ray, 5 legitimate cave mining). Configuration A, judge: AUC 0.433 [0.000, 0.833]. Every reading of the model sits between 0.43 and 0.60. The count of approaches alone gives 1.000: the X-Ray sessions met 12 or more ores, the legitimate ones 1 to 7. reports/human1-frozen.json, docs/confirmation.md"
+        }
+      ]
     }
   },
-  "sealed": ["datasets/labels/human-sealed.jsonl"],
-  "$note": "One sealed dataset, human-sealed, registered 2026-09-30 and not yet read."
+  "sealed": [],
+  "$note": "There is currently no sealed dataset. sealed1 and human-sealed were spent on 2026-09-30."
 }
