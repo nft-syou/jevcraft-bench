@@ -1,5 +1,9 @@
 import type { Bot } from "mineflayer";
+// mineflayer-pathfinder is CommonJS, so its members come off the default export.
+import pathfinderPkg from "mineflayer-pathfinder";
 import { Vec3 } from "vec3";
+
+const { goals, Movements, pathfinder } = pathfinderPkg;
 
 export interface Rng {
   next(): number;
@@ -267,6 +271,148 @@ export async function approachAndMine(bot: Bot, ore: Vec3, deadline: number): Pr
   if (!reached && !inReach()) return false;
   await bot.lookAt(ore.offset(0.5, 0.5, 0.5), true);
   return digAt(bot, ore);
+}
+
+/* ------------------------------------------------------------------- caves */
+
+// Natural caves are cave_air; plain air underground is a pocket someone carved, ours included.
+const CAVE_AIR = ["cave_air"];
+const STONE_LIKE = new Set(["stone", "deepslate", "tuff", "andesite", "diorite", "granite"]);
+
+/** A cell a player can stand in: two passable blocks over a solid, non-liquid floor. */
+export function isStandable(bot: Bot, cell: Vec3): boolean {
+  const floor = cell.offset(0, -1, 0);
+  return (
+    isPassable(bot, cell) &&
+    isPassable(bot, cell.offset(0, 1, 0)) &&
+    !isPassable(bot, floor) &&
+    !isLiquid(bot, floor)
+  );
+}
+
+/**
+ * Walks through open cave toward `goal` without digging, on the pathfinder with digging and
+ * block placing switched off, so the bot only goes where a person could walk. Returns where it
+ * ended and whether it got within two blocks; a scenario decides what to do when it did not.
+ */
+// Bots that already carry the walking-only pathfinder.
+const walkers = new WeakSet<Bot>();
+
+export async function walkToward(
+  bot: Bot,
+  goal: Vec3,
+  opts: TunnelOptions,
+): Promise<{ cell: Vec3; reached: boolean }> {
+  if (!walkers.has(bot)) {
+    bot.loadPlugin(pathfinder);
+    const movements = new Movements(bot);
+    movements.canDig = false;
+    movements.allow1by1towers = false;
+    movements.allowParkour = false;
+    movements.allowSprinting = false;
+    movements.scafoldingBlocks = [];
+    bot.pathfinder.setMovements(movements);
+    walkers.add(bot);
+  }
+  const budget = Math.min(20_000, opts.deadline - Date.now());
+  if (budget <= 0) return { cell: bot.entity.position.floored(), reached: false };
+  let done = false;
+  const walk = bot.pathfinder
+    .goto(new goals.GoalNear(goal.x, goal.y, goal.z, 2))
+    .then(() => true)
+    .catch(() => false)
+    .finally(() => {
+      done = true;
+    });
+  // Glance and pause while walking, and stop early when the caller says so.
+  const started = Date.now();
+  while (!done && Date.now() - started < budget) {
+    if (opts.stopWhen?.()) break;
+    if (opts.lookAt) await bot.lookAt(opts.lookAt.offset(0.5, 0.5, 0.5), true);
+    if (opts.onStep) await opts.onStep(bot.entity.position.floored());
+    await sleep(400);
+  }
+  if (!done) bot.pathfinder.setGoal(null);
+  const ok = await walk;
+  const cell = bot.entity.position.floored();
+  const near = Math.hypot(cell.x - goal.x, cell.z - goal.z) <= 2 && Math.abs(cell.y - goal.y) <= 2;
+  return { cell, reached: opts.stopWhen?.() === true || ok || near };
+}
+
+/** Standable cave cells within `maxDistance`, nearest first. Reads only air, which is no secret. */
+export function caveCellsNear(bot: Bot, maxDistance: number, count = 400): Vec3[] {
+  const ids = CAVE_AIR.map((n) => bot.registry.blocksByName[n]?.id).filter(
+    (id): id is number => id !== undefined,
+  );
+  const here = bot.entity.position;
+  // Underground only (sessions need y <= 40 and the surface is not a cave), with rock overhead
+  // within a few blocks so a cave mouth on a hillside does not count.
+  const roofed = (p: Vec3) => {
+    for (let dy = 2; dy <= 8; dy++) if (!isPassable(bot, p.offset(0, dy, 0))) return true;
+    return false;
+  };
+  return bot
+    .findBlocks({ matching: ids, maxDistance, count })
+    .filter((p) => p.y >= MIN_TARGET_Y && p.y <= 30 && isStandable(bot, p) && roofed(p))
+    .sort((a, b) => a.distanceTo(here) - b.distanceTo(here));
+}
+
+/**
+ * An ore the bot can actually see from where it stands: an open face and a clear line of sight,
+ * which is what a person walking through a cave notices. No hidden information.
+ */
+export function oreInSight(bot: Bot, names: string[], maxDistance: number): Vec3 | null {
+  const ids = names
+    .map((n) => bot.registry.blocksByName[n]?.id)
+    .filter((id): id is number => id !== undefined);
+  const here = bot.entity.position;
+  let best: Vec3 | null = null;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (const pos of bot.findBlocks({ matching: ids, maxDistance, count: 256 })) {
+    const block = bot.blockAt(pos);
+    if (!block || pos.y < MIN_TARGET_Y) continue;
+    const open = [
+      new Vec3(1, 0, 0),
+      new Vec3(-1, 0, 0),
+      new Vec3(0, 1, 0),
+      new Vec3(0, -1, 0),
+      new Vec3(0, 0, 1),
+      new Vec3(0, 0, -1),
+    ].some((d) => isPassable(bot, pos.plus(d)));
+    if (!open || !bot.canSeeBlock(block)) continue;
+    const distance = pos.distanceTo(here);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = pos;
+    }
+  }
+  return best;
+}
+
+/**
+ * Chips a few stone blocks around a mined ore, the way a person follows a vein into the wall.
+ * This is what exposes the hidden ore next to a visible one.
+ */
+export async function chipAround(bot: Bot, ore: Vec3, max: number): Promise<number> {
+  let dug = 0;
+  const around = [
+    new Vec3(1, 0, 0),
+    new Vec3(-1, 0, 0),
+    new Vec3(0, 0, 1),
+    new Vec3(0, 0, -1),
+    new Vec3(0, 1, 0),
+    new Vec3(0, -1, 0),
+  ];
+  for (const d of around) {
+    if (dug >= max) break;
+    const p = ore.plus(d);
+    const b = bot.blockAt(p);
+    if (!b || !STONE_LIKE.has(b.name)) continue;
+    if (bot.entity.position.offset(0, 1.62, 0).distanceTo(p.offset(0.5, 0.5, 0.5)) > 4.5) continue;
+    await bot.lookAt(p.offset(0.5, 0.5, 0.5), true);
+    if (await digAt(bot, p)) dug++;
+  }
+  return dug;
 }
 
 /** Human-ish pause and glance, scaled by `noise` (0 = none). */
