@@ -154,17 +154,23 @@
       ]
     },
     "datasets/labels/human-sealed2.jsonl": {
-      "status": "sealed",
-      "sessions": 0,
-      "recorded": "2026-09-30",
-      "note": "New sessions played by a person after round 8: cave mining without X-Ray and X-Ray play, recorded with scripts/human-session.mjs. Reported alongside sealed2 by scripts/confirm-frozen-v2.mjs; too few to enter the registered conditions. The count is filled in when the recording ends.",
-      "uses": []
+      "status": "spent",
+      "sessions": 6,
+      "recorded": "2026-10-17",
+      "note": "Five sessions played by the same person as before, after round 8: three cave mining without X-Ray (in fresh deep caves found by a one-second bot probe) and two with an X-Ray resource pack, one of which a death split into two plugin sessions. Six labelled sessions, all with an ore reveal: cave 2, 4 and 5 reveals; X-Ray 2, 12 and 12 (capped).",
+      "uses": [
+        {
+          "date": "2026-10-17",
+          "question": "Reported alongside sealed2: do the questions frozen after round 8 rank this person's X-Ray play above their cave mining?",
+          "outcome": "Configuration D, judge: every X-Ray session above every cave session, AUC 1.000 on 9 pairs (interval degenerate). Previous leader A 0.667, plain question 0.833, count of approaches 0.722. The count-blind reading of D is 0.667. Too few pairs to be a result; the direction is the one the cave wording was tuned for. reports/human2-frozen.json, docs/confirmation.md"
+        }
+      ]
     },
     "datasets/recordings/sealed2-*.jsonl": {
       "status": "spent",
       "see": "datasets/labels/sealed2.jsonl"
     }
   },
-  "sealed": ["datasets/labels/human-sealed2.jsonl"],
-  "$note": "One sealed dataset, human-sealed2, registered 2026-09-30 and not yet recorded. sealed2 was spent on 2026-09-30."
+  "sealed": [],
+  "$note": "There is currently no sealed dataset. sealed2 was spent on 2026-09-30 and human-sealed2 on 2026-10-17."
 }

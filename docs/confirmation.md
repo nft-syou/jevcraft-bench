@@ -180,3 +180,58 @@ on it: the cheats met 12 ores and most legitimate sessions met one or two.
 
 Sessions played by a person were registered as `human-sealed2` and had not been recorded when
 this was measured. They are the test that matters for the cave question and remain to be done.
+
+## Second set of sessions played by a person
+
+Recorded 2026-10-17 by the same player, after the cave-aware questions were frozen: three cave
+mining sessions without X-Ray, each in a fresh deep cave, and two sessions with an X-Ray resource
+pack played however the player chose. A death split one X-Ray session into two plugin sessions,
+so there are six labelled sessions, all with an ore reveal. Registered as `human-sealed2` and
+measured once with `scripts/confirm-frozen-v2.mjs`.
+
+| Session | Kind | Minutes | Reveals |
+|---|---|---|---|
+| cave 1 | legitimate | 8.9 | 4 |
+| cave 2 | legitimate | 10.7 | 5 |
+| cave 3 | legitimate | 9.4 | 2 |
+| X-Ray 1, before the death | cheat | 4.8 | 12 or more |
+| X-Ray 1, after the death | cheat | 4.6 | 2 |
+| X-Ray 2 | cheat | 8.7 | 12 or more |
+
+| Reading | AUC | vs cave |
+|---|---|---|
+| **D, judge (primary)** | **1.000** | 1.00 |
+| D, first three approaches | 0.667 | 0.67 |
+| A, judge (previous leader) | 0.667 | 0.67 |
+| A, first three approaches | 0.333 | 0.33 |
+| C, plain single question | 0.833 | 0.83 |
+| control, count of approaches | 0.722 | 0.72 |
+
+Per session, judge:
+
+| Session | D | A |
+|---|---|---|
+| X-Ray 2 | 0.82 | 0.67 |
+| X-Ray 1, before the death | 0.78 | 0.77 |
+| X-Ray 1, after the death, 2 approaches | 0.76 | 0.73 |
+| cave 2 | 0.72 | 0.76 |
+| cave 1 | 0.67 | 0.67 |
+| cave 3, 2 approaches | 0.55 | 0.67 |
+
+Under D every X-Ray session sits above every cave session, including the X-Ray fragment that
+met only two ores against the cave session that met five, which the count of approaches gets
+wrong. Under the previous leader the best cave session sits above two of the three X-Ray
+sessions, as it did on the first set of human sessions.
+
+This is nine pairs. It cannot carry a claim, and the bootstrap interval is degenerate. What it
+says is that the direction tuned on bot cave sessions carried over to this person's cave
+sessions: the first human measurement had every model reading between 0.43 and 0.60, this one
+has the primary reading at 1.0 and the previous leader at 0.67. The per-approach answers still
+overlap (the count-blind reading is 0.67); the separation comes from the judge, which also sees
+how many approaches there were.
+
+The registered control condition is not met on this set (D minus control 0.278, interval 0.000
+to 0.833), as expected with six sessions; the conditions were registered for sealed2 and the
+human sessions were declared too few to enter them.
+
+Still one player, still one world. The next step for a claim about people is more people.
