@@ -24,7 +24,10 @@ players. The strongest outcome it produces is a request for human review.
 
 Phases 0 to 3 are implemented: the offline slice, the Paper telemetry plugin, the feature
 extractor, and real recordings on fixed-seed worlds. The corpus is **156 labelled sessions**
-across two world seeds, from Mineflayer bots and one human player.
+across two world seeds, from Mineflayer bots and one human player. Since then the question-tuning
+work below has added cave mining by bots, two sealed bot sets and two sets by a person: 549
+distinct labelled sessions across the label files, every one declared open, sealed or spent in
+`datasets/access.json`.
 
 ![How a broken block becomes a review request](docs/images/pipeline.svg)
 
@@ -163,9 +166,10 @@ pnpm jevcraft evaluate datasets/features/batch1.jsonl --out datasets/decisions/b
 pnpm jevcraft report --decisions datasets/decisions/batch1.jsonl --labels datasets/labels/batch1.jsonl
 ```
 
-Scenarios: `legit-branch-mining`, `xray-direct`, `xray-detour`, `xray-humanized`,
-`xray-throttled` (`packages/bot-recorder/src/scenarios.ts`). The last one holds its ore ratio
-inside the legitimate range on purpose; see `docs/evasion.md`.
+Scenarios: `legit-branch-mining`, `legit-cave-mining`, `xray-direct`, `xray-detour`,
+`xray-humanized`, `xray-throttled` (`packages/bot-recorder/src/scenarios.ts`). The throttled one
+holds its ore ratio inside the legitimate range on purpose; see `docs/evasion.md`. The cave one
+walks natural caves on the pathfinder and digs only where a person would.
 
 Each run joins as `jevbotNN`, teleports to a fresh
 64-block cell, mines for the budget, and leaves; the manifest records the bot's pseudonymous id
@@ -234,11 +238,40 @@ defeats the approach rule just as completely as diluting the ratio defeats count
 
 ![Recall by X-Ray evasion style](docs/images/detector-complementarity.svg)
 
-So the contribution is the approach telemetry, not the language model. An ablation settles it:
+So, on summarised features, the contribution is the approach telemetry, not the language model. An
+ablation settles it:
 fit a feature-only rule on the same 134 sessions the policy's thresholds saw, and on the 22
 confirmation sessions it flags **exactly the same** ones, 9 of 10, for one fewer false positive.
 Zero discordant pairs. See `docs/evasion.md` for the full result, including how
 much of it was pre-registered, and `docs/benchmark.md` for the method.
+
+## Questions on raw traces
+
+The ablation above fed the model the same six summarised numbers the rule reads, so it could
+only tie. The second line of work sends the model the raw approach trace instead: the player's
+position and view over the 45 seconds before each hidden ore was exposed, as offsets from that
+ore, eight samples per approach, plus the count the plugin records of how many faces of each
+broken block were already open. No feature is computed for the model and no threshold is chosen
+(`docs/decisions.md`). The questions are searched on an open development split only, every
+reading of that search is in `docs/tuning-ledger.jsonl` (923 rows), and the winner is frozen in
+a script and measured once on sessions recorded afterwards (`datasets/ACCESS.md`).
+
+| Sealed set | Scored | Primary AUC | Outcome |
+| --- | --- | --- | --- |
+| bots, legitimate play is branch mining (`sealed1`) | 103 | 0.948 [0.897, 0.985] | supported |
+| one person, 14 sessions | 8 | 0.433 | **not supported**: cave mining scored as X-Ray |
+| bots, legitimate play includes cave mining (`sealed2`) | 66 | 0.985 [0.957, 1.000] | supported; 8 cave sessions, so that column is weak |
+| the same person, 6 sessions after the cave fix | 6 | 1.000 on 9 pairs | a direction, not a result |
+
+What held up: judging each approach alone and then the set beats one call; eight samples per
+approach beat more and fewer; a 45 to 60 second window; wording that says a wandering route is
+not evidence and what a cave looks like. The plain single question gives 0.69 to 0.72 on the
+same sessions. The count of ore encounters alone gives 0.75 to 0.92, so part of every headline
+is the count, and the count-blind readings are reported next to it in `docs/confirmation.md`.
+
+What it does not show: anything about players in general (one person, one world); a decision
+rule (these are rankings, not false-positive rates); anything about sessions that meet no
+hidden ore, 13% of bot sessions. `docs/human-recording.md` is how to add a person.
 
 ## Operating cost
 
@@ -357,6 +390,11 @@ the only thing CI needs.
 | `docs/deployment.md` | Installing the plugin on a live server, and what it will and will not do |
 | `docs/external-data.md` | Public datasets checked for real human mining, and why none of them fit |
 | `docs/representation.md` | Asking the same question from raw traces instead of the summarised features |
+| `docs/decisions.md` | Settled decisions: raw evidence, no thresholds, exploration on open data; CI fails when a script contradicts one |
+| `datasets/ACCESS.md` | Which datasets may be looked at: open, sealed or spent, and the rule for spending one |
+| `docs/confirmation.md` | The frozen questions measured once on sealed bot sessions and on sessions by a person |
+| `docs/human-recording.md` | Recording play by a person, with and without an X-Ray resource pack |
+| `docs/tuning-ledger.jsonl` | Every reading of the question search, so the number of things tried sits next to the winner |
 | `Dockerfile` | The analysis CLI as a 312 MB image, so a trial needs no Node install |
 
 ## License

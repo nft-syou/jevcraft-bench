@@ -20,6 +20,33 @@ below shipped in 0.1.0 and is repeated here because 0.1.0 was the first tag.
 
 ### Added
 
+- Question tuning on raw traces, and its confirmation. `scripts/tune-grid.mjs` searches what to
+  ask, what to show and how to structure the calls over the open development split, 8 rounds and
+  923 ledger rows in `docs/tuning-ledger.jsonl`. The evidence is the raw approach trace, never the
+  summarised features (`docs/decisions.md`, enforced by `pnpm decisions-check`). Two frozen
+  measurements on sessions recorded afterwards: `sealed1`, AUC 0.948 [0.897, 0.985] on 103 bot
+  sessions; `sealed2`, 0.985 [0.957, 1.000] on 66 bot sessions including cave mining. The same
+  questions on 14 sessions by one person gave 0.433, because cave mining by a person looks like
+  anticipation; after the cave fix, 6 new sessions by the same person came out in the right order
+  on all 9 pairs. `docs/confirmation.md` has all four, with the count-of-approaches control next
+  to each (0.75 to 0.92 on its own).
+- `legit-cave-mining` bot scenario: walks natural caves on the pathfinder with digging off, goes
+  to ore it can see, chips the wall around it. The corpus had no legitimate play other than
+  branch mining. Hidden-ore reveals count diamonds only, so it stays below y -20; about one run
+  in ten meets one.
+- `docs/human-recording.md` and `scripts/human-session.mjs`: recording play by a person on the
+  local server with an X-Ray resource pack, with the session kind declared by the player.
+- Trace builder option `context`: the open-face count the plugin records per break, 0 in a tunnel
+  and 1 or more in a cave wall. Per-event recorded value, raw under D1.
+- Three more cave batches, two sealed bot sets and two human sets: 549 distinct labelled sessions
+  across the label files, up from 156 in the benchmark corpus the badge counts.
+
+### Withdrawn
+
+- "The contribution is the approach telemetry, not the language model." True of the summarised
+  features, which the ablation showed; not true of the raw trace. Asked from the trace with the
+  tuned questions, the model separates every evasion style, including the ratio-throttled one, on
+  sessions it never shaped; the plain question on the same trace does not (0.69 to 0.72).
 - `datasets/ACCESS.md`, `datasets/access.json` and `pnpm access-check`. Every dataset is declared
   open, sealed or spent; a script reading spent or sealed data must carry an `// ACCESS:` marker
   saying why, and CI fails otherwise. Convention did not prevent contamination three times, and in
