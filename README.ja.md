@@ -159,7 +159,7 @@ pnpm jevcraft benchmark   --features datasets/splits2/holdout-features.jsonl   -
 
 ![X-Ray 回避手口別の再現率](docs/images/detector-complementarity.svg)
 
-つまり貢献しているのは接近テレメトリであって言語モデルではありません。手書きの直進度ルールが、このデータでは Jev と同等に働きます。どこまでが事前登録済みだったかを含む完全な結果は `docs/evasion.md`、手法は `docs/benchmark.md` にあります。
+つまり、要約した特徴量を渡す限りでは、貢献しているのは接近テレメトリであって言語モデルではありません。手書きの直進度ルールが、このデータでは Jev と同等に働きます。生の軌跡を渡した場合は別で、次の節を参照してください。どこまでが事前登録済みだったかを含む完全な結果は `docs/evasion.md`、手法は `docs/benchmark.md` にあります。
 
 ## 生の軌跡への質問
 

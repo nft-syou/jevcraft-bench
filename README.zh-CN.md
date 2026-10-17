@@ -159,7 +159,7 @@ pnpm jevcraft benchmark   --features datasets/splits2/holdout-features.jsonl   -
 
 ![按 X-Ray 规避风格划分的召回率](docs/images/detector-complementarity.svg)
 
-所以真正的贡献来自接近遥测，而不是语言模型：在这批数据上，一条手写的直线度规则和 Jev 表现相当。完整结果（包括其中有多少是预先登记的）见 `docs/evasion.md`，方法见 `docs/benchmark.md`。
+所以，只要交给模型的是汇总特征，真正的贡献就来自接近遥测，而不是语言模型：在这批数据上，一条手写的直线度规则和 Jev 表现相当。交给模型原始轨迹时则不同，见下一节。完整结果（包括其中有多少是预先登记的）见 `docs/evasion.md`，方法见 `docs/benchmark.md`。
 
 ## 面向原始轨迹的提问
 

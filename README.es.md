@@ -159,7 +159,7 @@ Esa es una evasión, no la evasión en general. Serpentear de camino a un minera
 
 ![Sensibilidad por estilo de evasión de X-Ray](docs/images/detector-complementarity.svg)
 
-Así que la aportación está en la telemetría de aproximación, no en el modelo de lenguaje: con estos datos, una regla de rectitud escrita a mano rinde igual que Jev. El resultado completo, incluido cuánto de él estaba registrado de antemano, está en `docs/evasion.md`, y el método en `docs/benchmark.md`.
+Así que, mientras el modelo reciba características resumidas, la aportación está en la telemetría de aproximación, no en el modelo de lenguaje: con estos datos, una regla de rectitud escrita a mano rinde igual que Jev. Con la traza en bruto es distinto; véase la sección siguiente. El resultado completo, incluido cuánto de él estaba registrado de antemano, está en `docs/evasion.md`, y el método en `docs/benchmark.md`.
 
 ## Preguntas sobre trazas en bruto
 
