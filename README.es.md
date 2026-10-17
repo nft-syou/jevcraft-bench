@@ -19,7 +19,7 @@ Este repositorio es una prueba de concepto. **Nunca** banea, expulsa ni revierte
 
 ## Estado
 
-Las fases 0 a 3 están implementadas: el corte vertical sin conexión, el plugin de telemetría para Paper, el extractor de características y grabaciones reales en mundos de semilla fija. El corpus son **156 sesiones etiquetadas** repartidas en dos semillas de mundo, provenientes de bots de Mineflayer y de un jugador humano.
+Las fases 0 a 3 están implementadas: el corte vertical sin conexión, el plugin de telemetría para Paper, el extractor de características y grabaciones reales en mundos de semilla fija. El corpus son **156 sesiones etiquetadas** repartidas en dos semillas de mundo, provenientes de bots de Mineflayer y de un jugador humano. Desde entonces el trabajo de ajuste de preguntas descrito más abajo ha añadido minería en cuevas por bots, dos conjuntos sellados de bots y dos de una persona: 549 sesiones etiquetadas distintas en los archivos de etiquetas, cada una declarada open, sealed o spent en `datasets/access.json`.
 
 ![Cómo un bloque roto acaba siendo una solicitud de revisión](docs/images/pipeline.svg)
 
@@ -160,6 +160,19 @@ Esa es una evasión, no la evasión en general. Serpentear de camino a un minera
 ![Sensibilidad por estilo de evasión de X-Ray](docs/images/detector-complementarity.svg)
 
 Así que la aportación está en la telemetría de aproximación, no en el modelo de lenguaje: con estos datos, una regla de rectitud escrita a mano rinde igual que Jev. El resultado completo, incluido cuánto de él estaba registrado de antemano, está en `docs/evasion.md`, y el método en `docs/benchmark.md`.
+
+## Preguntas sobre trazas en bruto
+
+La ablación anterior entregaba al modelo los mismos seis números resumidos que lee la regla, así que como mucho podía empatar. La segunda línea de trabajo le entrega la traza de aproximación en bruto: posición y vista del jugador durante los 45 segundos previos a que cada mena oculta quedara expuesta, como desplazamientos respecto a esa mena, ocho muestras por aproximación, más el recuento que registra el plugin de cuántas caras de cada bloque roto ya estaban abiertas antes de excavar. No se calcula ninguna característica para el modelo ni se elige ningún umbral (`docs/decisions.md`). Las preguntas se buscan solo en la partición de desarrollo abierta, cada lectura de esa búsqueda está en `docs/tuning-ledger.jsonl` (923 filas), y la ganadora se congela en un script y se mide una sola vez sobre sesiones grabadas después (`datasets/ACCESS.md`).
+
+| Conjunto sellado | Puntuadas | AUC principal | Resultado |
+| --- | --- | --- | --- |
+| bots, el juego legítimo es minería en ramas (`sealed1`) | 103 | 0.948 [0.897, 0.985] | respaldado |
+| una persona, 14 sesiones | 8 | 0.433 | **no respaldado**: la minería en cuevas se puntuó como X-Ray |
+| bots, el juego legítimo incluye cuevas (`sealed2`) | 66 | 0.985 [0.957, 1.000] | respaldado; solo 8 sesiones de cueva, esa columna es débil |
+| la misma persona, 6 sesiones tras el ajuste de cuevas | 6 | 1.000 en 9 pares | una dirección, no un resultado |
+
+La pregunta simple en una sola llamada da de 0.69 a 0.72 en las mismas sesiones. Solo contar las menas encontradas da de 0.75 a 0.92, así que parte de cada cifra es el recuento, y las lecturas que lo ignoran están al lado en `docs/confirmation.md`. Lo que no muestra: nada sobre jugadores en general (una persona, un mundo); una regla de decisión (son ordenaciones, no tasas de falsos positivos); nada sobre sesiones sin mena oculta, el 13 % de las de bots. `docs/human-recording.md` explica cómo añadir a una persona.
 
 ## Coste de operación
 
