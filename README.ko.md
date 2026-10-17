@@ -159,7 +159,7 @@ pnpm jevcraft benchmark   --features datasets/splits2/holdout-features.jsonl   -
 
 ![X-Ray 회피 유형별 재현율](docs/images/detector-complementarity.svg)
 
-그러므로 기여하는 것은 접근 텔레메트리이지 언어 모델이 아닙니다. 이 데이터에서는 손으로 쓴 직진도 규칙이 Jev와 같은 수준으로 동작합니다. 무엇이 사전 등록되어 있었는지를 포함한 전체 결과는 `docs/evasion.md`, 방법론은 `docs/benchmark.md`에 있습니다.
+그러므로 요약된 특징을 넘기는 한에서는, 기여하는 것은 접근 텔레메트리이지 언어 모델이 아닙니다. 이 데이터에서는 손으로 쓴 직진도 규칙이 Jev와 같은 수준으로 동작합니다. 원시 궤적을 넘기면 달라지며, 다음 절을 보세요. 무엇이 사전 등록되어 있었는지를 포함한 전체 결과는 `docs/evasion.md`, 방법론은 `docs/benchmark.md`에 있습니다.
 
 ## 원시 궤적에 대한 질문
 
