@@ -16,7 +16,7 @@ repositories {
     maven("https://repo.papermc.io/repository/maven-public/")
 }
 
-val paperApiVersion = "26.2.build.124-stable"
+val paperApiVersion = "26.3.build.230-stable"
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:$paperApiVersion")
