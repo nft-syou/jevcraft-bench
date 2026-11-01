@@ -23,7 +23,7 @@ dependencies {
     compileOnly("com.google.code.gson:gson:2.14.0")
 
     testImplementation("io.papermc.paper:paper-api:$paperApiVersion")
-    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v26.2:4.116.1")
+    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v26.2:4.117.0")
     testImplementation(platform("org.junit:junit-bom:6.1.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
